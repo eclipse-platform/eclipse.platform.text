@@ -16,10 +16,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 
@@ -207,7 +207,7 @@ public class DocumentLineDiffer implements ILineDiffer, IDocumentListener, IAnno
 		 * @see org.eclipse.ui.texteditor.IAnnotationExtension#getSeverity()
 		 */
 		public int getSeverity() {
-			return IMarker.SEVERITY_INFO;
+			return 0; // same as IMarker.SEVERITY_INFO;
 		}
 
 		/*
@@ -530,6 +530,8 @@ public class DocumentLineDiffer implements ILineDiffer, IDocumentListener, IAnno
 							return e.getStatus();
 						}
 					}
+				} catch (OperationCanceledException e) {
+					return Status.CANCEL_STATUS;
 				}
 
 				// Getting our own copies of the documents for offline diffing.

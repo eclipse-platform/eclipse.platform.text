@@ -18,6 +18,7 @@ import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
@@ -26,6 +27,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.StatusLineLayoutData;
+import org.eclipse.jface.preference.JFacePreferences;
 import org.eclipse.jface.resource.JFaceColors;
 
 /**
