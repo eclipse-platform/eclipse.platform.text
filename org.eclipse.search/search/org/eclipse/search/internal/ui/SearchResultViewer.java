@@ -281,6 +281,8 @@ class SearchResultViewer extends TableViewer {
 			return;
 
 		int index= table.getSelectionIndex();
+		if (index < 0)
+			return;
 		SearchResultViewEntry entry= (SearchResultViewEntry)getTable().getItem(index).getData();
 
 		fMarkerToShow= 0;
