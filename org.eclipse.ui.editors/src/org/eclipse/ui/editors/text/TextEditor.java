@@ -41,6 +41,7 @@ import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.eclipse.ui.dialogs.SaveAsDialog;
 import org.eclipse.ui.ide.IDEActionFactory;
+import org.eclipse.ui.ide.IMarkerEditorPositioner;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.AbstractMarkerAnnotationModel;
 import org.eclipse.ui.texteditor.AddMarkerAction;
@@ -73,6 +74,13 @@ import org.eclipse.ui.internal.editors.text.EditorsPlugin;
  * </p>
  */
 public class TextEditor extends ExtendedTextEditor {
+	
+	private class MarkerEditorPositioner implements IMarkerEditorPositioner {
+		public void gotoPosition(IMarker marker) {
+			gotoMarker(marker);
+		}
+	}
+	
 	/** 
 	 * The encoding support for the editor.
 	 * @since 2.0
@@ -83,8 +91,16 @@ public class TextEditor extends ExtendedTextEditor {
 	 * @since 2.1
 	 */
 	private MarkerAnnotationPreferences fAnnotationPreferences;
-	/** The editor's implicit document provider. */
+	/** 
+	 * The editor's implicit document provider.
+	 * @since 3.0
+	 */
 	private IDocumentProvider fImplicitDocumentProvider;
+	/** 
+	 * The editor's marker positioner.
+	 * @since 3.0 
+	 */
+	private Object fMarkerEditorPositioner= new MarkerEditorPositioner();
 	
 	
 	/**
@@ -395,6 +411,8 @@ public class TextEditor extends ExtendedTextEditor {
 	public Object getAdapter(Class adapter) {
 		if (IEncodingSupport.class.equals(adapter))
 			return fEncodingSupport;
+		if (IMarkerEditorPositioner.class.equals(adapter))
+			return fMarkerEditorPositioner;
 		return super.getAdapter(adapter);
 	}
 	
@@ -415,10 +433,9 @@ public class TextEditor extends ExtendedTextEditor {
 	 * must be determined as it might differ from the position stated in the marker.
 	 * 
 	 * @param marker the marker to go to
-	 * @see EditorPart#gotoMarker(org.eclipse.core.resources.IMarker)
 	 * @since 3.0
 	 */
-	public void gotoMarker(IMarker marker) {
+	protected void gotoMarker(IMarker marker) {
 		
 		if (getSourceViewer() == null)
 			return;
