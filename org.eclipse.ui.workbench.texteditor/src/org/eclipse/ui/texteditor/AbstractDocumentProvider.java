@@ -12,6 +12,7 @@
 package org.eclipse.ui.texteditor;
 
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +35,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 
+import org.eclipse.jface.operation.IRunnableContext;
+import org.eclipse.jface.operation.IRunnableWithProgress;
+
 
 
 /**
@@ -44,6 +48,32 @@ import org.eclipse.core.runtime.Status;
  * </p>
  */
 public abstract class AbstractDocumentProvider implements IDocumentProvider, IDocumentProviderExtension, IDocumentProviderExtension2 {
+
+		/**
+		 * Opertion created by the document provider and to be executed by the providers runnable context.
+		 * 
+		 * @since 3.0
+		 */
+		protected static abstract class DocumentProviderOperation implements IRunnableWithProgress {
+			
+			/**
+			 * The actual functionality of this operation.
+			 * 
+			 * @throws CoreException
+			 */
+			protected abstract void execute(IProgressMonitor monitor) throws CoreException;
+			
+			/*
+			 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+			 */
+			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+				try {
+					execute(monitor);
+				} catch (CoreException x) {
+					throw new InvocationTargetException(x);
+				}
+			}
+		}
 		
 		/**
 		 * Collection of all information managed for a connected element.
@@ -209,12 +239,12 @@ public abstract class AbstractDocumentProvider implements IDocumentProvider, IDo
 	protected abstract void doSaveDocument(IProgressMonitor monitor, Object element, IDocument document, boolean overwrite) throws CoreException;
 	
 	/**
-	 * Returns the document operation runner for this document provider.
+	 * Returns the runnable context for this document provider.
 	 * 
-	 * @return the document operation runner for this document provider
+	 * @return the runnable context for this document provider
 	 * @since 3.0
 	 */
-	protected abstract IDocumentProviderOperationRunner getOperationRunner();
+	protected abstract IRunnableContext getOperationRunner(IProgressMonitor monitor);
 	
 	/**
 	 * Returns the element info object for the given element.
@@ -415,10 +445,11 @@ public abstract class AbstractDocumentProvider implements IDocumentProvider, IDo
 	 * Executes the actual work of reseting the given elements document.
 	 * 
 	 * @param element the element
+	 * @param monitor the progress monitor
 	 * @throws CoreException
 	 * @since 3.0
 	 */
-	protected void doResetDocument(Object element) throws CoreException {
+	protected void doResetDocument(Object element, IProgressMonitor monitor) throws CoreException {
 		ElementInfo info= (ElementInfo) fElementInfoMap.get(element);
 		if (info != null) {
 			
@@ -446,6 +477,31 @@ public abstract class AbstractDocumentProvider implements IDocumentProvider, IDo
 		}		
 	}
 	
+	/**
+	 * Executes the given operation in the providers runnable context.
+	 * 
+	 * @param operation the operation to be executes
+	 * @param monitor the progress monitor
+	 * @exception CoreException the operation's core exception
+	 * @since 3.0
+	 */
+	protected void executeOperation(DocumentProviderOperation operation, IProgressMonitor monitor) throws CoreException {
+		try {
+			IRunnableContext runner= getOperationRunner(monitor);
+			if (runner != null)
+				runner.run(false, false, operation);
+			else
+				operation.run(monitor);
+		} catch (InvocationTargetException x) {
+			Throwable e= x.getTargetException();
+			if (e instanceof CoreException)
+				throw (CoreException) e;
+			throw new CoreException(new Status(IStatus.ERROR, TextEditorPlugin.PLUGIN_ID, IStatus.ERROR, e.getMessage(), e));
+		} catch (InterruptedException e) {
+			throw new CoreException(new Status(IStatus.CANCEL, TextEditorPlugin.PLUGIN_ID, IStatus.OK, e.getMessage(), e));
+		}
+	}
+		
 	/*
 	 * @see IDocumentProvider#resetDocument(Object)
 	 */
@@ -454,28 +510,26 @@ public abstract class AbstractDocumentProvider implements IDocumentProvider, IDo
 		if (element == null)
 			return;
 				
-		IDocumentProviderOperation operation= new IDocumentProviderOperation() {
-			public void execute() throws CoreException {
-				doResetDocument(element);
+		DocumentProviderOperation operation= new DocumentProviderOperation() {
+			protected void execute(IProgressMonitor monitor) throws CoreException {
+				doResetDocument(element, monitor);
 			}
 		};
 		
-		IDocumentProviderOperationRunner runner= getOperationRunner();
-		if (runner != null)
-			runner.run(operation, new NullProgressMonitor());
-		else
-			operation.execute();	}
+		executeOperation(operation, getProgressMonitor());	
+	}
 	
+
 	/*
 	 * @see IDocumentProvider#saveDocument(IProgressMonitor, Object, IDocument, boolean)
 	 */
-	public final void saveDocument(final IProgressMonitor monitor, final Object element, final IDocument document, final boolean overwrite) throws CoreException {
+	public final void saveDocument(IProgressMonitor monitor, final Object element, final IDocument document, final boolean overwrite) throws CoreException {
 		
 		if (element == null)
 			return;
 				
-		IDocumentProviderOperation operation= new IDocumentProviderOperation() {
-			public void execute() throws CoreException {
+		DocumentProviderOperation operation= new DocumentProviderOperation() {
+			public void execute(IProgressMonitor monitor) throws CoreException {
 				ElementInfo info= (ElementInfo) fElementInfoMap.get(element);
 				if (info != null) {
 					if (info.fDocument != document) {
@@ -493,11 +547,7 @@ public abstract class AbstractDocumentProvider implements IDocumentProvider, IDo
 			}
 		};
 		
-		IDocumentProviderOperationRunner runner= getOperationRunner();
-		if (runner != null)
-			runner.run(operation, new NullProgressMonitor());
-		else
-			operation.execute();
+		executeOperation(operation, monitor);
 	}
 	
 	/**
@@ -833,9 +883,10 @@ public abstract class AbstractDocumentProvider implements IDocumentProvider, IDo
 	 * Performs the actual work of snchronizing the given element.
 	 * 
 	 * @param element the element
+	 * @param monitor the progress monitor
 	 * @since 3.0
 	 */
-	protected void doSynchronize(Object element) throws CoreException {
+	protected void doSynchronize(Object element, IProgressMonitor monitor) throws CoreException {
 	}
 	
 	/*
@@ -847,17 +898,13 @@ public abstract class AbstractDocumentProvider implements IDocumentProvider, IDo
 		if (element == null)
 			return;
 			
-		IDocumentProviderOperation operation= new IDocumentProviderOperation() {
-			public void execute() throws CoreException {
-				doSynchronize(element);
+		DocumentProviderOperation operation= new DocumentProviderOperation() {
+			public void execute(IProgressMonitor monitor) throws CoreException {
+				doSynchronize(element, monitor);
 			}
 		};
 		
-		IDocumentProviderOperationRunner runner= getOperationRunner();
-		if (runner != null)
-			runner.run(operation, new NullProgressMonitor());
-		else
-			operation.execute();
+		executeOperation(operation, getProgressMonitor());
 	}
 	
 	/*

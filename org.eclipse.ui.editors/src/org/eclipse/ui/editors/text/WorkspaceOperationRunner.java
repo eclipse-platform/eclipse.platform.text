@@ -13,39 +13,50 @@ package org.eclipse.ui.editors.text;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.ui.actions.WorkspaceModifyOperation;
-import org.eclipse.ui.internal.editors.text.EditorsPlugin;
-import org.eclipse.ui.texteditor.IDocumentProviderOperation;
-import org.eclipse.ui.texteditor.IDocumentProviderOperationRunner;
+import org.eclipse.core.runtime.NullProgressMonitor;
+
+import org.eclipse.jface.operation.IRunnableContext;
+import org.eclipse.jface.operation.IRunnableWithProgress;
+
+import org.eclipse.ui.actions.WorkspaceModifyDelegatingOperation;
 
 /**
  * @since 3.0
  */
-public class WorkspaceOperationRunner implements IDocumentProviderOperationRunner {
+public class WorkspaceOperationRunner implements IRunnableContext {
 	
-	/*
-	 * @see org.eclipse.ui.texteditor.IDocumentProviderOperationRunner#run(org.eclipse.ui.texteditor.IDocumentProviderOperation)
+	private IProgressMonitor fProgressMonitor;
+	
+	public WorkspaceOperationRunner() {
+	}
+	
+	/**
+	 * Sets the progress monitor.
+	 * 
+	 * @param progressMonitor the progress monitor to set
 	 */
-	public void run(final IDocumentProviderOperation operation, IProgressMonitor progressMonitor) throws CoreException {
-		WorkspaceModifyOperation wsop= new WorkspaceModifyOperation() {
-			protected void execute(IProgressMonitor monitor) throws CoreException, InvocationTargetException, InterruptedException {
-				operation.execute();
-			}
-		};
-		
-		try {
-			wsop.run(progressMonitor);
-		} catch (InvocationTargetException x) {
-			Throwable e = x.getTargetException();
-			if (e instanceof CoreException)
-				throw (CoreException) e;
-			throw new CoreException(new Status(IStatus.ERROR, EditorsPlugin.getPluginId(), IStatus.ERROR, e.getMessage(), e));
-		} catch (InterruptedException e) {
-			throw new CoreException(new Status(IStatus.CANCEL, EditorsPlugin.getPluginId(), IStatus.OK, e.getMessage(), e));
-		}
+	public void setProgressMonitor(IProgressMonitor progressMonitor) {
+		fProgressMonitor= progressMonitor;
+	}
+
+	/**
+	 * Returns the progress monitor. It there is no progress monitor the monitor\
+	 * is set to the <code>NullProgressMonitor</code>.
+	 * 
+	 * @return the progress monitor
+	 */
+	public IProgressMonitor getProgressMonitor() {
+		if (fProgressMonitor == null)
+			fProgressMonitor= new NullProgressMonitor();
+		return fProgressMonitor;
+	}
+
+	/*
+	 * @see org.eclipse.jface.operation.IRunnableContext#run(boolean, boolean, org.eclipse.jface.operation.IRunnableWithProgress)
+	 */
+	public void run(boolean fork, boolean cancelable, IRunnableWithProgress runnable) throws InvocationTargetException, InterruptedException {
+		WorkspaceModifyDelegatingOperation operation= new WorkspaceModifyDelegatingOperation(runnable);
+		operation.run(getProgressMonitor());
 	}
 }

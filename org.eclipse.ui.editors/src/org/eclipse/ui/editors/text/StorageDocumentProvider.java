@@ -27,6 +27,8 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 
+import org.eclipse.jface.operation.IRunnableContext;
+
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.source.IAnnotationModel;
@@ -35,7 +37,6 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.AbstractDocumentProvider;
-import org.eclipse.ui.texteditor.IDocumentProviderOperationRunner;
 
 /**
  * Shareable document provider specialized for <code>IStorage</code>s.
@@ -397,9 +398,9 @@ public class StorageDocumentProvider extends AbstractDocumentProvider implements
 	}
 
 	/*
-	 * @see org.eclipse.ui.texteditor.AbstractDocumentProvider#getOperationRunner()
+	 * @see org.eclipse.ui.texteditor.AbstractDocumentProvider#getOperationRunner(org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected IDocumentProviderOperationRunner getOperationRunner() {
+	protected IRunnableContext getOperationRunner(IProgressMonitor monitor) {
 		return null;
 	}
 }
