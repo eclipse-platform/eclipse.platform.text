@@ -1048,21 +1048,6 @@
             command="org.eclipse.ui.edit.text.lowerCase"
             configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
       </keyBinding>
-      <context
-            name="%context.text.name"
-            parent="org.eclipse.ui.globalScope"
-            description="%context.text.description"
-            id="org.eclipse.ui.textEditorScope">
-      </context>
-   </extension>
-
-   <extension
-         point="org.eclipse.ui.commands">
-
-
-   </extension>
-  <extension
-         point="org.eclipse.ui.commands">
       <keyBinding
             string="Ctrl+Arrow_Right"
             scope="org.eclipse.ui.textEditorScope"
@@ -1099,5 +1084,11 @@
             configuration="org.eclipse.ui.defaultAcceleratorConfiguration"
             string="Ctrl+Shift+Arrow_Left">
       </keyBinding>
+      <context
+            name="%context.text.name"
+            parent="org.eclipse.ui.globalScope"
+            description="%context.text.description"
+            id="org.eclipse.ui.textEditorScope">
+      </context>
    </extension>
 </plugin>
