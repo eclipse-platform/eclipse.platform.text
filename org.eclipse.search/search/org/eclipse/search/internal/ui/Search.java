@@ -62,7 +62,7 @@ class Search extends Object {
 		if (i < 0)
 			return fDescription;
 		else
-			return fDescription.substring(0, i) + getItemCount()+ fDescription.substring(Math.max(i + 3, fDescription.length()));
+			return fDescription.substring(0, i) + getItemCount()+ fDescription.substring(Math.min(i + 3, fDescription.length()));
 	}
 	/**
 	 * Returns a short description of the search.
@@ -76,13 +76,13 @@ class Search extends Object {
 		String text= getFullDescription();
 		int separatorPos= text.indexOf(" - "); //$NON-NLS-1$
 		if (separatorPos < 1)
-			return text.substring(0, 49) + "..."; // use first 50 characters //$NON-NLS-1$
+			return text.substring(0, Math.min(50, text.length())) + "..."; // use first 50 characters //$NON-NLS-1$
 		if (separatorPos < 30)
 			return text;	// don't cut
 		if (text.charAt(0) == '"')  //$NON-NLS-1$
-			return text.substring(0, 29) + "...\" - " + text.substring(separatorPos + 3); //$NON-NLS-1$
+			return text.substring(0, Math.min(30, text.length())) + "...\" - " + text.substring(Math.min(separatorPos + 3, text.length())); //$NON-NLS-1$
 		else
-			return text.substring(0, 29) + "... - " + text.substring(separatorPos + 3); //$NON-NLS-1$
+			return text.substring(0, Math.min(30, text.length())) + "... - " + text.substring(Math.min(separatorPos + 3, text.length())); //$NON-NLS-1$
 	}
 
 	/** Image used when search is displayed in a list */
