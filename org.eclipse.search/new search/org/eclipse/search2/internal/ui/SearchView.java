@@ -11,7 +11,6 @@
 
 package org.eclipse.search2.internal.ui;
 
-import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -21,8 +20,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Tree;
 
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.GroupMarker;
 import org.eclipse.jface.action.IContributionManager;
 import org.eclipse.jface.action.IMenuManager;
@@ -56,7 +53,6 @@ import org.eclipse.search.ui.ISearchResult;
 import org.eclipse.search.ui.ISearchResultPage;
 import org.eclipse.search.ui.ISearchResultViewPart;
 
-import org.eclipse.search.internal.ui.SearchPlugin;
 import org.eclipse.search.internal.ui.SearchPluginImages;
 
 public class SearchView extends PageBookView implements ISearchResultViewPart, IQueryListener {
@@ -236,12 +232,8 @@ public class SearchView extends PageBookView implements ISearchResultViewPart, I
 		ISearchResultPage page= null;
 		if (search != null) {
 			page= fSearchViewPageService.getExtensionObject(search, ISearchResultPage.class);
-			if (page == null) {
-				String format= SearchMessages.getString("SearchView.error.noResultPage"); //$NON-NLS-1$
-				String message= MessageFormat.format(format, new Object[] { search.getClass().getName() });
-				SearchPlugin.log(new Status(IStatus.ERROR, SearchPlugin.getID(), 0, message, null));
+			if (page == null)
 				return;
-			}
 		}
 
 		// detach the previous page.
