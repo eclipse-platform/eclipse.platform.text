@@ -226,14 +226,14 @@ public class FileSearchPage extends AbstractTextSearchViewPage implements IAdapt
 		StructuredViewer viewer= getViewer();
 		if (viewer instanceof TableViewer) {
 			TableViewer tv= (TableViewer) viewer;
-
+	
 			AbstractTextSearchResult result= getInput();
 			if (result != null) {
 				int itemCount= ((IStructuredContentProvider) tv.getContentProvider()).getElements(getInput()).length;
 				int fileCount= getInput().getElements().length;
 				if (itemCount < fileCount) {
 					String format= SearchMessages.getString("FileSearchPage.limited.format"); //$NON-NLS-1$
-					return MessageFormat.format(format, new Object[]{FileSearchQuery.quote(label), new Integer(itemCount), new Integer(fileCount)});
+					return MessageFormat.format(format, new Object[]{label, new Integer(itemCount), new Integer(fileCount)});
 				}
 			}
 		}
