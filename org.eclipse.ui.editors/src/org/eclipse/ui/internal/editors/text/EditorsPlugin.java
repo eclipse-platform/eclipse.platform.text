@@ -10,9 +10,13 @@
  *******************************************************************************/
 package org.eclipse.ui.internal.editors.text;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdapterManager;
 import org.eclipse.core.runtime.IPluginDescriptor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -65,11 +69,32 @@ public class EditorsPlugin extends AbstractUIPlugin {
 		log(new Status(IStatus.ERROR, getPluginId(), IEditorsStatusConstants.INTERNAL_ERROR, TextEditorMessages.getString("EditorsPlugin.internal_error"), e)); //$NON-NLS-1$
 	}
 
+	private FileEditorInputAdapterFactory fFileEditorInputAdapterFactory;
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.plugin.AbstractUIPlugin#initializeDefaultPreferences(org.eclipse.jface.preference.IPreferenceStore)
 	 */
 	protected void initializeDefaultPreferences(IPreferenceStore store) {
 		MarkerAnnotationPreferences.initializeDefaultValues(store);
 		TextEditorPreferenceConstants.initializeDefaultValues(store);
+	}
+
+	/*
+	 * @see org.eclipse.ui.plugin.AbstractUIPlugin#startup()
+	 */
+	public void startup() throws CoreException {
+		super.startup();
+		fFileEditorInputAdapterFactory= new FileEditorInputAdapterFactory();
+		IAdapterManager manager= Platform.getAdapterManager();		
+		manager.registerAdapters(fFileEditorInputAdapterFactory, IFile.class);
+	}
+	
+	/*
+	 * @see org.eclipse.ui.plugin.AbstractUIPlugin#shutdown()
+	 */
+	public void shutdown() throws CoreException {
+		IAdapterManager manager= Platform.getAdapterManager();		
+		manager.unregisterAdapters(fFileEditorInputAdapterFactory);
+		super.shutdown();
 	}
 }
