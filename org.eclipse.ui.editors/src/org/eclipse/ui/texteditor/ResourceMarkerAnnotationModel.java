@@ -52,7 +52,7 @@ public class ResourceMarkerAnnotationModel extends AbstractMarkerAnnotationModel
 				if (delta != null)
 					delta.accept(fResourceDeltaVisitor);
 			} catch (CoreException x) {
-				handleCoreException(x, EditorMessages.getString("ResourceMarkerAnnotationModel.resourceChanged")); //$NON-NLS-1$
+				handleCoreException(x, TextEditorMessages.getString("ResourceMarkerAnnotationModel.resourceChanged")); //$NON-NLS-1$
 			}
 		}
 	};
