@@ -69,6 +69,12 @@ public class TextEditorActionContributor extends BasicTextEditorActionContributo
 		ITextEditor textEditor= null;
 		if (part instanceof ITextEditor)
 			textEditor= (ITextEditor) part;
+		
+		IActionBars actionBars= getActionBars();
+		if (actionBars != null) {
+			actionBars.setGlobalActionHandler(ITextEditorActionConstants.ADD_TASK, getAction(textEditor, ITextEditorActionConstants.ADD_TASK));
+			actionBars.setGlobalActionHandler(ITextEditorActionConstants.BOOKMARK, getAction(textEditor, ITextEditorActionConstants.BOOKMARK));
+		}
 			
 		// line delimiter conversion
 		fConvertToWindows.setAction(getAction(textEditor, ITextEditorActionConstants.CONVERT_LINE_DELIMITERS_TO_WINDOWS));

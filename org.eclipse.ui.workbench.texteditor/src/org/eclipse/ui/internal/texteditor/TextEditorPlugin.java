@@ -23,7 +23,6 @@ import org.eclipse.jface.text.Assert;
 import org.eclipse.jface.text.source.ISharedTextColors;
 
 import org.eclipse.ui.plugin.AbstractUIPlugin;
-import org.eclipse.ui.texteditor.MarkerAnnotationPreferences;
 
 /**
  * The plug-in runtime class for the text editor UI plug-in (id <code>"org.eclipse.ui.workbench.texteditor"</code>).
@@ -47,8 +46,6 @@ public final class TextEditorPlugin extends AbstractUIPlugin {
 	private EditPosition fLastEditPosition;
 	/** The action which goes to the last edit position */
 	private Set fLastEditPositionDependentActions;
-
-	private ISharedTextColors fSharedTextColors;
 
 
 	/**
@@ -75,13 +72,6 @@ public final class TextEditorPlugin extends AbstractUIPlugin {
 	 * Text editor UI plug-in Id (value <code>"org.eclipse.ui.workbench.texteditor"</code>).
 	 */
 	public static final String PLUGIN_ID= "org.eclipse.ui.workbench.texteditor"; //$NON-NLS-1$
-
-	/*
-	 * @see AbstractUIPlugin#initializeDefaultPluginPreferences()
-	 */
-	protected void initializeDefaultPluginPreferences() {
-		MarkerAnnotationPreferences.initializeDefaultValues(getPreferenceStore());
-	}
 	
 	/**
 	 * Returns the last edit position.
@@ -132,28 +122,5 @@ public final class TextEditorPlugin extends AbstractUIPlugin {
 			return;
 		if (fLastEditPositionDependentActions != null)
 			fLastEditPositionDependentActions.remove(action);
-	}
-	
-	/**
-	 * Returns the shared text colors of this plug-in.
-	 *
-	 * @since 3.0 
-	 * @return the shared text colors
-	 */
-	public ISharedTextColors getSharedTextColors() {
-		if (fSharedTextColors == null)
-			fSharedTextColors= new SharedTextColors();
-		return fSharedTextColors;
-	}
-
-	/*
-	 * @see org.eclipse.ui.internal.editors.text.EditorsPlugin#shutdown()
-	 */
-	public void shutdown() throws CoreException {
-		if (fSharedTextColors != null) {
-			fSharedTextColors.dispose();
-			fSharedTextColors= null;
-		}
-		super.shutdown();
 	}
 }
