@@ -54,7 +54,35 @@ import org.eclipse.ui.internal.texteditor.TextEditorPlugin;
  */
 public class AnnotationPreference {
 	
-	/** IDs for presentation preference attributes */
+	/* String constants for style enumeration */
+	
+	/** 
+	 * Constant defining no decoration for the show in text style preference. 
+	 * @since 3.0
+	 */
+	public static final String STYLE_NONE= "NONE"; //$NON-NLS-1$
+	/** 
+	 * Constant defining squiggly decoration for the show in text style preference.
+	 * @since 3.0
+	 */
+	public static final String STYLE_SQUIGGLES= "SQUIGGLES"; //$NON-NLS-1$
+	/** 
+	 * Constant defining box decoration for the show in text style preference.
+	 * @since 3.0
+	 */
+	public static final String STYLE_BOX= "BOX"; //$NON-NLS-1$
+	/**
+	 * Constant defining underline decoration for the show in text style preference.
+	 * @since 3.0
+	 */
+	public static final String STYLE_UNDERLINE= "UNDERLINE"; //$NON-NLS-1$
+	/** 
+	 * Constant defining i-beam decoration for the show in text style preference.
+	 * @since 3.0
+	 */
+	public static final String STYLE_IBEAM= "IBEAM"; //$NON-NLS-1$
+	
+	/* IDs for presentation preference attributes */
 	
 	/** The image to be used for drawing in the vertical ruler. */ 
 	protected final static Object IMAGE_DESCRIPTOR= new Object();
@@ -103,6 +131,10 @@ public class AnnotationPreference {
 	protected final static Object SHOW_IN_NAVIGATION_DROPDOWN_KEY= new Object();
 	/** The value for the visibility in the next/previous drop down toolbar action. */
 	protected final static Object SHOW_IN_NAVIGATION_DROPDOWN_VALUE= new Object();
+	/** The preference key for the decoration style. */
+	protected final static Object TEXT_STYLE_PREFERENCE_KEY= new Object();
+	/** The value for the text decoration style. */
+	protected final static Object TEXT_STYLE_PREFERENCE_VALUE= new Object();
 	
 	/**
 	 * Array of all supported attributes.
@@ -129,7 +161,9 @@ public class AnnotationPreference {
 			OVERVIEW_RULER_PREFERENCE_KEY,
 			OVERVIEW_RULER_PREFERENCE_VALUE,
 			SHOW_IN_NAVIGATION_DROPDOWN_KEY,
-			SHOW_IN_NAVIGATION_DROPDOWN_VALUE
+			SHOW_IN_NAVIGATION_DROPDOWN_VALUE,
+			TEXT_STYLE_PREFERENCE_KEY,
+			TEXT_STYLE_PREFERENCE_VALUE
 	};
 	
 	/** The annotation type */
@@ -299,6 +333,7 @@ public class AnnotationPreference {
 				key.equals(getStringValue(OVERVIEW_RULER_PREFERENCE_KEY)) || 
 				key.equals(getStringValue(TEXT_PREFERENCE_KEY)) || 
 				key.equals(getStringValue(HIGHLIGHT_PREFERENCE_KEY)) || 
+				key.equals(getStringValue(TEXT_STYLE_PREFERENCE_KEY)) || 
 				key.equals(getStringValue(VERTICAL_RULER_PREFERENCE_KEY));
 	}
 	
@@ -729,6 +764,50 @@ public class AnnotationPreference {
 	 */
 	public void setShowInNextPrevDropdownToolbarAction(boolean showInNextPrevDropdownToolbarAction) {
 		setValue(SHOW_IN_NAVIGATION_DROPDOWN_VALUE, showInNextPrevDropdownToolbarAction);
+	}
+	
+	/**
+	 * Sets the preference key for the text style property.
+	 * 
+	 * @param key the new key
+	 * @since 3.0
+	 */
+	public void setTextStylePreferenceKey(String key) {
+		setValue(TEXT_STYLE_PREFERENCE_KEY, key);
+	}
+
+	/**
+	 * Returns the preference key for the decoration style used when the annotation is shown in text.
+	 * 
+	 * @return the preference key for the decoration style or <code>null</code> if the key is undefined
+	 */
+	public String getTextStylePreferenceKey() {
+		return getStringValue(TEXT_STYLE_PREFERENCE_KEY);
+	}
+	
+	/**
+	 * Returns the value for the decoration style used when the annotation is shown in text.
+	 * 
+	 * @return the value for the decoration style or <code>null</code> if the key is undefined
+	 * @since 3.0
+	 */
+	public String getTextStyleValue() {
+		return getStringValue(TEXT_STYLE_PREFERENCE_VALUE);
+	}
+
+	/**
+	 * Sets the value for the text style property.
+	 * 
+	 * @param value the new text decoration style
+	 * @since 3.0
+	 */
+	public void setTextStyleValue(String value) {
+		if (!STYLE_NONE.equals(value) && !STYLE_BOX.equals(value)
+				&& !STYLE_IBEAM.equals(value) && !STYLE_SQUIGGLES.equals(value)
+				&& !STYLE_UNDERLINE.equals(value))
+			throw new IllegalArgumentException();
+		
+		setValue(TEXT_STYLE_PREFERENCE_VALUE, value);
 	}
 	
 	/**

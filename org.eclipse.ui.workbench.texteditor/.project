@@ -4,8 +4,10 @@
 	<comment></comment>
 	<projects>
 		<project>org.eclipse.core.runtime.compatibility</project>
+		<project>org.eclipse.jface</project>
 		<project>org.eclipse.jface.text</project>
 		<project>org.eclipse.ui</project>
+		<project>org.eclipse.ui.workbench</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
