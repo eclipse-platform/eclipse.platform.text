@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.eclipse.core.internal.utils.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import org.eclipse.jface.text.Assert;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.source.ILineDiffInfo;

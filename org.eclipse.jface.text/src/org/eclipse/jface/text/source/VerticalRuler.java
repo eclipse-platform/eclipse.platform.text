@@ -82,7 +82,7 @@ public final class VerticalRuler implements IVerticalRuler, IVerticalRulerExtens
 			if (fTextViewer != null && e.getViewerRedrawState())
 				redraw();
 		}
-	};
+	}
 	
 	/** The vertical ruler's text viewer */
 	private ITextViewer fTextViewer;
@@ -206,6 +206,7 @@ public final class VerticalRuler implements IVerticalRuler, IVerticalRulerExtens
 			fBuffer= new Image(fCanvas.getDisplay(), size.x, size.y);
 			
 		GC gc= new GC(fBuffer);
+		gc.setFont(fTextViewer.getTextWidget().getFont());
 		try {
 			gc.setBackground(fCanvas.getBackground());
 			gc.fillRectangle(0, 0, size.x, size.y);

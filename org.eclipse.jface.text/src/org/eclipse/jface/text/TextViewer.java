@@ -53,6 +53,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.ScrollBar;
 
+import org.eclipse.jface.viewers.IPostSelectionProvider;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ISelectionProvider;
@@ -77,10 +78,10 @@ import org.eclipse.jface.viewers.Viewer;
  * 
  * @see ITextViewer
  */  
-public class TextViewer extends Viewer implements 
-					ITextViewer, ITextViewerExtension, ITextViewerExtension2,
+public class TextViewer extends Viewer implements
+					ITextViewer, ITextViewerExtension, ITextViewerExtension2, ITextViewerExtension4,
 					ITextOperationTarget, ITextOperationTargetExtension,
-					IWidgetTokenOwner, IPostSelectionProvider {
+					IWidgetTokenOwner, IWidgetTokenOwnerExtension, IPostSelectionProvider {
 	
 	/** Internal flag to indicate the debug state. */
 	public static boolean TRACE_ERRORS= false;
@@ -119,7 +120,7 @@ public class TextViewer extends Viewer implements
 			} else
 				preservedText= null;
 		}
-	};
+	}
 		
 	/**
 	 * Connects a text double click strategy to this viewer's text widget. 
@@ -152,7 +153,7 @@ public class TextViewer extends Viewer implements
 					s.doubleClicked(TextViewer.this);
 			}
 		}
-	};
+	}
 	
 	/**
 	 * Monitors the area of the viewer's document that is visible in the viewer. 
@@ -221,7 +222,7 @@ public class TextViewer extends Viewer implements
 		 * @see SelectionListener#widgetDefaultSelected
 		 */
 		public void widgetDefaultSelected(SelectionEvent e) {}
-	};
+	}
 		
 	/**
 	 * This position updater is used to keep the selection during text shift operations.
@@ -262,7 +263,7 @@ public class TextViewer extends Viewer implements
 			if (myStart > yoursStart)
 				fPosition.offset += fReplaceLength;		
 		}
-	};
+	}
 	
 	/**
 	 * Internal document listener.
@@ -285,7 +286,7 @@ public class TextViewer extends Viewer implements
 				updateTextListeners(fWidgetCommand);
 			fLastSentSelectionChange= null;
 		}
-	};
+	}
 	
 	
 	/**
@@ -316,7 +317,7 @@ public class TextViewer extends Viewer implements
 			if (fForward)
 				handleVerifyEvent(e);
 		}	
-	};
+	}
 	
 	/**
 	 * The viewer's manager reponsible for registered verify key listeners.
@@ -345,7 +346,7 @@ public class TextViewer extends Viewer implements
 				listener= l;
 				index= i;
 			}
-		};
+		}
 		
 		/** List of registed verify key listeners. */
 		private List fListeners= new ArrayList();
@@ -486,7 +487,7 @@ public class TextViewer extends Viewer implements
 			if (textWidget != null && !textWidget.isDisposed())
 				textWidget.removeVerifyKeyListener(this);
 		}
-	};
+	}
 	
 	
 	/**
@@ -654,7 +655,7 @@ public class TextViewer extends Viewer implements
 			else if (offset < fPosition.getOffset() + fPosition.getLength())
 				fPosition.setLength(fPosition.getLength() + delta);
 		}
-	};
+	}
 	
 	/**
 	 * This viewer's find/replace target.
@@ -666,7 +667,7 @@ public class TextViewer extends Viewer implements
 		/** The highlight color of the range of this target. */
 		private Color fScopeHighlightColor;
 		/** The document partitioner remembered in case of a "Replace All". */
-		private IDocumentPartitioner fRememberedPartitioner;
+		private Map fRememberedPartitioners;
 		
 		/*
 		 * @see IFindReplaceTarget#getSelectionText()
@@ -845,11 +846,7 @@ public class TextViewer extends Viewer implements
 					fUndoManager.beginCompoundChange();
 				
 				IDocument document= TextViewer.this.getDocument();
-				fRememberedPartitioner= document.getDocumentPartitioner();
-				if (fRememberedPartitioner != null) {
-					fRememberedPartitioner.disconnect();
-					document.setDocumentPartitioner(null);
-				}
+				fRememberedPartitioners= TextUtilities.removeDocumentPartitioners(document);
 
 			} else {
 				
@@ -859,14 +856,13 @@ public class TextViewer extends Viewer implements
 				if (fUndoManager != null)
 					fUndoManager.endCompoundChange();
 					
-				if (fRememberedPartitioner != null) {
+				if (fRememberedPartitioners != null) {
 					IDocument document= TextViewer.this.getDocument();
-					fRememberedPartitioner.connect(document);
-					document.setDocumentPartitioner(fRememberedPartitioner);
+					TextUtilities.addDocumentPartitioners(document, fRememberedPartitioners);
 				}
 			}
 		}
-	};
+	}
 	
 	
 	/**
@@ -904,7 +900,7 @@ public class TextViewer extends Viewer implements
 		public void setRedraw(boolean redraw) {
 			TextViewer.this.setRedraw(redraw);
 		}
-	};
+	}
 	
 	/**
 	 * Value object used as key in the text hover configuration table. It is
@@ -957,7 +953,7 @@ public class TextViewer extends Viewer implements
 		private void setStateMask(int stateMask) {
 			fStateMask= stateMask;
 		}
-	};
+	}
 	
 	/**
 	 * A position reflecting a viewer selection and the selection anchor.
@@ -1005,7 +1001,7 @@ public class TextViewer extends Viewer implements
 		public Point getSelection() {
 			return reverse ? new Point(offset - length, -length) : new Point(offset, length);
 		}
-	};
+	}
 
 	/**
 	 * Internal cursor listener i.e. aggregation of mouse and key listener.
@@ -1238,6 +1234,11 @@ public class TextViewer extends Viewer implements
 	 * @since 2.1
 	 */
 	protected PaintManager fPaintManager;
+	/**
+	 * The viewers partitioning, i.e. the partitioning name the viewer uses to access partitioning information of its input document.
+	 * @since 3.0
+	 */
+	protected String fPartitioning;
 	
 	
 	
@@ -1704,7 +1705,7 @@ public class TextViewer extends Viewer implements
 			return null;
 
 		try {
-			TextHoverKey key= new TextHoverKey(document.getContentType(offset), stateMask);
+			TextHoverKey key= new TextHoverKey(TextUtilities.getContentType(document, getDocumentPartitioning(), offset), stateMask);
 			Object textHover= fTextHovers.get(key);
 			if (textHover == null) {
 				// Use default text hover
@@ -1743,15 +1744,15 @@ public class TextViewer extends Viewer implements
 	 * @see IWidgetTokenOwner#requestWidgetToken(IWidgetTokenKeeper)
 	 * @since 2.0
 	 */
-	public boolean requestWidgetToken(IWidgetTokenKeeper requester) {
-		if (fTextWidget != null) {
-			if (fWidgetTokenKeeper != null) {
-				if (fWidgetTokenKeeper == requester)
-					return true;
-				if (fWidgetTokenKeeper.requestWidgetToken(this)) {
-					fWidgetTokenKeeper= requester;
-					return true;
-				}
+	 public boolean requestWidgetToken(IWidgetTokenKeeper requester) {
+		 if (fTextWidget != null) {
+			 if (fWidgetTokenKeeper != null) {
+				 if (fWidgetTokenKeeper == requester)
+					 return true;
+				 if (fWidgetTokenKeeper.requestWidgetToken(this)) {
+					 fWidgetTokenKeeper= requester;
+					 return true;
+				 }
 			} else {
 				fWidgetTokenKeeper= requester;
 				return true;
@@ -1760,6 +1761,38 @@ public class TextViewer extends Viewer implements
 		return false;
 	}
 	
+	/*
+	 * @see org.eclipse.jface.text.IWidgetTokenOwnerExtension#requestWidgetToken(org.eclipse.jface.text.IWidgetTokenKeeper, int)
+	 * @since 3.0
+	 */
+	public boolean requestWidgetToken(IWidgetTokenKeeper requester, int priority) {
+		if (fTextWidget != null) {
+			if (fWidgetTokenKeeper != null) {
+				
+				if (fWidgetTokenKeeper == requester)
+					return true;
+					
+				boolean accepted= false;
+				if (fWidgetTokenKeeper instanceof IWidgetTokenKeeperExtension)  {
+					IWidgetTokenKeeperExtension extension= (IWidgetTokenKeeperExtension) fWidgetTokenKeeper;
+					accepted= extension.requestWidgetToken(this, priority);
+				} else  {
+					fWidgetTokenKeeper.requestWidgetToken(this);
+				}
+				
+				if (accepted) {
+					fWidgetTokenKeeper= requester;
+					return true;
+				}
+				
+		   } else {
+			   fWidgetTokenKeeper= requester;
+			   return true;
+		   }
+	   }
+	   return false;
+   }
+   
 	/*
 	 * @see IWidgetTokenOwner#releaseWidgetToken(IWidgetTokenKeeper)
 	 * @since 2.0
@@ -2627,7 +2660,7 @@ public class TextViewer extends Viewer implements
 					
 				} else {
 					IRegion extent= getExtent(start, end);
-					startPixel= extent.getOffset() + fTextWidget.getHorizontalPixel();;
+					startPixel= extent.getOffset() + fTextWidget.getHorizontalPixel();
 					endPixel= startPixel + extent.getLength();
 				}
 				
@@ -2990,7 +3023,7 @@ public class TextViewer extends Viewer implements
 	 */
 	protected Object selectContentTypePlugin(int offset, Map plugins) {
 		try {
-			return selectContentTypePlugin(getDocument().getContentType(offset), plugins);
+			return selectContentTypePlugin(TextUtilities.getContentType(getDocument(), getDocumentPartitioning(), offset), plugins);
 		} catch (BadLocationException x) {
 			if (TRACE_ERRORS)
 				System.out.println(JFaceTextMessages.getString("TextViewer.error.bad_location.selectContentTypePlugin")); //$NON-NLS-1$
@@ -3160,8 +3193,9 @@ public class TextViewer extends Viewer implements
 				return isEditable();
 			case SELECT_ALL:
 				return true;
-			case SHIFT_RIGHT:
 			case SHIFT_LEFT:
+				return isEditable() && fIndentChars != null;
+			case SHIFT_RIGHT:
 				return isEditable() && fIndentChars != null && areMultipleLinesSelected();
 			case PREFIX:
 			case STRIP_PREFIX:
@@ -3185,6 +3219,8 @@ public class TextViewer extends Viewer implements
 		if (fTextWidget == null || !redraws())
 			return;
 
+		Point selection= null;
+		
 		switch (operation) {
 
 			case UNDO:
@@ -3206,6 +3242,10 @@ public class TextViewer extends Viewer implements
 					copyMarkedRegion(true);
 				else
 					fTextWidget.cut();
+
+				selection= fTextWidget.getSelectionRange();
+				fireSelectionChanged(selection.x, selection.y);
+
 				break;
 			case COPY:
 				if (fTextWidget.getSelectionCount() == 0)
@@ -3216,10 +3256,14 @@ public class TextViewer extends Viewer implements
 			case PASTE:
 //				ignoreAutoEditStrategies(true);
 				fTextWidget.paste();
+				selection= fTextWidget.getSelectionRange();
+				fireSelectionChanged(selection.x, selection.y);
 //				ignoreAutoEditStrategies(false);
 				break;
 			case DELETE:
 				deleteText();
+				selection= fTextWidget.getSelectionRange();
+				fireSelectionChanged(selection.x, selection.y);
 				break;
 			case SELECT_ALL: {
 				if (getDocument() != null)
@@ -3461,13 +3505,13 @@ public class TextViewer extends Viewer implements
 		startSequentialRewriteMode(true);
 
 		IDocument d= getDocument();
-		IDocumentPartitioner partitioner= null;
+		Map partitioners= null;
 		
 		try {
 			
 			Point selection= getSelectedRange();
 			IRegion block= getTextBlockFromSelection(selection);
-			ITypedRegion[] regions= d.computePartitioning(block.getOffset(), block.getLength());
+			ITypedRegion[] regions= TextUtilities.computePartitioning(d, getDocumentPartitioning(), block.getOffset(), block.getLength());
 
 			int lineCount= 0;			
 			int[] lines= new int[regions.length * 2]; // [startline, endline, startline, endline, ...]
@@ -3480,13 +3524,8 @@ public class TextViewer extends Viewer implements
 				lineCount += lines[j + 1] - lines[j] + 1;
 			}
 			
-			if (lineCount >= 20) {
-				partitioner= d.getDocumentPartitioner();
-				if (partitioner != null) {
-					partitioner.disconnect();
-					d.setDocumentPartitioner(null);
-				}
-			}
+			if (lineCount >= 20)
+				partitioners= TextUtilities.removeDocumentPartitioners(d);
 			
 			// Remember the selection range.
 			IPositionUpdater positionUpdater= new ShiftPositionUpdater(SHIFTING);
@@ -3527,10 +3566,8 @@ public class TextViewer extends Viewer implements
 		
 		} finally {
 
-			if (partitioner != null) {
-				partitioner.connect(d);
-				d.setDocumentPartitioner(partitioner);
-			}
+			if (partitioners != null)
+				TextUtilities.addDocumentPartitioners(d, partitioners);
 			
 			stopSequentialRewriteMode();
 			setRedraw(true);
@@ -4511,5 +4548,40 @@ public class TextViewer extends Viewer implements
 			}
 		}
 		return -1;
+	}
+	
+	/*
+	 * @see org.eclipse.jface.text.ITextViewerExtension4#moveFocusToWidgetToken()
+	 * @since 3.0
+	 */
+	public boolean moveFocusToWidgetToken() {
+		if (fWidgetTokenKeeper instanceof IWidgetTokenKeeperExtension) {
+			IWidgetTokenKeeperExtension extension= (IWidgetTokenKeeperExtension) fWidgetTokenKeeper;
+			extension.setFocus(this);
+			return true;
+		} else  {
+			return false;
+		}
+	}
+	
+	/**
+	 * Sets the document partitioning of this viewer. The partitioning is used by this viewer to
+	 * access partitioning information of the viewers input document.
+	 * 
+	 * @param partitioning the partitioning name
+	 * @since 3.0
+	 */
+	public void setDocumentPartitioning(String partitioning) {
+		fPartitioning= partitioning;
+	}
+	
+	/**
+	 * Returns the document partitioning for this viewer.
+	 * 
+	 * @return the document partitioning for this viewer
+	 * @since 3.0
+	 */
+	protected String getDocumentPartitioning() {
+		return fPartitioning;
 	}
 }

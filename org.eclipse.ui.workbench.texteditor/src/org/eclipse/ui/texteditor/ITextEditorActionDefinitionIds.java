@@ -392,7 +392,14 @@ public interface ITextEditorActionDefinitionIds extends IWorkbenchActionDefiniti
 	 * Value: <code>"org.eclipse.ui.edit.text.toggleOverwrite"</code>
 	 */
 	public static final String TOGGLE_OVERWRITE= "org.eclipse.ui.edit.text.toggleOverwrite"; //$NON-NLS-1$
-	
+
+	/**
+	 * Action definition id of toggle show selected element only action.
+	 * Value: <code>"org.eclipse.ui.edit.text.toggleShowSelectedElementOnly"</code>
+	 * @since 3.0
+	 */
+	public static final String TOGGLE_SHOW_SELECTED_ELEMENT_ONLY= "org.eclipse.ui.edit.text.toggleShowSelectedElementOnly"; //$NON-NLS-1$
+		
 	/**
 	 * Action definition id of the show ruler context menu action.
 	 * Value: <code>"org.eclipse.ui.edit.text.showRulerContextMenu"</code>
@@ -400,11 +407,25 @@ public interface ITextEditorActionDefinitionIds extends IWorkbenchActionDefiniti
 	public static final String SHOW_RULER_CONTEXT_MENU= "org.eclipse.ui.edit.text.showRulerContextMenu"; //$NON-NLS-1$
 
 	/**
-	 * Action definition id of got to last edit position action.
+	 * Action definition id of go to last edit position action.
 	 * Value: <code>"org.eclipse.ui.edit.text.gotoLastEditPosition"</code>
 	 * @since 2.1
 	 */
 	public static final String GOTO_LAST_EDIT_POSITION= "org.eclipse.ui.edit.text.gotoLastEditPosition"; //$NON-NLS-1$
+
+	/**
+	 * Action definition id of go to next annotation action.
+	 * Value: <code>"org.eclipse.ui.edit.text.gotoNextAnnotation"</code>
+	 * @since 3.0
+	 */
+	public static final String GOTO_NEXT_ANNOTATION= "org.eclipse.ui.edit.text.gotoNextAnnotation"; //$NON-NLS-1$
+
+	/**
+	 * Action definition id of go to previous annotation action.
+	 * Value: <code>"org.eclipse.ui.edit.text.gotoPreviousAnnotation"</code>
+	 * @since 3.0
+	 */
+	public static final String GOTO_PREVIOUS_ANNOTATION= "org.eclipse.ui.edit.text.gotoPreviousAnnotation"; //$NON-NLS-1$
 	
 	/**
 	 * Action definition ID of the edit -> content assist proposal action

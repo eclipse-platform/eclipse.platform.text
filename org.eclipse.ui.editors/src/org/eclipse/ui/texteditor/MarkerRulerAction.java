@@ -169,13 +169,16 @@ public class MarkerRulerAction extends ResourceAction implements IUpdate {
 	public void update() {
 		//bug 38745
 		int line= getVerticalRuler().getLineOfLastMouseButtonActivity() + 1;
-		if (line > getDocument().getNumberOfLines()) {
-			setEnabled(false);
-			setText(fAddLabel);
-		} else {
-			setEnabled(true);
-			fMarkers= getMarkers();
-			setText(fMarkers.isEmpty() ? fAddLabel : fRemoveLabel);
+		IDocument document= getDocument();
+		if (document != null) {
+			if (line > getDocument().getNumberOfLines()) {
+				setEnabled(false);
+				setText(fAddLabel);
+			} else {
+				setEnabled(true);
+				fMarkers= getMarkers();
+				setText(fMarkers.isEmpty() ? fAddLabel : fRemoveLabel);
+			}
 		}
 	}
 
@@ -264,9 +267,9 @@ public class MarkerRulerAction extends ResourceAction implements IUpdate {
 		ILog log= Platform.getPlugin(PlatformUI.PLUGIN_ID).getLog();
 		
 		if (message != null)
-			log.log(new Status(IStatus.ERROR, PlatformUI.PLUGIN_ID, 0, message, null));
-		
-		log.log(exception.getStatus());
+			log.log(new Status(IStatus.ERROR, PlatformUI.PLUGIN_ID, 0, message, exception));
+		else
+			log.log(exception.getStatus());
 		
 		
 		Shell shell= getTextEditor().getSite().getShell();

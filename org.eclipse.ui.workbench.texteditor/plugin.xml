@@ -9,7 +9,7 @@
    <runtime>
       <library name="texteditor.jar">
          <export name="*"/>
-         <packages prefixes="org.eclipse.ui.texteditor,org.eclipse.ui.internal.texteditor"/>
+         <packages prefixes="org.eclipse.ui.texteditor,org.eclipse.ui.internal.texteditor,org.eclipse.ui.texteditor.quickdiff,org.eclipse.ui.internal.texteditor.quickdiff"/>
       </library>
    </runtime>
    <requires>
@@ -17,8 +17,10 @@
       <import plugin="org.eclipse.jface"/>
       <import plugin="org.eclipse.jface.text"/>
       <import plugin="org.eclipse.ui.workbench"/>
-      <import plugin="org.eclipse.core.resources"/>
    </requires>
+   
+
+<extension-point id="quickDiffReferenceProvider" name="%ExtPoint.referenceProvider" schema="schema/quickDiffReferenceProvider.exsd"/>
 
 
 <!-- action sets -->
@@ -41,6 +43,24 @@
                helpContextId="goto_last_edit_position_action_context"
                tooltip="%goToLastEditPosition.tooltip">
          </action>
+      </actionSet>
+      <actionSet
+            label="%textEditorPresentationActionSet.label"
+            visible="false"
+            id="org.eclipse.ui.edit.text.actionSet.presentation">
+         <action
+               label="%onlyShowSelectedElement.label"
+               tooltip="%onlyShowSelectedElement.tooltip"
+               toolbarPath="Normal/Presentation"
+               id="org.eclipse.ui.edit.text.toggleShowSelectedElementOnly"
+               definitionId="org.eclipse.ui.edit.text.toggleShowSelectedElementOnly"
+               retarget="true"
+               allowLabelUpdate="true"
+               style="toggle"
+               icon="icons/full/etool16/segment_edit.gif"
+               disabledIcon="icons/full/dtool16/segment_edit.gif"
+               hoverIcon="icons/full/ctool16/segment_edit.gif"
+               helpContextId="only_show_selected_element_action_context"/>
       </actionSet>
    </extension>
    
@@ -432,6 +452,12 @@
             category="org.eclipse.ui.category.textEditor"
             id="org.eclipse.ui.edit.text.lowerCase">
       </command>
+	<command
+		category="org.eclipse.ui.category.window"
+		id="org.eclipse.ui.edit.text.toggleShowSelectedElementOnly"
+		name= "%onlyShowSelectedElement.label"
+		description="%onlyShowSelectedElement.description">
+	</command>
       <keyBinding
             string="Ctrl+E"
             context="org.eclipse.ui.textEditorScope"
@@ -510,6 +536,12 @@
             command="org.eclipse.ui.edit.text.contentAssist.contextInformation"
             configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
       </keyBinding>
+	  <keyBinding
+			string=""
+			scope="org.eclipse.ui.textEditorScope"
+			command="org.eclipse.ui.edit.text.toggleShowSelectedElementOnly"
+			configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
+	  </keyBinding>
       <keyBinding
             locale="zh"
             string="Ctrl+Space"
@@ -1024,5 +1056,48 @@
       </context>
    </extension>
 
+   <extension
+         point="org.eclipse.ui.commands">
 
+
+   </extension>
+  <extension
+         point="org.eclipse.ui.commands">
+      <keyBinding
+            string="Ctrl+Arrow_Right"
+            scope="org.eclipse.ui.textEditorScope"
+            command="org.eclipse.ui.edit.text.goto.wordNext"
+            configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </keyBinding>
+      <keyBinding
+            string="Ctrl+Arrow_Left"
+            scope="org.eclipse.ui.textEditorScope"
+            command="org.eclipse.ui.edit.text.goto.wordPrevious"
+            configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </keyBinding>
+      <keyBinding
+            string="Ctrl+Delete"
+            scope="org.eclipse.ui.textEditorScope"
+            command="org.eclipse.ui.edit.text.deleteNextWord"
+            configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </keyBinding>
+      <keyBinding
+            string="Ctrl+Backspace"
+            scope="org.eclipse.ui.textEditorScope"
+            command="org.eclipse.ui.edit.text.deletePreviousWord"
+            configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </keyBinding>
+      <keyBinding
+            command="org.eclipse.ui.edit.text.select.wordNext"
+            configuration="org.eclipse.ui.defaultAcceleratorConfiguration"
+            scope="org.eclipse.ui.textEditorScope"
+            string="Ctrl+Shift+Arrow_Right">
+      </keyBinding>
+      <keyBinding
+            command="org.eclipse.ui.edit.text.select.wordPrevious"
+            scope="org.eclipse.ui.textEditorScope"
+            configuration="org.eclipse.ui.defaultAcceleratorConfiguration"
+            string="Ctrl+Shift+Arrow_Left">
+      </keyBinding>
+   </extension>
 </plugin>

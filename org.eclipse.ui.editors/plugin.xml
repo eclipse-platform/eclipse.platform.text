@@ -20,19 +20,19 @@
       <import plugin="org.eclipse.core.resources"/>
       <import plugin="org.eclipse.ui"/>
       <import plugin="org.eclipse.ui.ide"/>
+      <import plugin="org.eclipse.core.filebuffers"/>
    </requires>
 
 
    <extension-point id="documentProviders" name="%ExtPoint.documentProviders" schema="schema/documentProviders.exsd"/>
    <extension-point id="markerUpdaters" name="%ExtPoint.markerUpdaters" schema="schema/markerUpdaters.exsd"/>
    <extension-point id="markerAnnotationSpecification" name="%ExtPoint.markerAnnotationSpecification" schema="schema/markerAnnotationSpecification.exsd"/>
-   <extension-point id="quickdiffreferenceprovider" name="%ExtPoint.referenceProvider" schema="schema/quickdiff.referenceprovider.exsd"/>
 
    <extension
           point="org.eclipse.ui.editors.markerAnnotationSpecification">
       <specification
       		annotationType="org.eclipse.ui.workbench.texteditor.error"
-            label="%problems.label"
+            label="%errors.label"
             markerType="org.eclipse.core.resources.problemmarker"
             markerSeverity="2"
             textPreferenceKey="errorIndication"
@@ -42,7 +42,13 @@
             colorPreferenceKey="errorIndicationColor"
             colorPreferenceValue="255,0,128"
             presentationLayer="6"
-            contributesToHeader="true">
+            contributesToHeader="true"
+            showInNextPrevDropdownToolbarActionKey="showErrorInNextPrevDropdownToolbarAction"
+            showInNextPrevDropdownToolbarAction="true"
+            isGoToNextNavigationTargetKey="isErrorGoToNextNavigationTarget"
+            isGoToNextNavigationTarget="true"
+            isGoToPreviousNavigationTargetKey="isErrorGoToPreviousNavigationTarget"
+            isGoToPreviousNavigationTarget="true">
       </specification>
       <specification
       		annotationType="org.eclipse.ui.workbench.texteditor.warning"
@@ -56,7 +62,13 @@
             colorPreferenceKey="warningIndicationColor"
             colorPreferenceValue="244,200,45"
             presentationLayer="5"
-            contributesToHeader="true">
+            contributesToHeader="true"
+            showInNextPrevDropdownToolbarActionKey="showWarningInNextPrevDropdownToolbarAction"
+            showInNextPrevDropdownToolbarAction="true"
+            isGoToNextNavigationTargetKey="isWarningGoToNextNavigationTarget"
+            isGoToNextNavigationTarget="true"
+            isGoToPreviousNavigationTargetKey="isWarningGoToPreviousNavigationTarget"
+            isGoToPreviousNavigationTarget="true">
       </specification>
       <specification
       		annotationType="org.eclipse.ui.workbench.texteditor.info"
@@ -69,7 +81,13 @@
             colorPreferenceKey="infoIndicationColor"
             colorPreferenceValue="244,200,45"
             presentationLayer="4"
-            contributesToHeader="false">
+            contributesToHeader="false"
+            showInNextPrevDropdownToolbarActionKey="showInfoInNextPrevDropdownToolbarAction"
+            showInNextPrevDropdownToolbarAction="true"
+            isGoToNextNavigationTargetKey="isInfoGoToNextNavigationTarget"
+            isGoToNextNavigationTarget="false"
+            isGoToPreviousNavigationTargetKey="isInfoGoToPreviousNavigationTarget"
+            isGoToPreviousNavigationTarget="false">
       </specification>
       <specification
       		annotationType="org.eclipse.ui.workbench.texteditor.task"
@@ -82,7 +100,13 @@
             colorPreferenceKey="taskIndicationColor"
             colorPreferenceValue="0,128,255"
             presentationLayer="2"
-            contributesToHeader="false">
+            contributesToHeader="false"
+            showInNextPrevDropdownToolbarActionKey="showTaskInNextPrevDropdownToolbarAction"
+            showInNextPrevDropdownToolbarAction="true"
+            isGoToNextNavigationTargetKey="isTaskGoToNextNavigationTarget"
+            isGoToNextNavigationTarget="false"
+            isGoToPreviousNavigationTargetKey="isTaskGoToPreviousNavigationTarget"
+            isGoToPreviousNavigationTarget="false">
       </specification>
       <specification
       		annotationType="org.eclipse.ui.workbench.texteditor.bookmark"
@@ -95,9 +119,75 @@
             colorPreferenceKey="bookmarkIndicationColor"
             colorPreferenceValue="34,164,99"
             presentationLayer="1"
-            contributesToHeader="false">
+            contributesToHeader="false"
+            showInNextPrevDropdownToolbarActionKey="showBookmarkInNextPrevDropdownToolbarAction"
+            showInNextPrevDropdownToolbarAction="true"
+            isGoToNextNavigationTargetKey="isBookmarkGoToNextNavigationTarget"
+            isGoToNextNavigationTarget="false"
+            isGoToPreviousNavigationTargetKey="isBookmarkGoToPreviousNavigationTarget"
+            isGoToPreviousNavigationTarget="false">
+      </specification>
+      
+      <!-- change information annotations -->
+      <specification
+      		annotationType="org.eclipse.ui.workbench.texteditor.quickdiffChange"
+            label="%changes.label"
+            markerType="org.eclipse.quickdiff.changeindication"
+            textPreferenceKey="changeIndication"
+            textPreferenceValue="false"
+            overviewRulerPreferenceKey="changeIndicationInOverviewRuler"
+            overviewRulerPreferenceValue="false"
+            colorPreferenceKey="changeIndicationColor"
+            colorPreferenceValue="255,230,230"
+            presentationLayer="2"
+            contributesToHeader="false"
+            showInNextPrevDropdownToolbarActionKey="showChangeInNextPrevDropdownToolbarAction"
+            showInNextPrevDropdownToolbarAction="false"
+            isGoToNextNavigationTargetKey="isChangeGoToNextNavigationTarget"
+            isGoToNextNavigationTarget="false"
+            isGoToPreviousNavigationTargetKey="isChangeGoToPreviousNavigationTarget"
+            isGoToPreviousNavigationTarget="false">
+      </specification>
+      <specification
+      		annotationType="org.eclipse.ui.workbench.texteditor.quickdiffAddition"
+            label="%additions.label"
+            markerType="org.eclipse.quickdiff.additionindication"
+            textPreferenceKey="additionIndication"
+            textPreferenceValue="false"
+            overviewRulerPreferenceKey="additionIndicationInOverviewRuler"
+            overviewRulerPreferenceValue="false"
+            colorPreferenceKey="additionIndicationColor"
+            colorPreferenceValue="230,230,255"
+            presentationLayer="2"
+            contributesToHeader="false"
+            showInNextPrevDropdownToolbarActionKey="showAdditionInNextPrevDropdownToolbarAction"
+            showInNextPrevDropdownToolbarAction="false"
+            isGoToNextNavigationTargetKey="isAdditionGoToNextNavigationTarget"
+            isGoToNextNavigationTarget="false"
+            isGoToPreviousNavigationTargetKey="isAdditionGoToPreviousNavigationTarget"
+            isGoToPreviousNavigationTarget="false">
+      </specification>
+      <specification
+      		annotationType="org.eclipse.ui.workbench.texteditor.quickdiffDeletion"
+            label="%deletions.label"
+            markerType="org.eclipse.quickdiff.deletionindication"
+            textPreferenceKey="deletionIndication"
+            textPreferenceValue="false"
+            overviewRulerPreferenceKey="deletionIndicationInOverviewRuler"
+            overviewRulerPreferenceValue="false"
+            colorPreferenceKey="deletionIndicationColor"
+            colorPreferenceValue="0,0,0"
+            presentationLayer="2"
+            contributesToHeader="false"
+            showInNextPrevDropdownToolbarActionKey="showDeletionInNextPrevDropdownToolbarAction"
+            showInNextPrevDropdownToolbarAction="false"
+            isGoToNextNavigationTargetKey="isDeletionGoToNextNavigationTarget"
+            isGoToNextNavigationTarget="false"
+            isGoToPreviousNavigationTargetKey="isDeletionGoToPreviousNavigationTarget"
+            isGoToPreviousNavigationTarget="false">
       </specification>
    </extension>
+
 
 
 
@@ -112,7 +202,7 @@
                label="%quickdiff.toggle.enable"
                style="push"
                helpContextId="quickdiff.toggle"
-               class="org.eclipse.ui.internal.editors.quickdiff.QuickDiffToggleAction"
+               class="org.eclipse.ui.texteditor.quickdiff.QuickDiffToggleAction"
                menubarPath="quickdiff"
                id="quickdiff.toggle">
          </action>
@@ -125,7 +215,7 @@
                label="%quickdiff.toggle.enable"
                style="push"
                helpContextId="quickdiff.toggle"
-               class="org.eclipse.ui.internal.editors.quickdiff.QuickDiffToggleAction"
+               class="org.eclipse.ui.texteditor.quickdiff.QuickDiffToggleAction"
                menubarPath="quickdiff"
                id="quickdiff.toggle">
          </action>
@@ -134,12 +224,12 @@
    
 <!-- add the standard reference provider -->
    <extension
-         point="org.eclipse.ui.editors.quickdiffreferenceprovider">
+         point="org.eclipse.ui.workbench.texteditor.quickDiffReferenceProvider">
       <referenceprovider
             label="%lastSaveReferenceProvider.label"
             default="true"
-            class="org.eclipse.ui.internal.editors.quickdiff.providers.LastSaveReferenceProvider"
-            id="org.eclipse.ui.internal.editors.quickdiff.providers.LastSaveReferenceProvider">
+            class="org.eclipse.ui.internal.editors.text.LastSaveReferenceProvider"
+            id="org.eclipse.ui.internal.editors.text.LastSaveReferenceProvider">
       </referenceprovider>
    </extension>
 
@@ -152,7 +242,7 @@
          <action
                definitionId="org.eclipse.quickdiff.toggle"
                label="%quickdiff.toggle.enable"
-               class="org.eclipse.ui.internal.editors.quickdiff.QuickDiffToggleAction"
+               class="org.eclipse.ui.texteditor.quickdiff.QuickDiffToggleAction"
                id="org.eclipse.quickdiff.QuickDiffToggleAction">
          </action>
       </editorContribution>
@@ -183,9 +273,9 @@
    <extension
          point="org.eclipse.ui.editors.documentProviders">
       <provider
-            class="org.eclipse.ui.editors.text.FileDocumentProvider"
+            class="org.eclipse.ui.editors.text.TextFileDocumentProvider"
             inputTypes="org.eclipse.ui.IStorageEditorInput"
-            id="org.eclipse.ui.editors.text.FileDocumentProvider">
+            id="org.eclipse.ui.editors.text.TextFileDocumentProvider">
       </provider>
    </extension>
    
@@ -233,6 +323,36 @@
 			</action>
 		</viewerContribution>
 	</extension>
+	
+      <actionSet
+            label="%textEditorAnnotationNavigationActionSet.label"
+            visible="false"
+            id="org.eclipse.ui.edit.text.actionSet.annotationNavigation">
+		<action id="org.eclipse.ui.edit.text.gotoPreviousAnnotation"
+			label="%goToPreviousAnnotation.label"
+			tooltip="%goToPreviousAnnotation.tooltip"
+			toolbarPath="org.eclipse.ui.workbench.navigate/history.group"
+			retarget="true"
+			style="pulldown"
+			allowLabelUpdate="true"
+            definitionId="org.eclipse.ui.navigate.previous"
+			icon="icons/full/etool16/prev_nav.gif"
+            disabledIcon="icons/full/dtool16/prev_nav.gif"
+            hoverIcon="icons/full/ctool16/prev_nav.gif"
+			class="org.eclipse.ui.internal.texteditor.PreviousPulldownActionDelegate"/>
+		<action id="org.eclipse.ui.edit.text.gotoNextAnnotation"
+			label="%goToNextAnnotation.label"
+			tooltip="%goToNextAnnotation.tooltip"
+			toolbarPath="org.eclipse.ui.workbench.navigate/history.group"
+            retarget="true"
+			style="pulldown"
+			allowLabelUpdate="true"
+            definitionId="org.eclipse.ui.navigate.next"
+			icon="icons/full/etool16/next_nav.gif"
+            disabledIcon="icons/full/dtool16/next_nav.gif"
+            hoverIcon="icons/full/ctool16/next_nav.gif"			
+			class="org.eclipse.ui.internal.texteditor.NextPulldownActionDelegate"/>
+      </actionSet>
 	
    <extension
          point="org.eclipse.ui.commands">

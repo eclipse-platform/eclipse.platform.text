@@ -160,9 +160,9 @@ public abstract class AbstractMarkerAnnotationModel extends AnnotationModel {
 		ILog log= Platform.getPlugin(PlatformUI.PLUGIN_ID).getLog();
 		
 		if (message != null)
-			log.log(new Status(IStatus.ERROR, PlatformUI.PLUGIN_ID, 0, message, null));
-		
-		log.log(exception.getStatus());
+			log.log(new Status(IStatus.ERROR, PlatformUI.PLUGIN_ID, 0, message, exception));
+		else
+			log.log(exception.getStatus());
 	}
 	
 	/**
@@ -215,7 +215,11 @@ public abstract class AbstractMarkerAnnotationModel extends AnnotationModel {
 		if (isAcceptable(marker)) {
 			Position p= createPositionFromMarker(marker);
 			if (p != null)
-				addAnnotation(createMarkerAnnotation(marker), p, false);
+				try {
+					addAnnotation(createMarkerAnnotation(marker), p, false);
+				} catch (BadLocationException e) {
+					// ignore invalid position
+				}
 		}
 	}
 
@@ -554,7 +558,11 @@ public abstract class AbstractMarkerAnnotationModel extends AnnotationModel {
 				Position p= createPositionFromMarker(a.getMarker());
 				if (p != null) {
 					removeAnnotation(a, false);
-					addAnnotation(a, p, false);
+					try {
+						addAnnotation(a, p, false);
+					} catch (BadLocationException e1) {
+						// ignore invalid position
+					}
 				}
 			}
 		}
@@ -566,7 +574,11 @@ public abstract class AbstractMarkerAnnotationModel extends AnnotationModel {
 				MarkerAnnotation a= (MarkerAnnotation) o;
 				Position p= createPositionFromMarker(a.getMarker());
 				if (p != null)
-					addAnnotation(a, p, false);
+					try {
+						addAnnotation(a, p, false);
+					} catch (BadLocationException e1) {
+						// ignore invalid position
+					}
 			}
 		}
 		fDeletedAnnotations.clear();

@@ -8,29 +8,26 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.ui.editors.text;
+package org.eclipse.ui.texteditor;
 
 
-import java.util.Iterator;
+import org.eclipse.swt.graphics.RGB;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
 
-import org.eclipse.ui.texteditor.AnnotationPreference;
-import org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants;
-import org.eclipse.ui.texteditor.MarkerAnnotationPreferences;
 
 
 /**
- * Preference constants used in the default text editor preference store.
- * @since 2.1
+ * Preference constants used in the extended text editor preference store.
+ * @since 3.0
   */
-public class TextEditorPreferenceConstants {
+public class ExtendedTextEditorPreferenceConstants {
 	
 	/**
 	 * Prevent initialization.
 	 */
-	private TextEditorPreferenceConstants() {
+	private ExtendedTextEditorPreferenceConstants() {
 	}
 	
 	/**
@@ -39,7 +36,6 @@ public class TextEditorPreferenceConstants {
 	 * <p>
 	 * The preference value is of type <code>Boolean</code>.
 	 * </p>
-	 * @deprecated as of 3.0 replaced by {@link org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants}
 	 */
 	public final static String EDITOR_CURRENT_LINE= "currentLine"; //$NON-NLS-1$
 
@@ -52,7 +48,6 @@ public class TextEditorPreferenceConstants {
 	 * </p>
 	 * @see org.eclipse.jface.resource.StringConverter
 	 * @see org.eclipse.jface.preference.PreferenceConverter
-	 * @deprecated as of 3.0 replaced by {@link org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants}
 	 */
 	public final static String EDITOR_CURRENT_LINE_COLOR= "currentLineColor"; //$NON-NLS-1$
 
@@ -62,7 +57,6 @@ public class TextEditorPreferenceConstants {
 	 * <p>
 	 * The preference value is of type <code>Boolean</code>.
 	 * </p>
-	 * @deprecated as of 3.0 replaced by {@link org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants}
 	 */
 	public final static String EDITOR_PRINT_MARGIN= "printMargin"; //$NON-NLS-1$
 	
@@ -75,7 +69,6 @@ public class TextEditorPreferenceConstants {
 	 * </p>
 	 * @see org.eclipse.jface.resource.StringConverter
 	 * @see org.eclipse.jface.preference.PreferenceConverter
-	 * @deprecated as of 3.0 replaced by {@link org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants}
 	 */
 	public final static String EDITOR_PRINT_MARGIN_COLOR= "printMarginColor"; //$NON-NLS-1$
 
@@ -85,7 +78,6 @@ public class TextEditorPreferenceConstants {
 	 * <p>
 	 * The preference value is of type <code>int</code>.
 	 * </p>
-	 * @deprecated as of 3.0 replaced by {@link org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants}
 	 */
 	public final static String EDITOR_PRINT_MARGIN_COLUMN= "printMarginColumn"; //$NON-NLS-1$
 
@@ -97,7 +89,6 @@ public class TextEditorPreferenceConstants {
 	 * The preference value is of type <code>Boolean</code>.
 	 * </p>
 	 * @since 2.1
-	 * @deprecated as of 3.0 replaced by {@link org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants}
 	 */
 	public final static String EDITOR_UNKNOWN_INDICATION= "othersIndication"; //$NON-NLS-1$
 
@@ -112,7 +103,6 @@ public class TextEditorPreferenceConstants {
 	 * @see org.eclipse.jface.resource.StringConverter
 	 * @see org.eclipse.jface.preference.PreferenceConverter
 	 * @since 2.1
-	 * @deprecated as of 3.0 replaced by {@link org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants}
 	 */
 	public final static String EDITOR_UNKNOWN_INDICATION_COLOR= "othersIndicationColor"; //$NON-NLS-1$
 
@@ -123,7 +113,6 @@ public class TextEditorPreferenceConstants {
 	 * The preference value is of type <code>Boolean</code>.
 	 * </p>
 	 * @since 2.1
-	 * @deprecated as of 3.0 replaced by {@link org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants}
 	 */
 	public final static String EDITOR_UNKNOWN_INDICATION_IN_OVERVIEW_RULER= "othersIndicationInOverviewRuler"; //$NON-NLS-1$
 
@@ -133,7 +122,6 @@ public class TextEditorPreferenceConstants {
 	 * <p>
 	 * The preference value is of type <code>Boolean</code>.
 	 * </p>
-	 * @deprecated as of 3.0 replaced by {@link org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants}
 	 */
 	public final static String EDITOR_OVERVIEW_RULER= "overviewRuler"; //$NON-NLS-1$
 
@@ -143,7 +131,6 @@ public class TextEditorPreferenceConstants {
 	 * <p>
 	 * The preference value is of type <code>Boolean</code>.
 	 * </p>
-	 * @deprecated as of 3.0 replaced by {@link org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants}
 	 */
 	public final static String EDITOR_LINE_NUMBER_RULER= "lineNumberRuler"; //$NON-NLS-1$
 
@@ -157,116 +144,59 @@ public class TextEditorPreferenceConstants {
 	 * @see org.eclipse.jface.resource.StringConverter
 	 * @see org.eclipse.jface.preference.PreferenceConverter
 	 * @see #EDITOR_LINE_NUMBER_RULER
-	 * @deprecated as of 3.0 replaced by {@link org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants}
 	 */
 	public final static String EDITOR_LINE_NUMBER_RULER_COLOR= "lineNumberColor"; //$NON-NLS-1$
 	
 	/**
-	 * @deprecated
+	 * A named preference that controls whether quick diff colors are shown on the line number bar.
+	 * <p>
+	 * Value is of type <code>boolean</code>.
+	 * @since 3.0
 	 */
-	public final static String EDITOR_PROBLEM_INDICATION= "problemIndication"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_PROBLEM_INDICATION_COLOR= "problemIndicationColor"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_WARNING_INDICATION= "warningIndication"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_WARNING_INDICATION_COLOR= "warningIndicationColor"; //$NON-NLS-1$
+	public static final String QUICK_DIFF_ALWAYS_ON= "quickdiff.quickDiff"; //$NON-NLS-1$
 	
 	/**
-	 * @deprecated
+	 * A named preference that controls the default quick diff reference provider.
+	 * <p>
+	 * Value is of type <code>String</code>.
+	 * @since 3.0
 	 */
-	public final static String EDITOR_INFO_INDICATION= "infoIndication"; //$NON-NLS-1$
+	public static final String QUICK_DIFF_DEFAULT_PROVIDER= "quickdiff.defaultProvider"; //$NON-NLS-1$
 
 	/**
-	 * @deprecated
+	 * A named preference that controls the default quick diff reference provider.
+	 * <p>
+	 * Value is of type <code>String</code>.
+	 * @since 3.0
 	 */
-	public final static String EDITOR_INFO_INDICATION_COLOR= "infoIndicationColor"; //$NON-NLS-1$
-	
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_TASK_INDICATION= "taskIndication"; //$NON-NLS-1$
+	public static final String QUICK_DIFF_CHARACTER_MODE= "quickdiff.characterMode"; //$NON-NLS-1$
 
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_TASK_INDICATION_COLOR= "taskIndicationColor"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_BOOKMARK_INDICATION= "bookmarkIndication"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_BOOKMARK_INDICATION_COLOR= "bookmarkIndicationColor"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_SEARCH_RESULT_INDICATION= "searchResultIndication"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_SEARCH_RESULT_INDICATION_COLOR= "searchResultIndicationColor"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_ERROR_INDICATION_IN_OVERVIEW_RULER= "errorIndicationInOverviewRuler"; //$NON-NLS-1$
-	
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_WARNING_INDICATION_IN_OVERVIEW_RULER= "warningIndicationInOverviewRuler"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_INFO_INDICATION_IN_OVERVIEW_RULER= "infoIndicationInOverviewRuler"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_TASK_INDICATION_IN_OVERVIEW_RULER= "taskIndicationInOverviewRuler"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_BOOKMARK_INDICATION_IN_OVERVIEW_RULER= "bookmarkIndicationInOverviewRuler"; //$NON-NLS-1$
-
-	/**
-	 * @deprecated
-	 */
-	public final static String EDITOR_SEARCH_RESULT_INDICATION_IN_OVERVIEW_RULER= "searchResultIndicationInOverviewRuler"; //$NON-NLS-1$
-	
 	/**
   	* Initializes the given preference store with the default values.
 	 * 
   	* @param store the preference store to be initialized
   	*/
 	public static void initializeDefaultValues(IPreferenceStore store) {
-		// set defaults from ExtendedTextEditor
-		ExtendedTextEditorPreferenceConstants.initializeDefaultValues(store);
+
+		store.setDefault(ExtendedTextEditorPreferenceConstants.EDITOR_CURRENT_LINE, true);
+		PreferenceConverter.setDefault(store, ExtendedTextEditorPreferenceConstants.EDITOR_CURRENT_LINE_COLOR, new RGB(225, 235, 224));
+
+		store.setDefault(ExtendedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN, false);
+		store.setDefault(ExtendedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLUMN, 80);
+		PreferenceConverter.setDefault(store, ExtendedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLOR, new RGB(176, 180 , 185));
+
+		store.setDefault(ExtendedTextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER, false);
+		PreferenceConverter.setDefault(store, ExtendedTextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER_COLOR, new RGB(0, 0, 0));
+		store.setDefault(ExtendedTextEditorPreferenceConstants.QUICK_DIFF_ALWAYS_ON, true);
+		store.setDefault(ExtendedTextEditorPreferenceConstants.QUICK_DIFF_CHARACTER_MODE, false);
+		store.setDefault(ExtendedTextEditorPreferenceConstants.QUICK_DIFF_DEFAULT_PROVIDER, "org.eclipse.ui.internal.texteditor.quickdiff.LastSaveReferenceProvider"); //$NON-NLS-1$
+
+		store.setDefault(ExtendedTextEditorPreferenceConstants.EDITOR_OVERVIEW_RULER, true);
 		
-		MarkerAnnotationPreferences preferences= new MarkerAnnotationPreferences();
-		Iterator e= preferences.getAnnotationPreferences().iterator();
-		while (e.hasNext()) {
-			AnnotationPreference info= (AnnotationPreference) e.next();
-			store.setDefault(info.getTextPreferenceKey(), info.getTextPreferenceValue());
-			store.setDefault(info.getOverviewRulerPreferenceKey(), info.getOverviewRulerPreferenceValue());
-			PreferenceConverter.setDefault(store, info.getColorPreferenceKey(), info.getColorPreferenceValue());
-		}
+		store.setDefault(ExtendedTextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION, false);
+		store.setDefault(ExtendedTextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION_IN_OVERVIEW_RULER, false);
+		PreferenceConverter.setDefault(store, ExtendedTextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION_COLOR, new RGB(0, 0, 0));
+		
+		MarkerAnnotationPreferences.initializeDefaultValues(store);
 	}
 }

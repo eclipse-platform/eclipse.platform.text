@@ -20,6 +20,7 @@ import org.eclipse.jface.text.DefaultTextDoubleClickStrategy;
 import org.eclipse.jface.text.DefaultUndoManager;
 import org.eclipse.jface.text.IAutoIndentStrategy;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IDocumentExtension3;
 import org.eclipse.jface.text.IInformationControl;
 import org.eclipse.jface.text.IInformationControlCreator;
 import org.eclipse.jface.text.ITextDoubleClickStrategy;
@@ -38,7 +39,7 @@ import org.eclipse.jface.text.reconciler.IReconciler;
  * <code>ISourceViewer</code>.<p>
  * Each method in this class get as argument the source viewer for which it should
  * provide a particular configurational setting such as a presentation reconciler.
- * Based on its specific knowlegde about the returned object, the configuration 
+ * Based on its specific knowledge about the returned object, the configuration 
  * might share such objects or compute them according to some rules.<p>
  * Clients should subclass and override just those methods which must be specific to
  * their needs.
@@ -73,7 +74,7 @@ public class SourceViewerConfiguration {
 	 * history length is set to 25.
 	 *
 	 * @param sourceViewer the source viewer to be configured by this configuration
-	 * @return an undo manager or <code>null</code< if no undo/redo should not be supported
+	 * @return an undo manager or <code>null</code> if no undo/redo should not be supported
 	 */
 	public IUndoManager getUndoManager(ISourceViewer sourceViewer) {
 		return new DefaultUndoManager(25);
@@ -186,6 +187,20 @@ public class SourceViewerConfiguration {
 	}
 
 	/**
+	 * Returns the annotation hover which will provide the information to be
+	 * shown in a hover popup window when requested for the overview ruler
+	 * of the given source viewer.This implementation always returns the general
+	 * annotation hover returned by <code>getAnnotationHover</code>.
+	 *
+	 * @param sourceViewer the source viewer to be configured by this configuration
+	 * @return an annotation hover or <code>null</code> if no hover support should be installed
+	 * @since 3.0
+	 */
+	public IAnnotationHover getOverviewRulerAnnotationHover(ISourceViewer sourceViewer) {
+		return getAnnotationHover(sourceViewer);
+	}
+
+	/**
 	 * Returns the SWT event state masks for which text hover are configured for
 	 * the given content type.
 	 *
@@ -271,5 +286,19 @@ public class SourceViewerConfiguration {
 	 */
 	public String[] getConfiguredContentTypes(ISourceViewer sourceViewer) {
 		return new String[] { IDocument.DEFAULT_CONTENT_TYPE };
+	}
+	
+	/**
+	 * Returns the configured partitioning for the given source viewer. The partitioning is
+	 * used when the querying content types from the source viewer's input document.  This
+	 * implementation always returns <code>IDocumentExtension3.DEFAULT_PARTITIONING</code>.
+	 * 
+	 * @param sourceViewer the source viewer to be configured by this configuration
+	 * @return the configured partitioning
+	 * @see #getConfiguredContentTypes(ISourceViewer)
+	 * @since 3.0
+	 */
+	public String getConfiguredDocumentPartitioning(ISourceViewer sourceViewer) {
+		return IDocumentExtension3.DEFAULT_PARTITIONING;
 	}
 }

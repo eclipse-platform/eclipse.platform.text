@@ -78,7 +78,7 @@ public class AnnotationRulerColumn implements IVerticalRulerColumn {
 			if (e.getViewerRedrawState())
 				postRedraw();
 		}
-	};
+	}
 	
 	
 	/** This column's parent ruler */
@@ -236,6 +236,7 @@ public class AnnotationRulerColumn implements IVerticalRulerColumn {
 			fBuffer= new Image(fCanvas.getDisplay(), size.x, size.y);
 			
 		GC gc= new GC(fBuffer);
+		gc.setFont(fCachedTextWidget.getFont());
 		try {
 			gc.setBackground(fCanvas.getBackground());
 			gc.fillRectangle(0, 0, size.x, size.y);

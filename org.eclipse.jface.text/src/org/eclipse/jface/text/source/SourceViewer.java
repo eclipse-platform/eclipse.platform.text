@@ -11,6 +11,7 @@
 
 package org.eclipse.jface.text.source;
 
+import java.util.Stack;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Point;
@@ -21,18 +22,25 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
 
 import org.eclipse.jface.text.AbstractHoverInformationControlManager;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.BadPositionCategoryException;
+import org.eclipse.jface.text.DefaultPositionUpdater;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IPositionUpdater;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextViewerExtension2;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.jface.text.contentassist.IContentAssistant;
+import org.eclipse.jface.text.formatter.FormattingContext;
+import org.eclipse.jface.text.formatter.FormattingContextProperties;
 import org.eclipse.jface.text.formatter.IContentFormatter;
+import org.eclipse.jface.text.formatter.IContentFormatterExtension2;
+import org.eclipse.jface.text.formatter.IFormattingContext;
 import org.eclipse.jface.text.information.IInformationPresenter;
 import org.eclipse.jface.text.presentation.IPresentationReconciler;
 import org.eclipse.jface.text.reconciler.IReconciler;
-
 
 /**
  * SWT based implementation of <code>ISourceViewer</code>. The same rules apply 
@@ -100,7 +108,7 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 			} else
 				getTextWidget().setBounds(0, 0, clArea.width, clArea.height);
 		}
-	};
+	}
 	
 	
 	/** The viewer's content assistant */
@@ -118,6 +126,26 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 	protected IPresentationReconciler fPresentationReconciler;
 	/** The viewer's annotation hover */
 	protected IAnnotationHover fAnnotationHover;
+	/**
+	 * Stack of saved selections in the underlying document
+	 * @since 3.0
+	 */
+	protected final Stack fSelections= new Stack();
+	/**
+	 * Position category of saved selections
+	 * @since 3.0
+	 */
+	protected final static String SELECTION_POSITION_CATEGORY= "__selection_category";
+	/**
+	 * Position updater for saved selections
+	 * @since 3.0
+	 */
+	protected IPositionUpdater fSelectionUpdater= null;
+	/** 
+	 * The viewer's overview ruler annotation hover
+	 * @since 3.0
+	 */
+	protected IAnnotationHover fOverviewRulerAnnotationHover;
 	/** 
 	 * The viewer's information presenter
 	 * @since 2.0
@@ -228,6 +256,19 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 	public void setAnnotationHover(IAnnotationHover annotationHover) {
 		fAnnotationHover= annotationHover;
 	}
+
+	/**
+	 * Sets the overview ruler's annotation hover of this source viewer.
+	 * The annotation hover provides the information to be displayed in a hover
+	 * popup window if requested over the overview rulers area. The annotation
+	 * hover is assumed to be line oriented.
+	 *
+	 * @param annotationHover the hover to be used, <code>null</code> is a valid argument
+	 * @since 3.0
+	 */
+	public void setOverviewRulerAnnotationHover(IAnnotationHover annotationHover) {
+		fOverviewRulerAnnotationHover= annotationHover;
+	}
 	
 	/*
 	 * @see ISourceViewer#configure(SourceViewerConfiguration)
@@ -236,6 +277,8 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 		
 		if (getTextWidget() == null)
 			return;
+			
+		setDocumentPartitioning(configuration.getConfiguredDocumentPartitioning(this));
 		
 		// install content type independent plugins
 		fPresentationReconciler= configuration.getPresentationReconciler(this);
@@ -263,6 +306,7 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 		getTextWidget().setTabs(configuration.getTabWidth(this));
 		
 		setAnnotationHover(configuration.getAnnotationHover(this));
+		setOverviewRulerAnnotationHover(configuration.getOverviewRulerAnnotationHover(this));
 		
 		setHoverControlCreator(configuration.getInformationControlCreator(this));
 		
@@ -311,8 +355,8 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 	 * After this method has been executed the caller knows that any installed overview hover has been installed.
 	 */
 	protected void ensureOverviewHoverManagerInstalled() {
-		if (fOverviewRuler != null &&  fAnnotationHover != null  && fOverviewRulerHoveringController == null && fHoverControlCreator != null)	{
-			fOverviewRulerHoveringController= new OverviewRulerHoverManager(fOverviewRuler, this, fAnnotationHover, fHoverControlCreator);
+		if (fOverviewRuler != null &&  fOverviewRulerAnnotationHover != null  && fOverviewRulerHoveringController == null && fHoverControlCreator != null)	{
+			fOverviewRulerHoveringController= new OverviewRulerHoverManager(fOverviewRuler, this, fOverviewRulerAnnotationHover, fHoverControlCreator);
 			fOverviewRulerHoveringController.install(fOverviewRuler.getControl());
 		}
 	}
@@ -472,6 +516,72 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 		return super.canDoOperation(operation);
 	}
 	
+	/**
+	 * Creates a new formatting context for a format operation.
+	 * <p>
+	 * After the use of the context, clients are required to call
+	 * its <code>dispose</code> method.
+	 * 
+	 * @return The new formatting context
+	 */
+	protected IFormattingContext createFormattingContext() {
+		return new FormattingContext();	
+	}
+	
+	/**
+	 * Saves the current selection in the document.
+	 */
+	public void saveSelection(int offset, int length) {
+
+		final IDocument document= getDocument();
+
+		if (fSelections.isEmpty()) {
+
+			fSelectionUpdater= new DefaultPositionUpdater(SELECTION_POSITION_CATEGORY);
+			document.addPositionCategory(SELECTION_POSITION_CATEGORY);
+			document.addPositionUpdater(fSelectionUpdater);
+		}
+
+		final Position selection;
+		try {
+
+			selection= new Position(offset, length);
+			document.addPosition(SELECTION_POSITION_CATEGORY, selection);
+			fSelections.push(selection);
+
+		} catch (BadLocationException exception) {
+			// Should not happen
+		} catch (BadPositionCategoryException exception) {
+			// Should not happen
+		}
+	}
+	
+	/**
+	 * Restores a previously saved selection in the document.
+	 */
+	public void restoreSelection() {
+
+		if (!fSelections.isEmpty()) {
+
+			final IDocument document= getDocument();
+			final Position selection= (Position)fSelections.pop();
+
+			try {
+				document.removePosition(SELECTION_POSITION_CATEGORY, selection);
+				setSelectedRange(selection.getOffset(), selection.getLength());
+
+				if (fSelections.isEmpty()) {
+
+					document.removePositionUpdater(fSelectionUpdater);
+					fSelectionUpdater= null;
+					document.removePositionCategory(SELECTION_POSITION_CATEGORY);
+				}
+			} catch (BadPositionCategoryException exception) {
+				// Should not happen
+			}
+		}
+	}
+
 	/*
 	 * @see ITextOperationTarget#doOperation(int)
 	 */
@@ -490,18 +600,42 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 			case INFORMATION:
 				fInformationPresenter.showInformation();
 				return;
-			case FORMAT: {
-				Point s= getSelectedRange();
-				IRegion r= (s.y == 0) ? getModelCoverage() : new Region(s.x, s.y);
-				try {
-					setRedraw(false); 
-					fContentFormatter.format(getDocument(), r);						
-				} finally {
-					setRedraw(true);
+			case FORMAT :
+				{
+					final Point selection= getSelectedRange();
+					saveSelection(selection.x, selection.y);
+					
+					final IRegion region= new Region(selection.x, selection.y); 
+					final IFormattingContext context= createFormattingContext();
+
+					if (selection.y == 0) {
+						context.setProperty(FormattingContextProperties.CONTEXT_DOCUMENT, Boolean.TRUE);
+					} else {
+						context.setProperty(FormattingContextProperties.CONTEXT_DOCUMENT, Boolean.FALSE);
+						context.setProperty(FormattingContextProperties.CONTEXT_REGION, region);
+					}
+					try {
+						setRedraw(false);
+
+						final IDocument document= getDocument();
+						if (fContentFormatter instanceof IContentFormatterExtension2) {
+
+							final IContentFormatterExtension2 extension= (IContentFormatterExtension2)fContentFormatter;
+							extension.format(document, context);
+
+						} else
+							fContentFormatter.format(document, region);
+
+					} finally {
+						
+						restoreSelection();
+						context.dispose();
+						
+						setRedraw(true);
+					}
+					return;
 				}
-				return;
-			}
-			default:
+			default :
 				super.doOperation(operation);
 		}
 	}

@@ -119,7 +119,7 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 				fireElementStateChangeFailed(fInput);
 			}
 		}
-	};
+	}
 	
 	
 	/**
@@ -143,7 +143,7 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 		 */
 		public FileSynchronizer(IFileEditorInput fileEditorInput) {
 			fFileEditorInput= fileEditorInput;
-		};
+		}
 		
 		/**
 		 * Creates a new file synchronizer which is not yet installed on a resource.
@@ -153,7 +153,7 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 		 */
 		public FileSynchronizer(FileEditorInput fileEditorInput) {
 			fFileEditorInput= fileEditorInput;
-		};
+		}
 		
 		/**
 		 * Returns the file wrapped by the file editor input.
@@ -262,7 +262,7 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 				runnable.run();
 			}
 		}
-	};
+	}
 	
 	
 	
@@ -287,7 +287,7 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 			super(document, model);
 			fFileSynchronizer= fileSynchronizer;
 		}
-	};
+	}
 	
 	
 	/**
@@ -735,6 +735,20 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 			file.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 		} catch (OperationCanceledException x) {
 		}
+	}
+	
+	/*
+	 * @see org.eclipse.ui.texteditor.IDocumentProviderExtension3#isSynchronized(java.lang.Object)
+	 * @since 3.0
+	 */
+	public boolean isSynchronized(Object element) {
+		Object elementInfo= getElementInfo(element);
+		if (elementInfo instanceof FileInfo) {
+			FileEditorInput input= (FileEditorInput) element;
+			IResource resource= input.getFile();
+			return resource.isSynchronized(IResource.DEPTH_ZERO);
+		}
+		return false;
 	}
 	
 	// --------------- Encoding support ---------------

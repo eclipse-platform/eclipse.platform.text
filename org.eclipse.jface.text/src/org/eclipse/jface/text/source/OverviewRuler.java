@@ -12,7 +12,6 @@
 package org.eclipse.jface.text.source;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -85,7 +84,7 @@ public class OverviewRuler implements IOverviewRuler {
 		public void modelChanged(IAnnotationModel model) {
 			update();
 		}
-	};
+	}
 	
 	/**
 	 * Enumerates the annotations of a specified type and characteristics
@@ -131,7 +130,7 @@ public class OverviewRuler implements IOverviewRuler {
 					continue;
 					
 				fNext= next;
-				if (fType == null || fType == annotationType) {
+				if (fType == null || fType.equals(annotationType)) {
 					if (fTemporary == IGNORE) return;
 					boolean temporary= fAnnotationAccess.isTemporary(fNext);
 					if (fTemporary == TEMPORARY && temporary) return;
@@ -164,7 +163,7 @@ public class OverviewRuler implements IOverviewRuler {
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
-	};
+	}
 	
 	/**
 	 * The painter of the overview ruler's header.
@@ -209,7 +208,7 @@ public class OverviewRuler implements IOverviewRuler {
 			e.gc.setLineWidth(1);
 			e.gc.drawLine(0, s.y -1, s.x -1, s.y -1);
 		}
-	};
+	}
 		
 	private static final int INSET= 2;
 	private static final int ANNOTATION_HEIGHT= 4;
@@ -246,13 +245,23 @@ public class OverviewRuler implements IOverviewRuler {
 	private Set fAnnotationTypes= new HashSet();
 	/** The list of annotation types to be shown in the header of this ruler */
 	private Set fHeaderAnnotationTypes= new HashSet();
-	/** The mapping between annotation types and drawing layers */
-	private Map fAnnotationTypes2Layers= new HashMap();
 	/** The mapping between annotation types and colors */
 	private Map fAnnotationTypes2Colors= new HashMap();
 	/** The color manager */
 	private ISharedTextColors fSharedTextColors;
-	
+	/**
+	 * All available annotation types sorted by layer.
+	 * 
+	 * @since 3.0
+	 */
+	private List fAnnotationsSortedByLayer= new ArrayList();
+	/**
+	 * All available layers sorted by layer.
+	 * This list may contain duplicates.
+	 * 
+	 * @since 3.0
+	 */
+	private List fLayersSortedByLayer= new ArrayList();
 	
 	
 	/**
@@ -309,9 +318,11 @@ public class OverviewRuler implements IOverviewRuler {
 		fTextViewer= textViewer;
 		
 		fHitDetectionCursor= new Cursor(parent.getDisplay(), SWT.CURSOR_HAND);
-		fCanvas= new Canvas(parent, SWT.NO_BACKGROUND);
+
 		fHeader= new Canvas(parent, SWT.NONE);
-		
+
+		fCanvas= new Canvas(parent, SWT.NO_BACKGROUND);
+	
 		fCanvas.addPaintListener(new PaintListener() {
 			public void paintControl(PaintEvent event) {
 				if (fTextViewer != null)
@@ -369,8 +380,9 @@ public class OverviewRuler implements IOverviewRuler {
 		
 		fAnnotationTypes.clear();
 		fHeaderAnnotationTypes.clear();
-		fAnnotationTypes2Layers.clear();
 		fAnnotationTypes2Colors.clear();
+		fAnnotationsSortedByLayer.clear();
+		fLayersSortedByLayer.clear();
 	}
 
 	/**
@@ -437,13 +449,8 @@ public class OverviewRuler implements IOverviewRuler {
 		if (size.y > writable)
 			size.y= writable;
 		
-		
-		List indices= new ArrayList(fAnnotationTypes2Layers.keySet());
-		Collections.sort(indices);
-		
-		for (Iterator iterator= indices.iterator(); iterator.hasNext();) {
-			Object layer= iterator.next();
-			Object annotationType= fAnnotationTypes2Layers.get(layer);
+		for (Iterator iterator= fAnnotationsSortedByLayer.iterator(); iterator.hasNext();) {
+			Object annotationType= iterator.next();
 			
 			if (skip(annotationType))
 				continue;
@@ -524,12 +531,8 @@ public class OverviewRuler implements IOverviewRuler {
 		if (size.y > writable)
 			size.y= writable;
 			
-		List indices= new ArrayList(fAnnotationTypes2Layers.keySet());
-		Collections.sort(indices);
-
-		for (Iterator iterator= indices.iterator(); iterator.hasNext();) {
-			Object layer= iterator.next();
-			Object annotationType= fAnnotationTypes2Layers.get(layer);
+		for (Iterator iterator= fAnnotationsSortedByLayer.iterator(); iterator.hasNext();) {
+			Object annotationType= iterator.next();
 
 			if (skip(annotationType))
 				continue;
@@ -668,35 +671,41 @@ public class OverviewRuler implements IOverviewRuler {
 	 * @param lineNumbers the line range
 	 * @return the position of the first found annotation
 	 */
-	private Position getAnnotationPosition(int[] lineNumbers) {
+	private Position getAnnotationPosition(int[] lineNumbers, boolean ignoreSelectedAnnotation) {
 		if (lineNumbers[0] == -1)
 			return null;
-		
+
 		Position found= null;
 		
 		try {
 			IDocument d= fTextViewer.getDocument();
 			IRegion line= d.getLineInformation(lineNumbers[0]);
 
+			Point currentSelection= fTextViewer.getSelectedRange();		
+
 			int start= line.getOffset();
 			
 			line= d.getLineInformation(lineNumbers[lineNumbers.length - 1]);
 			int end= line.getOffset() + line.getLength();
-			
-			Iterator e= new FilterIterator();
-			while (e.hasNext()) {
-				Annotation a= (Annotation) e.next();
+
+			for (int i= fAnnotationsSortedByLayer.size() -1; i >= 0; i--) {
 				
-				if (skip(fAnnotationAccess.getType(a)))
-					continue;
+				Object annotationType= fAnnotationsSortedByLayer.get(i);
 				
-				Position p= fModel.getPosition(a);
-				if (start <= p.getOffset() && p.getOffset() < end) {
-					if (found == null || p.getOffset() < found.getOffset())
-						found= p;
+				Iterator e= new FilterIterator(annotationType);
+				while (e.hasNext() && found == null) {
+					Annotation a= (Annotation) e.next();
+					
+					if (skip(fAnnotationAccess.getType(a)))
+						continue;
+					
+					Position p= fModel.getPosition(a);
+					if (start <= p.getOffset() && p.getOffset() < end) {
+						if ((found == null || p.getOffset() < found.getOffset()) && (ignoreSelectedAnnotation || currentSelection.x != p.getOffset() || currentSelection.y != p.getLength()))
+							found= p;
+					}
 				}
-			}
-			
+			}			
 		} catch (BadLocationException x) {
 		}
 		
@@ -714,7 +723,7 @@ public class OverviewRuler implements IOverviewRuler {
 			return -1;
 
 		try {
-			Position pos= getAnnotationPosition(lineNumbers);
+			Position pos= getAnnotationPosition(lineNumbers, true);
 			if (pos == null)
 				return -1;
 			return fTextViewer.getDocument().getLineOfOffset(pos.getOffset());
@@ -731,7 +740,7 @@ public class OverviewRuler implements IOverviewRuler {
 	private void handleMouseDown(MouseEvent event) {
 		if (fTextViewer != null) {
 			int[] lines= toLineNumbers(event.y);
-			Position p= getAnnotationPosition(lines);
+			Position p= getAnnotationPosition(lines, false);
 			if (p != null) {
 				fTextViewer.revealRange(p.getOffset(), p.getLength());
 				fTextViewer.setSelectedRange(p.getOffset(), p.getLength());
@@ -749,7 +758,7 @@ public class OverviewRuler implements IOverviewRuler {
 	private void handleMouseMove(MouseEvent event) {
 		if (fTextViewer != null) {
 			int[] lines= toLineNumbers(event.y);
-			Position p= getAnnotationPosition(lines);
+			Position p= getAnnotationPosition(lines, true);
 			Cursor cursor= (p != null ? fHitDetectionCursor : null);
 			if (cursor != fLastCursor) {
 				fCanvas.setCursor(cursor);
@@ -776,17 +785,17 @@ public class OverviewRuler implements IOverviewRuler {
 	 * @see org.eclipse.jface.text.source.IOverviewRuler#setAnnotationTypeLayer(java.lang.Object, int)
 	 */
 	public void setAnnotationTypeLayer(Object annotationType, int layer) {
-		if (layer >= 0)
-			fAnnotationTypes2Layers.put(new Integer(layer), annotationType);
-		else {
-			Iterator e= fAnnotationTypes2Layers.keySet().iterator();
-			while (e.hasNext()) {
-				Object key= e.next();
-				if (annotationType.equals(fAnnotationTypes2Layers.get(key))) {
-					fAnnotationTypes2Layers.remove(key);
-					return;
-				}
-			}
+		Integer layerObj= new Integer(layer);
+		if (fAnnotationsSortedByLayer.remove(annotationType))
+			fLayersSortedByLayer.remove(layerObj);
+
+		if (layer >= 0) {
+			int i= 0;
+			int size= fLayersSortedByLayer.size();
+			while (i < size && layer >= ((Integer)fLayersSortedByLayer.get(i)).intValue())
+				i++;
+			fLayersSortedByLayer.add(i, layerObj);
+			fAnnotationsSortedByLayer.add(i, annotationType);
 		}
 	}
 	
@@ -968,16 +977,12 @@ public class OverviewRuler implements IOverviewRuler {
 		if (fHeader == null || fHeader.isDisposed())
 			return;
 	
-		List indices= new ArrayList(fAnnotationTypes2Layers.keySet());
-		Collections.sort(indices);
-		
 		Object colorType= null;
-		outer: for (int i= indices.size() -1; i >= 0; i--) {
+		outer: for (int i= fAnnotationsSortedByLayer.size() -1; i >= 0; i--) {
 			
-			Object layer=indices.get(i);
-			Object annotationType= fAnnotationTypes2Layers.get(layer);
+			Object annotationType= fAnnotationsSortedByLayer.get(i);
 			
-			if (!fHeaderAnnotationTypes.contains(annotationType))
+			if (!fHeaderAnnotationTypes.contains(annotationType) || !fAnnotationTypes.contains(annotationType))
 				continue;
 			
 			for (Iterator e= new FilterIterator(annotationType); e.hasNext();) {
@@ -1004,5 +1009,52 @@ public class OverviewRuler implements IOverviewRuler {
 		}
 			
 		fHeader.redraw();
+		updateHeaderToolTipText();
+	}
+
+	/**
+	 * Updates the tool tip text of the header of this ruler.
+	 * 
+	 * @since 3.0
+	 */
+	private void updateHeaderToolTipText() {
+
+		if (fHeader == null || fHeader.isDisposed())
+			return;
+
+		fHeader.setToolTipText(null);
+
+		if (!(fAnnotationAccess instanceof IAnnotationAccessExtension))
+			return;
+	
+		String overview= ""; //$NON-NLS-1$
+		
+		for (int i= fAnnotationsSortedByLayer.size() -1; i >= 0; i--) {
+			
+			Object annotationType= fAnnotationsSortedByLayer.get(i);
+			
+			if (!fHeaderAnnotationTypes.contains(annotationType) || !fAnnotationTypes.contains(annotationType))
+				continue;
+	
+			int count= 0;
+			String annotationTypeLabel= null;
+	
+			for (Iterator e= new FilterIterator(annotationType); e.hasNext();) {
+				Annotation annotation= (Annotation)e.next();
+				if (annotation != null) {
+					if (annotationTypeLabel == null)
+						annotationTypeLabel= ((IAnnotationAccessExtension)fAnnotationAccess).getTypeLabel(annotation);
+					count++;
+				}
+			}
+			
+			if (annotationTypeLabel != null) {
+				if (overview.length() > 0)
+					overview += "\n"; //$NON-NLS-1$
+				overview += JFaceTextMessages.getFormattedString("OverviewRulerHeader.toolTipTextEntry", new Object[] {annotationTypeLabel, new Integer(count)}); //$NON-NLS-1$
+			}
+		}
+		if (overview.length() > 0)
+			fHeader.setToolTipText(overview);
 	}
 }

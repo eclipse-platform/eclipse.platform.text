@@ -56,7 +56,6 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Caret;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -83,6 +82,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.viewers.IPostSelectionProvider;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ISelectionProvider;
@@ -94,7 +94,6 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IFindReplaceTarget;
 import org.eclipse.jface.text.IFindReplaceTargetExtension;
 import org.eclipse.jface.text.IMarkRegionTarget;
-import org.eclipse.jface.text.IPostSelectionProvider;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.IRewriteTarget;
 import org.eclipse.jface.text.ITextInputListener;
@@ -213,45 +212,51 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 					if (! validateEditorInputState())
 							e.doit= false;
 					}
-			};
+			}
 		
 		/**
 		 * The listener's validator.
 		 * @since 2.0
 		 */
 		private Validator fValidator;
+		/**
+		 * The display used for posting runnable into the UI thread.
+		 * @since 3.0
+		 */
+		private Display fDisplay;
 		
 		/*
 		 * @see IElementStateListenerExtension#elementStateValidationChanged(Object, boolean)
 		 * @since 2.0
 		 */
-		public void elementStateValidationChanged(Object element, boolean isStateValidated) {
-
+		public void elementStateValidationChanged(final Object element, final boolean isStateValidated) {
 			if (element != null && element.equals(getEditorInput())) {
-				
-				enableSanityChecking(true);
-
-				if (isStateValidated && fValidator != null) {
-					ISourceViewer viewer= getSourceViewer();
-					if (viewer != null) {
-						StyledText textWidget= viewer.getTextWidget();
-						if (textWidget != null && !textWidget.isDisposed())
-							textWidget.removeVerifyListener(fValidator);
-						fValidator= null;
-						enableStateValidation(false);
-					}
-				} else if (!isStateValidated && fValidator == null) {
-					ISourceViewer viewer= getSourceViewer();
-					if (viewer != null) {
-						StyledText textWidget= viewer.getTextWidget();
-						if (textWidget != null && !textWidget.isDisposed()) {
-							fValidator= new Validator();
-							enableStateValidation(true);
-							textWidget.addVerifyListener(fValidator);
+				Runnable r= new Runnable() {
+					public void run() {
+						enableSanityChecking(true);
+						if (isStateValidated && fValidator != null) {
+							ISourceViewer viewer= getSourceViewer();
+							if (viewer != null) {
+								StyledText textWidget= viewer.getTextWidget();
+								if (textWidget != null && !textWidget.isDisposed())
+									textWidget.removeVerifyListener(fValidator);
+								fValidator= null;
+								enableStateValidation(false);
+							}
+						} else if (!isStateValidated && fValidator == null) {
+							ISourceViewer viewer= getSourceViewer();
+							if (viewer != null) {
+								StyledText textWidget= viewer.getTextWidget();
+								if (textWidget != null && !textWidget.isDisposed()) {
+									fValidator= new Validator();
+									enableStateValidation(true);
+									textWidget.addVerifyListener(fValidator);
+								}
+							}
 						}
 					}
-				}
-				
+				};
+				execute(r);
 			}
 		}
 		
@@ -260,8 +265,13 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		 */
 		public void elementDirtyStateChanged(Object element, boolean isDirty) {
 			if (element != null && element.equals(getEditorInput())) {
-				enableSanityChecking(true);
-				firePropertyChange(PROP_DIRTY);
+				Runnable r= new Runnable() {
+					public void run() {
+						enableSanityChecking(true);
+						firePropertyChange(PROP_DIRTY);
+					}
+				};
+				execute(r);
 			}
 		}
 		
@@ -270,9 +280,14 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		 */
 		public void elementContentAboutToBeReplaced(Object element) {
 			if (element != null && element.equals(getEditorInput())) {
-				enableSanityChecking(true);
-				rememberSelection();
-				resetHighlightRange();
+				Runnable r= new Runnable() {
+					public void run() {
+						enableSanityChecking(true);
+						rememberSelection();
+						resetHighlightRange();
+					}
+				};
+				execute(r);
 			}
 		}
 		
@@ -281,9 +296,14 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		 */
 		public void elementContentReplaced(Object element) {
 			if (element != null && element.equals(getEditorInput())) {
-				enableSanityChecking(true);
-				firePropertyChange(PROP_DIRTY);
-				restoreSelection();
+				Runnable r= new Runnable() {
+					public void run() {
+						enableSanityChecking(true);
+						firePropertyChange(PROP_DIRTY);
+						restoreSelection();
+					}
+				};
+				execute(r);
 			}
 		}
 		
@@ -292,43 +312,51 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		 */
 		public void elementDeleted(Object deletedElement) {
 			if (deletedElement != null && deletedElement.equals(getEditorInput())) {
-				enableSanityChecking(true);
-				close(false);
+				Runnable r= new Runnable() {
+					public void run() {
+						enableSanityChecking(true);
+						close(false);
+					}
+				};
+				execute(r);
 			}
 		}
 		
 		/*
 		 * @see IElementStateListener#elementMoved(Object, Object)
 		 */
-		public void elementMoved(Object originalElement, Object movedElement) {
-						
+		public void elementMoved(final Object originalElement, final Object movedElement) {
 			if (originalElement != null && originalElement.equals(getEditorInput())) {
-				
-				enableSanityChecking(true);
-				
-				if (!canHandleMove((IEditorInput) originalElement, (IEditorInput) movedElement)) {
-					close(true);
-					return;
-				}
-			
-				if (movedElement == null || movedElement instanceof IEditorInput) {	
-					rememberSelection();
-										
-					IDocumentProvider d= getDocumentProvider();
-					IDocument changed= null;
-					if (isDirty())
-						changed= d.getDocument(getEditorInput());
+				Runnable r= new Runnable() {
+					public void run() {
+						enableSanityChecking(true);
 						
-					setInput((IEditorInput) movedElement);
+						if (!canHandleMove((IEditorInput) originalElement, (IEditorInput) movedElement)) {
+							close(true);
+							return;
+						}
 					
-					if (changed != null) {
-						d.getDocument(getEditorInput()).set(changed.get());
-						validateState(getEditorInput());
-						updateStatusField(ITextEditorActionConstants.STATUS_CATEGORY_ELEMENT_STATE);
-					}					
-						
-					restoreSelection();
-				}
+						if (movedElement == null || movedElement instanceof IEditorInput) {	
+							rememberSelection();
+												
+							IDocumentProvider d= getDocumentProvider();
+							IDocument changed= null;
+							if (isDirty())
+								changed= d.getDocument(getEditorInput());
+								
+							setInput((IEditorInput) movedElement);
+							
+							if (changed != null) {
+								d.getDocument(getEditorInput()).set(changed.get());
+								validateState(getEditorInput());
+								updateStatusField(ITextEditorActionConstants.STATUS_CATEGORY_ELEMENT_STATE);
+							}					
+								
+							restoreSelection();
+						}
+					}
+				};
+				execute(r);
 			}
 		}
 		
@@ -349,7 +377,23 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			if (element != null && element.equals(getEditorInput()))
 				enableSanityChecking(true);
 		}
-	};
+		
+		/**
+		 * Executes the given runnable in the UI thread.
+		 * 
+		 * @param runnable runnable to be executed
+		 * @since 3.0
+		 */
+		private void execute(Runnable runnable) {
+			if (Display.getCurrent() != null)
+				runnable.run();
+			else {
+				if (fDisplay == null)
+					fDisplay= getSite().getShell().getDisplay();
+				fDisplay.asyncExec(runnable);
+			}
+		}
+	}
 	
 	/**
 	 * Internal text listener for updating all content dependent
@@ -414,7 +458,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			fTextEventQueue.add(event);
 			fDisplay.asyncExec(fRunnable);
 		}
-	};
+	}
 	
 	/**
 	 * Compare configuration elements according to the prerequisite relation
@@ -494,7 +538,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		public void propertyChange(PropertyChangeEvent event) {
 			handlePreferenceStoreChanged(event);
 		}
-	};
+	}
 
 	/**
 	 * Internal property change listener for handling workbench font changes.
@@ -513,7 +557,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			if (getFontPropertyPreferenceKey().equals(property))
 				initializeViewerFont(fSourceViewer);
 		}
-	};
+	}
 
 	/**
 	 * Internal key verify listener for triggering action activation codes.
@@ -631,7 +675,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			if (keyBindingScopes != null && keyBindingScopes.length > 0)
 				fKeyBindingService.setScopes(keyBindingScopes);
 		}
-	};
+	}
 	
 	/**
 	 * Representation of action activation codes.
@@ -664,7 +708,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 						(fKeyCode == -1 || event.keyCode == fKeyCode) &&
 						(fStateMask == SWT.DEFAULT || event.stateMask == fStateMask));
 		}		
-	};
+	}
 	
 	/**
 	 * Internal part and shell activation listener for triggering state validation.
@@ -742,7 +786,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 				}
 			}
 		}
-	};
+	}
 	
 	/**
 	 * Internal interface for a cursor listener. I.e. aggregation 
@@ -750,7 +794,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 	 * @since 2.0
 	 */
 	interface ICursorListener extends MouseListener, KeyListener {
-	};
+	}
 	
 	/**
 	 * Maps an action definition id to an StyledText action.
@@ -788,7 +832,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		public int getAction() {
 			return fAction;
 		}
-	};
+	}
 	
 	/**
 	 * Internal action to scroll the editor's viewer by a specified number of lines.
@@ -817,7 +861,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			int newTopIndex= Math.max(0, topIndex + fScrollIncrement);
 			viewer.setTopIndex(newTopIndex);
 		}
-	};
+	}
 	
 	/**
 	 * Action to toggle the insert mode.
@@ -835,7 +879,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		public void run() {	
 			switchToNextInsertMode();
 		}
-	};
+	}
 
 	/**
 	 * This action implements smart end.
@@ -944,7 +988,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			event.y= st.getSelection().y;
 			st.notifyListeners(SWT.Selection, event);
 		}
-	};
+	}
 
 	/**
 	 * This action implements smart home.
@@ -954,10 +998,10 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 	 * - if the caret is at the beginning of the line the caret is moved directly before the line's first non-whitespace character
 	 * @since 2.1
 	 */
-	class LineStartAction extends TextNavigationAction {
+	protected class LineStartAction extends TextNavigationAction {
 		
 		/** boolean flag which tells if the text up to the beginning of the line should be selected. */
-		private boolean fDoSelect;
+		private final boolean fDoSelect;
 		
 		/**
 		 * Creates a new line start action.
@@ -965,11 +1009,27 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		 * @param textWidget the styled text widget
 		 * @param doSelect a boolean flag which tells if the text up to the beginning of the line should be selected
 		 */
-		public LineStartAction(StyledText textWidget, boolean doSelect) {
+		public LineStartAction(final StyledText textWidget, final boolean doSelect) {
 			super(textWidget, ST.LINE_START);
 			fDoSelect= doSelect;
 		}
-		
+
+		/**
+		 * Computes the offset of the line start position.
+		 * 
+		 * @param document The document where to compute the line start position
+		 * @param line The line to determine the start position of
+		 * @param length The length of the line
+		 * @param offset The caret position in the document
+		 * @return The offset of the line start
+		 */
+		protected int getLineStartPosition(final IDocument document, final String line, final int length, final int offset) {
+			int index= 0;
+			while (index < length && Character.isWhitespace(line.charAt(index)))
+				index++;
+			return index;
+		}
+
 		/*
 		 * @see org.eclipse.jface.action.IAction#run()
 		 */
@@ -986,11 +1046,14 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			int caretOffset= st.getCaretOffset();
 			int lineNumber= st.getLineAtOffset(caretOffset);
 			int lineOffset= st.getOffsetAtLine(lineNumber);
-			
+		
 			int lineLength;
+			int caretOffsetInDocument;
+			final IDocument document= getSourceViewer().getDocument();
+
 			try {
-				int caretOffsetInDocument= widgetOffset2ModelOffset(getSourceViewer(), caretOffset);
-				lineLength= getSourceViewer().getDocument().getLineInformationOfOffset(caretOffsetInDocument).getLength();
+				caretOffsetInDocument= widgetOffset2ModelOffset(getSourceViewer(), caretOffset);
+				lineLength= document.getLineInformationOfOffset(caretOffsetInDocument).getLength();
 			} catch (BadLocationException ex) {
 				return;
 			}
@@ -1001,10 +1064,9 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 				end= Math.min(end, st.getCharCount() -1);
 				line= st.getText(lineOffset, end);
 			}
-			int i= 0;
-			while (i < lineLength && Character.isWhitespace(line.charAt(i)))
-				i++;
-
+			
+			// Compute the line start offset
+			int index= getLineStartPosition(document, line, lineLength, caretOffsetInDocument);
 
 			// Remember current selection
 			Point oldSelection= st.getSelection();
@@ -1013,12 +1075,12 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			int newCaretOffset= -1;
 			if (isSmartHomeEndEnabled) {
 				
-				if (caretOffset - lineOffset == i)
+				if (caretOffset - lineOffset == index)
 					// to beginning of line
 					newCaretOffset= lineOffset;
 				else
 					// to beginning of text
-					newCaretOffset= lineOffset + i;
+					newCaretOffset= lineOffset + index;
 									
 			} else {
 				
@@ -1047,7 +1109,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			st.notifyListeners(SWT.Selection, event);
 		}
 
-	};
+	}
 	
 	/**
 	 * Internal action to show the editor's ruler context menu (accessibility).
@@ -1075,14 +1137,14 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			fRulerContextMenu.setLocation(location.x, location.y);
 			fRulerContextMenu.setVisible(true);
 		}		
-	};
+	}
 	
 	
 	/** 
 	 * Editor specific selection provider which wraps the source viewer's selection provider.
 	 * @since 2.1
 	 */
-	class SelectionProvider implements ISelectionProvider, IPostSelectionProvider {
+	class SelectionProvider implements IPostSelectionProvider {
 	
 		/*
 		 * @see org.eclipse.jface.viewers.ISelectionProvider#addSelectionChangedListener(ISelectionChangedListener)
@@ -1137,7 +1199,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 				}
 			}
 		}
-	};
+	}
 	
 	/**
 	 * Key used to look up font preference.
@@ -1258,7 +1320,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		public String toString() {
 			return String.valueOf(fValue);
 		}
-	};
+	}
 	/** The pattern used to show the position label in the status line. */
 	private final String fPositionLabelPattern= EditorMessages.getString("Editor.statusline.position.pattern"); //$NON-NLS-1$
 	/** The position label value of the current line. */
@@ -2521,30 +2583,27 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		
 		if (fInsertModeCaret != null) {
 			if (!fInsertModeCaret.isDisposed()) {
-				// TODO remove parent check 
-				Canvas parent= fInsertModeCaret.getParent();
-				if (parent != null && ! parent.isDisposed())
-					fInsertModeCaret.dispose();
+				Image image= fInsertModeCaret.getImage();
+				if (image != null && !image.isDisposed())
+					image.dispose();				
 			}
 			fInsertModeCaret= null;
 		}
 		
 		if (fOverwriteModeCaret != null) {
 			if (!fOverwriteModeCaret.isDisposed()) {
-				// TODO remove parent check 
-				Canvas parent= fOverwriteModeCaret.getParent();
-				if (parent != null && ! parent.isDisposed())
-					fOverwriteModeCaret.dispose();
+				Image image= fOverwriteModeCaret.getImage();
+				if (image != null && !image.isDisposed())
+					image.dispose();
 			}
 			fOverwriteModeCaret= null;
 		}
 		
 		if (fSmartInsertModeCaret != null) {
 			if (!fSmartInsertModeCaret.isDisposed()) {
-				// TODO remove parent check 
-				Canvas parent= fSmartInsertModeCaret.getParent();
-				if (parent != null && ! parent.isDisposed())
-					fSmartInsertModeCaret.dispose();
+				Image image= fSmartInsertModeCaret.getImage();
+				if (image != null && !image.isDisposed())
+					image.dispose();
 			}
 			fSmartInsertModeCaret= null;
 		}
@@ -2924,16 +2983,30 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		IDocumentProvider p= getDocumentProvider();
 		if (p == null)
 			return;
-		
-		if (fModificationStamp == -1) 
-			fModificationStamp= p.getSynchronizationStamp(input);
 			
-		long stamp= p.getModificationStamp(input);
-		if (stamp != fModificationStamp) {
-			fModificationStamp= stamp;
-			if (stamp != p.getSynchronizationStamp(input))
-				handleEditorInputChanged();
-		} 
+		if (p instanceof IDocumentProviderExtension3)  {
+			
+			IDocumentProviderExtension3 p3= (IDocumentProviderExtension3) p;
+			
+			long stamp= p.getModificationStamp(input);
+			if (stamp != fModificationStamp) {
+				fModificationStamp= stamp;
+				if (!p3.isSynchronized(input))
+					handleEditorInputChanged();
+			} 
+			
+		} else  {
+		
+			if (fModificationStamp == -1) 
+				fModificationStamp= p.getSynchronizationStamp(input);
+				
+			long stamp= p.getModificationStamp(input);
+			if (stamp != fModificationStamp) {
+				fModificationStamp= stamp;
+				if (stamp != p.getSynchronizationStamp(input))
+					handleEditorInputChanged();
+			} 
+		}
 		
 		updateState(getEditorInput());
 		updateStatusField(ITextEditorActionConstants.STATUS_CATEGORY_ELEMENT_STATE);
@@ -3088,11 +3161,19 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			
 			Shell shell= getSite().getShell();
 			
+			boolean isSynchronized= false;
 			IDocumentProvider p= getDocumentProvider();
-			long modifiedStamp= p.getModificationStamp(getEditorInput());
-			long synchStamp= p.getSynchronizationStamp(getEditorInput());
 			
-			if (fErrorCorrectionOnSave == 1 && modifiedStamp != synchStamp) {
+			if (p instanceof IDocumentProviderExtension3)  {
+				IDocumentProviderExtension3 p3= (IDocumentProviderExtension3) p;
+				isSynchronized= p3.isSynchronized(getEditorInput());
+			} else  {
+				long modifiedStamp= p.getModificationStamp(getEditorInput());
+				long synchStamp= p.getSynchronizationStamp(getEditorInput());
+				isSynchronized= (modifiedStamp == synchStamp);
+			}
+			
+			if (fErrorCorrectionOnSave == 1 && !isSynchronized) {
 				
 				String title= EditorMessages.getString("Editor.error.save.outofsync.title"); //$NON-NLS-1$
 				String msg= EditorMessages.getString("Editor.error.save.outofsync.message"); //$NON-NLS-1$
@@ -3445,7 +3526,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		
 		StyledText textWidget= getSourceViewer().getTextWidget();
 		for (int i= 0; i < ACTION_MAP.length; i++) {
-			IdMapEntry entry= (IdMapEntry) ACTION_MAP[i];
+			IdMapEntry entry= ACTION_MAP[i];
 			action= new TextNavigationAction(textWidget, entry.getAction());
 			action.setActionDefinitionId(entry.getActionId());
 			setAction(entry.getActionId(), action);
@@ -3591,6 +3672,13 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		action.setActionDefinitionId(ITextEditorActionDefinitionIds.SHIFT_RIGHT);
 		setAction(ITextEditorActionConstants.SHIFT_RIGHT, action);
 		
+		action= new ShiftAction(EditorMessages.getResourceBundle(), "Editor.ShiftRight.", this, ITextOperationTarget.SHIFT_RIGHT) { //$NON-NLS-1$
+			public void update() {
+				updateForTab();
+			}
+		};
+		setAction(ITextEditorActionConstants.SHIFT_RIGHT_TAB, action);
+		
 		action= new ShiftAction(EditorMessages.getResourceBundle(), "Editor.ShiftLeft.", this, ITextOperationTarget.SHIFT_LEFT); //$NON-NLS-1$
 		action.setHelpContextId(IAbstractTextEditorHelpContextIds.SHIFT_LEFT_ACTION);
 		action.setActionDefinitionId(ITextEditorActionDefinitionIds.SHIFT_LEFT);
@@ -3695,7 +3783,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		markAsSelectionDependentAction(ITextEditorActionConstants.PASTE, true);
 		markAsSelectionDependentAction(ITextEditorActionConstants.DELETE, true);
 		markAsSelectionDependentAction(ITextEditorActionConstants.SHIFT_RIGHT, true);
-		markAsSelectionDependentAction(ITextEditorActionConstants.SHIFT_LEFT, true);
+		markAsSelectionDependentAction(ITextEditorActionConstants.SHIFT_RIGHT_TAB, true);
 		markAsSelectionDependentAction(ITextEditorActionConstants.UPPER_CASE, true);
 		markAsSelectionDependentAction(ITextEditorActionConstants.LOWER_CASE, true);
 		
@@ -3707,6 +3795,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		markAsStateDependentAction(ITextEditorActionConstants.PASTE, true);
 		markAsStateDependentAction(ITextEditorActionConstants.DELETE, true);
 		markAsStateDependentAction(ITextEditorActionConstants.SHIFT_RIGHT, true);
+		markAsStateDependentAction(ITextEditorActionConstants.SHIFT_RIGHT_TAB, true);
 		markAsStateDependentAction(ITextEditorActionConstants.SHIFT_LEFT, true);
 		markAsStateDependentAction(ITextEditorActionConstants.FIND, true);
 		markAsStateDependentAction(ITextEditorActionConstants.DELETE_LINE, true);
@@ -3718,7 +3807,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		markAsStateDependentAction(ITextEditorActionConstants.CUT_LINE_TO_BEGINNING, true);
 		markAsStateDependentAction(ITextEditorActionConstants.CUT_LINE_TO_END, true);
 		
-		setActionActivationCode(ITextEditorActionConstants.SHIFT_RIGHT,'\t', -1, SWT.NONE);
+		setActionActivationCode(ITextEditorActionConstants.SHIFT_RIGHT_TAB,'\t', -1, SWT.NONE);
 		setActionActivationCode(ITextEditorActionConstants.SHIFT_LEFT, '\t', -1, SWT.SHIFT);
 	}
 	
@@ -4385,7 +4474,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			int column= 0;
 			for (int i= lineOffset; i < caret; i++)
 				if ('\t' == document.getChar(i))
-					column += tabWidth - (column % tabWidth);
+					column += tabWidth - (tabWidth == 0 ? 0 : column % tabWidth);
 				else
 					column++;
 					
@@ -4472,6 +4561,23 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 	}
 	
 	/**
+	 * Returns the offset of the given source viewer's text widget that corresponds
+	 * to the given model offset or <code>-1</code> if there is no such offset.
+	 * 
+	 * @param viewer the source viewer
+	 * @param modelOffset the model offset
+	 * @return the corresponding offset in the source viewer's text widget or <code>-1</code>
+	 * @since 3.0
+	 */
+	protected final static int modelOffset2WidgetOffset(ISourceViewer viewer, int modelOffset) {
+		if (viewer instanceof ITextViewerExtension3) {
+			ITextViewerExtension3 extension= (ITextViewerExtension3) viewer;
+			return extension.modelOffset2WidgetOffset(modelOffset);
+		}
+		return modelOffset - viewer.getVisibleRegion().getOffset();
+	}
+	
+	/**
 	 * Returns the minimal region of the given source viewer's document that completely
 	 * comprises everything that is visible in the viewer's widget.
 	 * 
@@ -4501,5 +4607,21 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			return overlap != null;
 		}
 		return viewer.overlapsWithVisibleRegion(offset, length);
+	}
+	
+	/*
+	 * @see org.eclipse.ui.texteditor.ITextEditorExtension3#showChangeInformation(boolean)
+	 * @since 3.0
+	 */
+	public void showChangeInformation(boolean show) {
+		// do nothing
+	}
+	
+	/*
+	 * @see org.eclipse.ui.texteditor.ITextEditorExtension3#isChangeInformationShowing()
+	 * @since 3.0
+	 */
+	public boolean isChangeInformationShowing() {
+		return false;
 	}
 }

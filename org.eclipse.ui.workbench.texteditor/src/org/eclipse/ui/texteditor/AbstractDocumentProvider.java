@@ -47,7 +47,7 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
  * <code>createAnnotationModel</code>, and <code>doSaveDocument</code>.
  * </p>
  */
-public abstract class AbstractDocumentProvider implements IDocumentProvider, IDocumentProviderExtension, IDocumentProviderExtension2 {
+public abstract class AbstractDocumentProvider implements IDocumentProvider, IDocumentProviderExtension, IDocumentProviderExtension2, IDocumentProviderExtension3 {
 
 		/**
 		 * Opertion created by the document provider and to be executed by the providers runnable context.
@@ -151,7 +151,7 @@ public abstract class AbstractDocumentProvider implements IDocumentProvider, IDo
 			 */
 			public void documentAboutToBeChanged(DocumentEvent event) {
 			}
-		};
+		}
 		
 	
 	/** 
@@ -735,7 +735,7 @@ public abstract class AbstractDocumentProvider implements IDocumentProvider, IDo
 	 * @see IDocumentProviderExtension#validateState(Object, Object)
 	 * @since 2.0
 	 */
-	final public void validateState(Object element, Object computationContext) throws CoreException {
+	public void validateState(Object element, Object computationContext) throws CoreException {
 		ElementInfo info= (ElementInfo) fElementInfoMap.get(element);
 		if (info == null)
 			return;
@@ -921,5 +921,13 @@ public abstract class AbstractDocumentProvider implements IDocumentProvider, IDo
 	 */
 	public void setProgressMonitor(IProgressMonitor progressMonitor) {
 		fProgressMonitor= progressMonitor;
+	}
+	
+	/*
+	 * @see org.eclipse.ui.texteditor.IDocumentProviderExtension3#isSynchronized(java.lang.Object)
+	 * @since 3.0
+	 */
+	public boolean isSynchronized(Object element) {
+		return true;
 	}
 }

@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.eclipse.core.runtime.IStatus;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -34,20 +36,22 @@ import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 
-import org.eclipse.core.runtime.IStatus;
-
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.DialogPage;
+import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.preference.PreferencePage;
 
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
+import org.eclipse.ui.texteditor.quickdiff.QuickDiff;
+import org.eclipse.ui.texteditor.quickdiff.ReferenceProviderDescriptor;
 import org.eclipse.ui.editors.text.ITextEditorHelpContextIds;
-import org.eclipse.ui.editors.text.TextEditorPreferenceConstants;
 import org.eclipse.ui.help.WorkbenchHelp;
 import org.eclipse.ui.texteditor.AnnotationPreference;
+import org.eclipse.ui.texteditor.ExtendedTextEditorPreferenceConstants;
 import org.eclipse.ui.texteditor.MarkerAnnotationPreferences;
+
 
 
 /**
@@ -59,31 +63,14 @@ import org.eclipse.ui.texteditor.MarkerAnnotationPreferences;
  */
 public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbenchPreferencePage {
 	
-	private static void indent(Control control) {
-		GridData gridData= new GridData();
-		gridData.horizontalIndent= 20;
-		control.setLayoutData(gridData);		
-	}
-	
-	private static void createDependency(final Button master, final Control slave) {
-		indent(slave);
-		master.addSelectionListener(new SelectionListener() {
-			public void widgetSelected(SelectionEvent e) {
-				slave.setEnabled(master.getSelection());
-			}
-
-			public void widgetDefaultSelected(SelectionEvent e) {}
-		});		
-	}
-		
 	private final String[][] fAppearanceColorListModel= new String[][] {
-		{TextEditorMessages.getString("TextEditorPreferencePage.lineNumberForegroundColor"), TextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER_COLOR}, //$NON-NLS-1$
-		{TextEditorMessages.getString("TextEditorPreferencePage.currentLineHighlighColor"), TextEditorPreferenceConstants.EDITOR_CURRENT_LINE_COLOR}, //$NON-NLS-1$
-		{TextEditorMessages.getString("TextEditorPreferencePage.printMarginColor"), TextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLOR}, //$NON-NLS-1$
-		{TextEditorMessages.getString("TextEditorPreferencePage.changedLineColor"), TextEditorPreferenceConstants.LINE_NUMBER_CHANGED_COLOR}, //$NON-NLS-1$
-		{TextEditorMessages.getString("TextEditorPreferencePage.addedLineColor"), TextEditorPreferenceConstants.LINE_NUMBER_ADDED_COLOR}, //$NON-NLS-1$
-		{TextEditorMessages.getString("TextEditorPreferencePage.deletedLineColor"), TextEditorPreferenceConstants.LINE_NUMBER_DELETED_COLOR}, //$NON-NLS-1$
+		{TextEditorMessages.getString("TextEditorPreferencePage.lineNumberForegroundColor"), ExtendedTextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER_COLOR}, //$NON-NLS-1$
+		{TextEditorMessages.getString("TextEditorPreferencePage.currentLineHighlighColor"), ExtendedTextEditorPreferenceConstants.EDITOR_CURRENT_LINE_COLOR}, //$NON-NLS-1$
+		{TextEditorMessages.getString("TextEditorPreferencePage.printMarginColor"), ExtendedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLOR}, //$NON-NLS-1$
 	};
+	
+	/** Button controlling default setting of the selected reference provider. */
+	private Button fSetDefaultButton;
 	
 	private final String[][] fAnnotationColorListModel;
 
@@ -116,10 +103,13 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 	
 	private List fAppearanceColorList;
 	private List fAnnotationList;
+	private List fQuickDiffProviderList;
 	private ColorEditor fAppearanceColorEditor;
 	private ColorEditor fAnnotationForegroundColorEditor;
 	private Button fShowInTextCheckBox;
 	private Button fShowInOverviewRulerCheckBox;
+	private String[][] fQuickDiffProviderListModel;
+
 	
 	public TextEditorPreferencePage2() {
 		setDescription(TextEditorMessages.getString("TextEditorPreferencePage.description")); //$NON-NLS-1$
@@ -127,7 +117,9 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 		
 		MarkerAnnotationPreferences preferences= new MarkerAnnotationPreferences();
 		fOverlayStore= createOverlayStore(preferences);
+		
 		fAnnotationColorListModel= createAnnotationTypeListModel(preferences);
+		fQuickDiffProviderListModel= createQuickDiffReferenceListModel();
 	}
 	
 	private OverlayPreferenceStore createOverlayStore(MarkerAnnotationPreferences preferences) {
@@ -141,25 +133,24 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, info.getOverviewRulerPreferenceKey()));
 		}
 		
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, TextEditorPreferenceConstants.EDITOR_CURRENT_LINE_COLOR));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, TextEditorPreferenceConstants.EDITOR_CURRENT_LINE));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, ExtendedTextEditorPreferenceConstants.EDITOR_CURRENT_LINE_COLOR));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, ExtendedTextEditorPreferenceConstants.EDITOR_CURRENT_LINE));
 		
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, TextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLOR));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, TextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLUMN));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, TextEditorPreferenceConstants.EDITOR_PRINT_MARGIN));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, ExtendedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLOR));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, ExtendedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLUMN));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, ExtendedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN));
 		
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, TextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION_COLOR));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, TextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, TextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION_IN_OVERVIEW_RULER));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, ExtendedTextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION_COLOR));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, ExtendedTextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, ExtendedTextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION_IN_OVERVIEW_RULER));
 		
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, TextEditorPreferenceConstants.EDITOR_OVERVIEW_RULER));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, ExtendedTextEditorPreferenceConstants.EDITOR_OVERVIEW_RULER));
 		
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, TextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER_COLOR));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, TextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, TextEditorPreferenceConstants.LINE_NUMBER_BAR_QUICK_DIFF));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, TextEditorPreferenceConstants.LINE_NUMBER_CHANGED_COLOR));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, TextEditorPreferenceConstants.LINE_NUMBER_ADDED_COLOR));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, TextEditorPreferenceConstants.LINE_NUMBER_DELETED_COLOR));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, ExtendedTextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER_COLOR));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, ExtendedTextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, ExtendedTextEditorPreferenceConstants.QUICK_DIFF_ALWAYS_ON));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, ExtendedTextEditorPreferenceConstants.QUICK_DIFF_DEFAULT_PROVIDER));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, ExtendedTextEditorPreferenceConstants.QUICK_DIFF_CHARACTER_MODE));
 		
 		OverlayPreferenceStore.OverlayKey[] keys= new OverlayPreferenceStore.OverlayKey[overlayKeys.size()];
 		overlayKeys.toArray(keys);
@@ -172,6 +163,27 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 		while (e.hasNext()) {
 			AnnotationPreference info= (AnnotationPreference) e.next();
 			listModelItems.add(new String[] { info.getPreferenceLabel(), info.getColorPreferenceKey(), info.getTextPreferenceKey(), info.getOverviewRulerPreferenceKey()});
+		}
+		String[][] items= new String[listModelItems.size()][];
+		listModelItems.toArray(items);
+		return items;
+	}
+	
+	private String[][] createQuickDiffReferenceListModel() {
+		java.util.List descriptors= new QuickDiff().getReferenceProviderDescriptors();
+		ArrayList listModelItems= new ArrayList();
+		for (Iterator it= descriptors.iterator(); it.hasNext();) {
+			ReferenceProviderDescriptor descriptor= (ReferenceProviderDescriptor) it.next();
+			String label= descriptor.getLabel();
+			int i= label.indexOf('&');
+			while (i >= 0) {
+				if (i < label.length())
+					label= label.substring(0, i) + label.substring(i+1);
+				else
+					label.substring(0, i);
+				i= label.indexOf('&');
+			}
+			listModelItems.add(new String[] { descriptor.getId(), label });
 		}
 		String[][] items= new String[listModelItems.size()][];
 		listModelItems.toArray(items);
@@ -215,17 +227,13 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 		fShowInOverviewRulerCheckBox.setSelection(fOverlayStore.getBoolean(key));				
 	}
 	
-	// sets enabled flag for a control and all its sub-tree
-	private static void setEnabled(Control control, boolean enable) {
-		control.setEnabled(enable);
-		if (control instanceof Composite) {
-			Composite composite= (Composite) control;
-			Control[] children= composite.getChildren();
-			for (int i= 0; i < children.length; i++)
-				setEnabled(children[i], enable);
-		}
+	private void handleProviderListSelection() {
+		int i= fQuickDiffProviderList.getSelectionIndex();
+		
+		boolean b= fOverlayStore.getString(ExtendedTextEditorPreferenceConstants.QUICK_DIFF_DEFAULT_PROVIDER).equals(fQuickDiffProviderListModel[i][0]);
+		fSetDefaultButton.setEnabled(!b);
 	}
-
+	
 	private Control createAppearancePage(Composite parent) {
 
 		Composite appearanceComposite= new Composite(parent, SWT.NONE);
@@ -233,23 +241,19 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 		appearanceComposite.setLayout(layout);
 
 		String label= TextEditorMessages.getString("TextEditorPreferencePage.printMarginColumn"); //$NON-NLS-1$
-		addTextField(appearanceComposite, label, TextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLUMN, 3, 0, true);
+		addTextField(appearanceComposite, label, ExtendedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLUMN, 3, 0, true);
 				
 		label= TextEditorMessages.getString("TextEditorPreferencePage.showOverviewRuler"); //$NON-NLS-1$
-		addCheckBox(appearanceComposite, label, TextEditorPreferenceConstants.EDITOR_OVERVIEW_RULER, 0);
+		addCheckBox(appearanceComposite, label, ExtendedTextEditorPreferenceConstants.EDITOR_OVERVIEW_RULER, 0);
 				
 		label= TextEditorMessages.getString("TextEditorPreferencePage.showLineNumbers"); //$NON-NLS-1$
-		Button lineNumberBarButton= addCheckBox(appearanceComposite, label, TextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER, 0);
-
-		label= TextEditorMessages.getString("TextEditorPreferencePage.enableQuickDiff"); //$NON-NLS-1$
-		Button quickDiffButton= addCheckBox(appearanceComposite, label, TextEditorPreferenceConstants.LINE_NUMBER_BAR_QUICK_DIFF, 0);
-		createDependency(lineNumberBarButton, quickDiffButton);
+		addCheckBox(appearanceComposite, label, ExtendedTextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER, 0);
 
 		label= TextEditorMessages.getString("TextEditorPreferencePage.highlightCurrentLine"); //$NON-NLS-1$
-		addCheckBox(appearanceComposite, label, TextEditorPreferenceConstants.EDITOR_CURRENT_LINE, 0);
+		addCheckBox(appearanceComposite, label, ExtendedTextEditorPreferenceConstants.EDITOR_CURRENT_LINE, 0);
 				
 		label= TextEditorMessages.getString("TextEditorPreferencePage.showPrintMargin"); //$NON-NLS-1$
-		addCheckBox(appearanceComposite, label, TextEditorPreferenceConstants.EDITOR_PRINT_MARGIN, 0);
+		addCheckBox(appearanceComposite, label, ExtendedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN, 0);
 
 
 		Label l= new Label(appearanceComposite, SWT.LEFT );
@@ -276,7 +280,7 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 
 		fAppearanceColorList= new List(editorComposite, SWT.SINGLE | SWT.V_SCROLL | SWT.BORDER);
 		gd= new GridData(GridData.VERTICAL_ALIGN_BEGINNING | GridData.FILL_HORIZONTAL);
-		gd.heightHint= convertHeightInCharsToPixels(8);
+		gd.heightHint= convertHeightInCharsToPixels(3);
 		fAppearanceColorList.setLayoutData(gd);
 						
 		Composite stylesComposite= new Composite(editorComposite, SWT.NONE);
@@ -318,7 +322,100 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 				PreferenceConverter.setValue(fOverlayStore, key, fAppearanceColorEditor.getColorValue());
 			}
 		});
+		
 		return appearanceComposite;
+	}
+	
+	private Control createQuickdiffPage(Composite parent) {
+		Composite composite= new Composite(parent, SWT.NONE);
+		GridLayout layout= new GridLayout(); layout.numColumns= 2;
+		composite.setLayout(layout);
+
+		String label= TextEditorMessages.getString("TextEditorPreferencePage.showQuickDiffPerDefault"); //$NON-NLS-1$
+		addCheckBox(composite, label, ExtendedTextEditorPreferenceConstants.QUICK_DIFF_ALWAYS_ON, 0);
+
+		label= TextEditorMessages.getString("TextEditorPreferencePage.quickDiffCharacterMode"); //$NON-NLS-1$
+		addCheckBox(composite, label, ExtendedTextEditorPreferenceConstants.QUICK_DIFF_CHARACTER_MODE, 0);
+
+		Label l= new Label(composite, SWT.LEFT );
+		GridData gd= new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+		gd.horizontalSpan= 2;
+		gd.heightHint= convertHeightInCharsToPixels(1) / 2;
+		l.setLayoutData(gd);
+		
+		l= new Label(composite, SWT.LEFT);
+		l.setText(TextEditorMessages.getString("TextEditorPreferencePage.quickdiff.referenceprovidertitle")); //$NON-NLS-1$
+		gd= new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+		gd.horizontalSpan= 2;
+		l.setLayoutData(gd);
+
+		Composite editorComposite= new Composite(composite, SWT.NONE);
+		layout= new GridLayout();
+		layout.numColumns= 2;
+		layout.marginHeight= 0;
+		layout.marginWidth= 0;
+		editorComposite.setLayout(layout);
+		gd= new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.FILL_VERTICAL);
+		gd.horizontalSpan= 2;
+		editorComposite.setLayoutData(gd);		
+
+		fQuickDiffProviderList= new List(editorComposite, SWT.SINGLE | SWT.V_SCROLL | SWT.BORDER);
+		gd= new GridData(GridData.VERTICAL_ALIGN_BEGINNING | GridData.FILL_HORIZONTAL);
+		gd.heightHint= convertHeightInCharsToPixels(4);
+		fQuickDiffProviderList.setLayoutData(gd);
+						
+		Composite stylesComposite= new Composite(editorComposite, SWT.NONE);
+		layout= new GridLayout();
+		layout.marginHeight= 0;
+		layout.marginWidth= 0;
+		layout.numColumns= 2;
+		stylesComposite.setLayout(layout);
+		stylesComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		fSetDefaultButton= new Button(stylesComposite, SWT.PUSH);
+		fSetDefaultButton.setText(TextEditorMessages.getString("TextEditorPreferencePage.quickdiff.setDefault")); //$NON-NLS-1$
+		gd= new GridData(GridData.FILL_HORIZONTAL);
+		gd.horizontalAlignment= GridData.BEGINNING;
+		gd.horizontalSpan= 2;
+		fSetDefaultButton.setLayoutData(gd);
+		
+		fQuickDiffProviderList.addSelectionListener(new SelectionListener() {
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// do nothing
+			}
+			
+			public void widgetSelected(SelectionEvent e) {
+				handleProviderListSelection();
+			}
+
+		});
+		
+		fSetDefaultButton.addSelectionListener(new SelectionListener() {
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// do nothing
+			}
+			
+			public void widgetSelected(SelectionEvent e) {
+				int i= fQuickDiffProviderList.getSelectionIndex();
+				for (int j= 0; j < fQuickDiffProviderListModel.length; j++) {
+					if (fOverlayStore.getString(ExtendedTextEditorPreferenceConstants.QUICK_DIFF_DEFAULT_PROVIDER).equals(fQuickDiffProviderListModel[j][0])) {
+						fQuickDiffProviderList.remove(j);
+						fQuickDiffProviderList.add(fQuickDiffProviderListModel[j][1], j);
+					}
+					if (i == j) {
+						fQuickDiffProviderList.remove(j);
+						fQuickDiffProviderList.add(fQuickDiffProviderListModel[j][1] + " " + TextEditorMessages.getString("TextEditorPreferencePage.quickdiff.defaultlabel"), j);  //$NON-NLS-1$//$NON-NLS-2$
+					}
+				}
+				fSetDefaultButton.setEnabled(false);
+				fQuickDiffProviderList.setSelection(i);
+				fQuickDiffProviderList.redraw();
+				
+				fOverlayStore.setValue(ExtendedTextEditorPreferenceConstants.QUICK_DIFF_DEFAULT_PROVIDER, fQuickDiffProviderListModel[i][0]);
+			}
+		});
+		
+		return composite;
 	}
 	
 	
@@ -345,7 +442,7 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 
 		fAnnotationList= new List(editorComposite, SWT.SINGLE | SWT.V_SCROLL | SWT.BORDER);
 		gd= new GridData(GridData.VERTICAL_ALIGN_BEGINNING | GridData.FILL_HORIZONTAL);
-		gd.heightHint= convertHeightInCharsToPixels(8);
+		gd.heightHint= convertHeightInCharsToPixels(10);
 		fAnnotationList.setLayoutData(gd);
 						
 		Composite optionsComposite= new Composite(editorComposite, SWT.NONE);
@@ -451,6 +548,10 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 		item.setText(TextEditorMessages.getString("TextEditorPreferencePage.annotationsTab.title")); //$NON-NLS-1$
 		item.setControl(createAnnotationsPage(folder));
 
+		item= new TabItem(folder, SWT.NONE);
+		item.setText(TextEditorMessages.getString("TextEditorPreferencePage.quickdiffTab.title")); //$NON-NLS-1$
+		item.setControl(createQuickdiffPage(folder));
+
 		initialize();
 		Dialog.applyDialogFont(folder);
 		return folder;
@@ -478,6 +579,21 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 				if (fAnnotationList != null && !fAnnotationList.isDisposed()) {
 					fAnnotationList.select(0);
 					handleAnnotationListSelection();
+				}
+			}
+		});
+
+		for (int i= 0; i < fQuickDiffProviderListModel.length; i++) {
+			String label= fQuickDiffProviderListModel[i][1];
+			if (fOverlayStore.getString(ExtendedTextEditorPreferenceConstants.QUICK_DIFF_DEFAULT_PROVIDER).equals(fQuickDiffProviderListModel[i][0]))
+				label += " " + TextEditorMessages.getString("TextEditorPreferencePage.quickdiff.defaultlabel"); //$NON-NLS-1$ //$NON-NLS-2$
+			fQuickDiffProviderList.add(label);
+		}
+		fQuickDiffProviderList.getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				if (fQuickDiffProviderList != null && !fQuickDiffProviderList.isDisposed()) {
+					fQuickDiffProviderList.select(0);
+					handleProviderListSelection();
 				}
 			}
 		});
@@ -522,6 +638,7 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 
 		handleAppearanceColorListSelection();
 		handleAnnotationListSelection();
+		handleProviderListSelection();
 
 		super.performDefaults();
 	}
@@ -621,15 +738,15 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 		String message= status.getMessage();
 		switch (status.getSeverity()) {
 			case IStatus.OK:
-				page.setMessage(message, DialogPage.NONE);
+				page.setMessage(message, IMessageProvider.NONE);
 				page.setErrorMessage(null);
 				break;
 			case IStatus.WARNING:
-				page.setMessage(message, DialogPage.WARNING);
+				page.setMessage(message, IMessageProvider.WARNING);
 				page.setErrorMessage(null);
 				break;				
 			case IStatus.INFO:
-				page.setMessage(message, DialogPage.INFORMATION);
+				page.setMessage(message, IMessageProvider.INFORMATION);
 				page.setErrorMessage(null);
 				break;			
 			default:

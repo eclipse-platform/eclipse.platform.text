@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.CoreException;
 
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.IAnnotationAccess;
+import org.eclipse.jface.text.source.IAnnotationAccessExtension;
 
 import org.eclipse.ui.internal.texteditor.TextEditorPlugin;
 
@@ -24,7 +25,7 @@ import org.eclipse.ui.internal.texteditor.TextEditorPlugin;
 /**
  * @since 2.1
  */
-public class DefaultMarkerAnnotationAccess implements IAnnotationAccess {
+public class DefaultMarkerAnnotationAccess implements IAnnotationAccess, IAnnotationAccessExtension {
 	
 	/** Constant for the unknown marker type */
 	public final static String UNKNOWN= TextEditorPlugin.PLUGIN_ID + ".unknown";  //$NON-NLS-1$
@@ -48,21 +49,36 @@ public class DefaultMarkerAnnotationAccess implements IAnnotationAccess {
 	 * @return the annotation preference or <code>null</code> if none
 	 */	
 	private AnnotationPreference getAnnotationPreference(IMarker marker) {
-		
-		try {
-			
-			int severity= marker.getAttribute(IMarker.SEVERITY, IMarker.SEVERITY_INFO);
-
-			Iterator e= fMarkerAnnotationPreferences.getAnnotationPreferences().iterator();
-			while (e.hasNext()) {
-				AnnotationPreference info= (AnnotationPreference) e.next();
-				if (marker.isSubtypeOf(info.getMarkerType()) && severity == info.getSeverity())
-					return info;
+		Iterator e= fMarkerAnnotationPreferences.getAnnotationPreferences().iterator();
+		while (e.hasNext()) {
+			Integer severity;
+			boolean isSubtype;
+			AnnotationPreference info= (AnnotationPreference) e.next();
+			try {
+				severity= (Integer)marker.getAttribute(IMarker.SEVERITY);
+				isSubtype= marker.isSubtypeOf(info.getMarkerType());
+			} catch (CoreException x) {
+				return null;
 			}
-			
-		} catch (CoreException x) {
-		}
-		
+			if (isSubtype && (severity == null || severity.intValue() == info.getSeverity()))
+				return info;
+			}
+		return null;
+	}
+
+	/**
+	 * Returns the annotation preference for the given marker.
+	 * 
+	 * @param marker
+	 * @return the annotation preference or <code>null</code> if none
+	 */	
+	private AnnotationPreference getAnnotationPreference(String markerType, int severity) {
+		Iterator e= fMarkerAnnotationPreferences.getAnnotationPreferences().iterator();
+		while (e.hasNext()) {
+			AnnotationPreference info= (AnnotationPreference) e.next();
+			if (info.getMarkerType().equals(markerType) && severity == info.getSeverity())
+				return info;
+			}
 		return null;
 	}
 	
@@ -78,6 +94,10 @@ public class DefaultMarkerAnnotationAccess implements IAnnotationAccess {
 				if (preference != null)
 					return preference.getAnnotationType();
 			}
+		} else if (annotation instanceof IAnnotationExtension) {
+			IAnnotationExtension annotationExtension= (IAnnotationExtension)annotation;
+			AnnotationPreference preference= getAnnotationPreference(annotationExtension.getMarkerType(), annotationExtension.getSeverity());
+			return preference.getAnnotationType();
 		}
 		return UNKNOWN;
 	}
@@ -93,6 +113,31 @@ public class DefaultMarkerAnnotationAccess implements IAnnotationAccess {
 	 * @see org.eclipse.jface.text.source.IAnnotationAccess#isTemporary(org.eclipse.jface.text.source.Annotation)
 	 */
 	public boolean isTemporary(Annotation annotation) {
+
+		if (annotation instanceof IAnnotationExtension)
+			return ((IAnnotationExtension)annotation).isTemporary();
+
 		return false;
+	}
+	
+	/*
+	 * @see org.eclipse.jface.text.source.IAnnotationAccessExtension#getLabel(org.eclipse.jface.text.source.Annotation)
+	 */
+	public String getTypeLabel(Annotation annotation) {
+		AnnotationPreference preference= null;
+		if (annotation instanceof MarkerAnnotation) {
+			MarkerAnnotation markerAnnotation= (MarkerAnnotation) annotation;
+			IMarker marker= markerAnnotation.getMarker();
+			if (marker != null && marker.exists()) {
+				preference= getAnnotationPreference(marker);
+			}
+		} else if (annotation instanceof IAnnotationExtension) {
+			IAnnotationExtension annotationExtension= (IAnnotationExtension)annotation;
+			preference= getAnnotationPreference(annotationExtension.getMarkerType(), annotationExtension.getSeverity());
+		}
+		if (preference != null)
+			return preference.getPreferenceLabel();
+		
+		return null;
 	}
 }

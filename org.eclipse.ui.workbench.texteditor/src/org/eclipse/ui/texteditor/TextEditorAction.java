@@ -14,12 +14,11 @@ package org.eclipse.ui.texteditor;
 import java.util.ResourceBundle;
 
 /**
- * Sekelleton of a standard text editor action. The action is 
+ * Skeleton of a standard text editor action. The action is 
  * initially associated with a text editor via the constructor,
  * but can subsequently be changed using <code>setEditor</code>.
  * Subclasses must implement the <code>run</code> method and if
  * required override the <code>update</code> method.
- * </p>
  */
 public abstract class TextEditorAction extends ResourceAction implements IUpdate {
 	
@@ -39,6 +38,25 @@ public abstract class TextEditorAction extends ResourceAction implements IUpdate
 	 */
 	protected TextEditorAction(ResourceBundle bundle, String prefix, ITextEditor editor) {
 		super(bundle, prefix);
+		setEditor(editor);
+		update();
+	}
+
+	/**
+	 * Creates and initializes the action for the given text editor. The action
+	 * configures its visual representation from the given resource bundle.
+	 *
+	 * @param bundle the resource bundle
+	 * @param prefix a prefix to be prepended to the various resource keys
+	 *   (described in <code>ResourceAction</code> constructor), or 
+	 *   <code>null</code> if none
+	 * @param editor the text editor
+	 * @param style the style of this action
+	 * @see ResourceAction#ResourceAction
+	 * @since 3.0
+	 */
+	protected TextEditorAction(ResourceBundle bundle, String prefix, ITextEditor editor, int style) {
+		super(bundle, prefix, style);
 		setEditor(editor);
 		update();
 	}

@@ -12,7 +12,11 @@
 package org.eclipse.ui.texteditor;
 
 
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.resources.IMarker;
@@ -22,9 +26,11 @@ import org.eclipse.core.runtime.Platform;
 
 import org.eclipse.swt.graphics.RGB;
 
+import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.resource.StringConverter;
 
-import org.eclipse.ui.internal.texteditor.TextEditorPlugin;
+import org.eclipse.ui.internal.editors.text.EditorsPlugin;
 
 
 /**
@@ -65,7 +71,7 @@ public class MarkerAnnotationPreferences {
 		fPreferences= new ArrayList(2);
 		
 		// populate list
-		IExtensionPoint extensionPoint= Platform.getPluginRegistry().getExtensionPoint(TextEditorPlugin.PLUGIN_ID, "markerAnnotationSpecification"); //$NON-NLS-1$
+		IExtensionPoint extensionPoint= Platform.getPluginRegistry().getExtensionPoint(EditorsPlugin.getPluginId(), "markerAnnotationSpecification"); //$NON-NLS-1$
 		if (extensionPoint != null) {
 			IConfigurationElement[] elements= extensionPoint.getConfigurationElements();
 			for (int i= 0; i < elements.length; i++) {
@@ -74,6 +80,34 @@ public class MarkerAnnotationPreferences {
 					fPreferences.add(createSpec(elements[i]));
 			}
 		}
+
+		final Collator collator= Collator.getInstance();
+		Collections.sort(fPreferences, new Comparator() {
+			/*
+			 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+			 */
+			public int compare(Object o1, Object o2) {
+				if (o1 == o2)
+					return 0;
+					
+				AnnotationPreference ap1= (AnnotationPreference)o1;
+				AnnotationPreference ap2= (AnnotationPreference)o2;
+
+				String label1= ap1.getPreferenceLabel();
+				String label2= ap2.getPreferenceLabel();
+				
+				if (label1 == null && label2 == null)
+					return 0;
+				
+				if (label1 == null)
+					return -1;
+				
+				if (label2 == null)
+					return 1;
+
+				return collator.compare(label1, label2);
+			}
+		});
 	}
 	
 	/**
@@ -149,7 +183,63 @@ public class MarkerAnnotationPreferences {
 		if (s != null && s.trim().length() > 0)
 			b= StringConverter.asBoolean(s, false);
 		info.setContributesToHeader(b);
+
+		s= element.getAttribute("showInNextPrevDropdownToolbarActionKey");  //$NON-NLS-1$
+		if (s != null && s.trim().length() == 0)
+			s= null;
+		info.setShowInNextPrevDropdownToolbarActionKey(s);
+
+		b= false;
+		s= element.getAttribute("showInNextPrevDropdownToolbarAction");  //$NON-NLS-1$
+		if (s != null && s.trim().length() > 0)
+			b= StringConverter.asBoolean(s, false);
+		info.setShowInNextPrevDropdownToolbarAction(b);
+
+		s= element.getAttribute("isGoToNextNavigationTargetKey");  //$NON-NLS-1$
+		if (s != null && s.trim().length() == 0)
+			s= null;
+		info.setIsGoToNextNavigationTargetKey(s);
+
+		b= false;
+		s= element.getAttribute("isGoToNextNavigationTarget");  //$NON-NLS-1$
+		if (s != null && s.trim().length() > 0)
+			b= StringConverter.asBoolean(s, false);
+		info.setIsGoToNextNavigationTarget(b);
+
+		s= element.getAttribute("isGoToPreviousNavigationTargetKey");  //$NON-NLS-1$
+		if (s != null && s.trim().length() == 0)
+			s= null;
+		info.setIsGoToPreviousNavigationTargetKey(s);
+
+		b= false;
+		s= element.getAttribute("isGoToPreviousNavigationTarget");  //$NON-NLS-1$
+		if (s != null && s.trim().length() > 0)
+			b= StringConverter.asBoolean(s, false);
+		info.setIsGoToPreviousNavigationTarget(b);
 		
 		return info;
+	}
+
+	/**
+	 * Initializes the given preference store with the default marker annotation values.
+	 * 
+	 * @param store the preference store to be initialized
+	 * @since 3.0
+	 */
+	public static void initializeDefaultValues(IPreferenceStore store) {
+		MarkerAnnotationPreferences preferences= new MarkerAnnotationPreferences();
+		Iterator e= preferences.getAnnotationPreferences().iterator();
+		while (e.hasNext()) {
+			AnnotationPreference info= (AnnotationPreference) e.next();
+			store.setDefault(info.getTextPreferenceKey(), info.getTextPreferenceValue());
+			store.setDefault(info.getOverviewRulerPreferenceKey(), info.getOverviewRulerPreferenceValue());
+			PreferenceConverter.setDefault(store, info.getColorPreferenceKey(), info.getColorPreferenceValue());
+			if (info.getShowInNextPrevDropdownToolbarActionKey() != null)
+				store.setDefault(info.getShowInNextPrevDropdownToolbarActionKey(), info.isShowInNextPrevDropdownToolbarAction());
+			if (info.getIsGoToNextNavigationTargetKey() != null)
+				store.setDefault(info.getIsGoToNextNavigationTargetKey(), info.isGoToNextNavigationTarget());
+			if (info.getIsGoToPreviousNavigationTargetKey() != null)
+				store.setDefault(info.getIsGoToPreviousNavigationTargetKey(), info.isGoToPreviousNavigationTarget());			
+		}
 	}
 }

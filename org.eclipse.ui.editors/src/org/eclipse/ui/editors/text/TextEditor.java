@@ -14,7 +14,6 @@ package org.eclipse.ui.editors.text;
 
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
-import java.util.Iterator;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
@@ -25,36 +24,17 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 
-import org.eclipse.swt.graphics.RGB;
-import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.preference.PreferenceConverter;
-import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.window.Window;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.Position;
-import org.eclipse.jface.text.source.AnnotationRulerColumn;
-import org.eclipse.jface.text.source.CompositeRuler;
-import org.eclipse.jface.text.source.IAnnotationAccess;
 import org.eclipse.jface.text.source.IAnnotationModel;
-import org.eclipse.jface.text.source.IOverviewRuler;
-import org.eclipse.jface.text.source.ISharedTextColors;
-import org.eclipse.jface.text.source.ISourceViewer;
-import org.eclipse.jface.text.source.ISourceViewerExtension;
-import org.eclipse.jface.text.source.IVerticalRuler;
-import org.eclipse.jface.text.source.IVerticalRulerColumn;
-import org.eclipse.jface.text.source.LineNumberChangeRulerColumn;
-import org.eclipse.jface.text.source.LineNumberRulerColumn;
-import org.eclipse.jface.text.source.OverviewRuler;
-import org.eclipse.jface.text.source.SourceViewer;
 
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IFileEditorInput;
@@ -65,11 +45,9 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.AbstractMarkerAnnotationModel;
 import org.eclipse.ui.texteditor.AddMarkerAction;
 import org.eclipse.ui.texteditor.AddTaskAction;
-import org.eclipse.ui.texteditor.AnnotationPreference;
 import org.eclipse.ui.texteditor.ConvertLineDelimitersAction;
-import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
-import org.eclipse.ui.texteditor.DefaultRangeIndicator;
 import org.eclipse.ui.texteditor.DocumentProviderRegistry;
+import org.eclipse.ui.texteditor.ExtendedTextEditor;
 import org.eclipse.ui.texteditor.IAbstractTextEditorHelpContextIds;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
@@ -77,8 +55,6 @@ import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 import org.eclipse.ui.texteditor.MarkerAnnotationPreferences;
 import org.eclipse.ui.texteditor.MarkerUtilities;
 import org.eclipse.ui.texteditor.ResourceAction;
-import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
-import org.eclipse.ui.texteditor.StatusTextEditor;
 
 import org.eclipse.ui.internal.editors.text.EditorsPlugin;
 
@@ -96,85 +72,8 @@ import org.eclipse.ui.internal.editors.text.EditorsPlugin;
  * editor is needed for a workbench window.
  * </p>
  */
-public class TextEditor extends StatusTextEditor {
-	
-	/**
-	 * Preference key for showing the line number ruler.
-	 * @since 2.1
-	 */
-	private final static String LINE_NUMBER_RULER= TextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER;
-	/**
-	 * Preference key for the foreground color of the line numbers.
-	 * @since 2.1
-	 */
-	private final static String LINE_NUMBER_COLOR= TextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER_COLOR;
-	/**
-	 * Preference key for showing the overview ruler.
-	 * @since 2.1
-	 */
-	private final static String OVERVIEW_RULER= TextEditorPreferenceConstants.EDITOR_OVERVIEW_RULER;
-	/**
-	 * Preference key for unknown annotation indication in overview ruler.
-	 * @since 2.1
-	 **/
-	private final static String UNKNOWN_INDICATION_IN_OVERVIEW_RULER= TextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION_IN_OVERVIEW_RULER;
-	/**
-	 * Preference key for unknown annotation indication.
-	 * @since 2.1
-	 **/
-	private final static String UNKNOWN_INDICATION= TextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION;
-	/**
-	 * Preference key for unknown annotation color.
-	 * @since 2.1
-	 **/
-	private final static String UNKNOWN_INDICATION_COLOR= TextEditorPreferenceConstants.EDITOR_UNKNOWN_INDICATION_COLOR;
-	/**
-	 * Preference key for highlighting current line.
-	 * @since 2.1
-	 */
-	private final static String CURRENT_LINE= TextEditorPreferenceConstants.EDITOR_CURRENT_LINE;
-	/**
-	 * Preference key for highlight color of current line.
-	 * @since 2.1
-	 */
-	private final static String CURRENT_LINE_COLOR= TextEditorPreferenceConstants.EDITOR_CURRENT_LINE_COLOR;
-	/**
-	 * Preference key for showing print marging ruler.
-	 * @since 2.1
-	 */
-	private final static String PRINT_MARGIN= TextEditorPreferenceConstants.EDITOR_PRINT_MARGIN;
-	/**
-	 * Preference key for print margin ruler color.
-	 * @since 2.1
-	 */
-	private final static String PRINT_MARGIN_COLOR= TextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLOR;
-	/**
-	 * Preference key for print margin ruler column.
-	 * @since 2.1
-	 **/
-	private final static String PRINT_MARGIN_COLUMN= TextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLUMN;
-
+public class TextEditor extends ExtendedTextEditor {
 	/** 
-	 * The overview ruler of this editor.
-	 * @since 2.1
-	 */
-	protected IOverviewRuler fOverviewRuler;
-	/**
-	 * Helper for accessing annotation from the perspective of this editor.
-	 * @since 2.1
-	 */
-	protected IAnnotationAccess fAnnotationAccess;
-	/**
-	 * Helper for managing the decoration support of this editor's viewer.
-	 * @since 2.1
-	 */
-	protected SourceViewerDecorationSupport fSourceViewerDecorationSupport;
-	/**
-	 * The line number column.
-	 * @since 2.1
-	 */
-	protected LineNumberRulerColumn fLineNumberRulerColumn;
-	/**
 	 * The encoding support for the editor.
 	 * @since 2.0
 	 */
@@ -194,16 +93,14 @@ public class TextEditor extends StatusTextEditor {
 	public TextEditor() {
 		super();
 		initializeKeyBindingScopes();
-		initializeEditor();
-		fAnnotationPreferences= new MarkerAnnotationPreferences();
 		setSourceViewerConfiguration(new TextSourceViewerConfiguration());
+		initializeEditor();
 	}
 	
 	/**
 	 * Initializes this editor.
 	 */
 	protected void initializeEditor() {
-		setRangeIndicator(new DefaultRangeIndicator());
 		setEditorContextMenuId("#TextEditorContext"); //$NON-NLS-1$
 		setRulerContextMenuId("#TextRulerContext"); //$NON-NLS-1$
 		setHelpContextId(ITextEditorHelpContextIds.TEXT_EDITOR);
@@ -231,14 +128,6 @@ public class TextEditor extends StatusTextEditor {
 				fEncodingSupport= null;
 		}
 
-		if (fSourceViewerDecorationSupport != null) {
-			fSourceViewerDecorationSupport.dispose();
-			fSourceViewerDecorationSupport= null;
-		}
-		
-		fAnnotationPreferences= null;
-		fAnnotationAccess= null;
-		
 		super.dispose();
 	}
 
@@ -336,7 +225,7 @@ public class TextEditor extends StatusTextEditor {
 			dialog.setMessage(message, IMessageProvider.WARNING);
 		}
 		
-		if (dialog.open() == Dialog.CANCEL) {
+		if (dialog.open() == Window.CANCEL) {
 			if (progressMonitor != null)
 				progressMonitor.setCanceled(true);
 			return;
@@ -510,16 +399,6 @@ public class TextEditor extends StatusTextEditor {
 	}
 	
 	/*
-	 * @see AbstractTextEditor#editorContextMenuAboutToShow(IMenuManager)
-	 * @since 2.0
-	 */
-	protected void editorContextMenuAboutToShow(IMenuManager menu) {
-		super.editorContextMenuAboutToShow(menu);
-		addAction(menu, ITextEditorActionConstants.GROUP_EDIT, ITextEditorActionConstants.SHIFT_RIGHT);
-		addAction(menu, ITextEditorActionConstants.GROUP_EDIT, ITextEditorActionConstants.SHIFT_LEFT);
-	}
-	
-	/*
 	 * @see org.eclipse.ui.texteditor.AbstractTextEditor#updatePropertyDependentActions()
 	 * @since 2.0
 	 */
@@ -529,303 +408,6 @@ public class TextEditor extends StatusTextEditor {
 			fEncodingSupport.reset();
 	}
 	
-	/*
-	 * @see org.eclipse.ui.texteditor.AbstractTextEditor#createSourceViewer(Composite, IVerticalRuler, int)
-	 * @since 2.1
-	 */
-	protected ISourceViewer createSourceViewer(Composite parent, IVerticalRuler ruler, int styles) {
-		
-		fAnnotationAccess= createAnnotationAccess();
-		ISharedTextColors sharedColors= EditorsPlugin.getDefault().getSharedTextColors();
-		
-		fOverviewRuler= new OverviewRuler(fAnnotationAccess, VERTICAL_RULER_WIDTH, sharedColors);
-		Iterator e= fAnnotationPreferences.getAnnotationPreferences().iterator();
-		while (e.hasNext()) {
-			AnnotationPreference preference= (AnnotationPreference) e.next();
-			if (preference.contributesToHeader())
-				fOverviewRuler.addHeaderAnnotationType(preference.getAnnotationType());
-		}
-		
-		ISourceViewer sourceViewer= new SourceViewer(parent, ruler, fOverviewRuler, isOverviewRulerVisible(), styles);
-		fSourceViewerDecorationSupport= new SourceViewerDecorationSupport(sourceViewer, fOverviewRuler, fAnnotationAccess, sharedColors);
-		configureSourceViewerDecorationSupport();
-		
-		return sourceViewer;
-	}
-
-	/**
-	 * Creates the annotation access for this editor.
-	 * 
-	 * @return the created annotation access
-	 * @since 2.1
-	 */
-	protected IAnnotationAccess createAnnotationAccess() {
-		return new DefaultMarkerAnnotationAccess(fAnnotationPreferences);
-	}
-
-	/**
-	 * Configures the decoration support for this editor's the source viewer.
-	 * 
-	 * @since 2.1
-	 */
-	protected void configureSourceViewerDecorationSupport() {
-
-		Iterator e= fAnnotationPreferences.getAnnotationPreferences().iterator();
-		while (e.hasNext())
-			fSourceViewerDecorationSupport.setAnnotationPreference((AnnotationPreference) e.next());
-		fSourceViewerDecorationSupport.setAnnotationPainterPreferenceKeys(DefaultMarkerAnnotationAccess.UNKNOWN, UNKNOWN_INDICATION_COLOR, UNKNOWN_INDICATION, UNKNOWN_INDICATION_IN_OVERVIEW_RULER, 0);
-		
-		fSourceViewerDecorationSupport.setCursorLinePainterPreferenceKeys(CURRENT_LINE, CURRENT_LINE_COLOR);
-		fSourceViewerDecorationSupport.setMarginPainterPreferenceKeys(PRINT_MARGIN, PRINT_MARGIN_COLOR, PRINT_MARGIN_COLUMN);
-		fSourceViewerDecorationSupport.setSymbolicFontName(getFontPropertyPreferenceKey());
-	}
-
-	/**
-	 * @since 2.1
-	 */
-	private void showOverviewRuler() {
-		if (getSourceViewer() instanceof ISourceViewerExtension) {
-			((ISourceViewerExtension) getSourceViewer()).showAnnotationsOverview(true);
-			fSourceViewerDecorationSupport.updateOverviewDecorations();
-		}
-	}
-
-	/**
-	 * Hides the overview ruler.
-	 * 
-	 * @since 2.1
-	 */
-	private void hideOverviewRuler() {
-		if (getSourceViewer() instanceof ISourceViewerExtension) {
-			fSourceViewerDecorationSupport.hideAnnotationOverview();
-			((ISourceViewerExtension) getSourceViewer()).showAnnotationsOverview(false);
-		}
-	}
-
-	/**
-	 * Tells whether the overview ruler is visible.
-	 * 
-	 * @since 2.1
-	 */
-	protected boolean isOverviewRulerVisible() {
-		IPreferenceStore store= getPreferenceStore();
-		return store != null ? store.getBoolean(OVERVIEW_RULER) : false;
-	}
-
-	/**
-	 * Shows the line number ruler column.
-	 * 
-	 * @since 2.1
-	 */
-	private void showLineNumberRuler() {
-		if (fLineNumberRulerColumn == null) {
-			IVerticalRuler v= getVerticalRuler();
-			if (v instanceof CompositeRuler) {
-				CompositeRuler c= (CompositeRuler) v;
-				c.addDecorator(1, createLineNumberRulerColumn());
-			}
-		}
-	}
-	
-	/**
-	 * Hides the line number ruler column.
-	 * 
-	 * @since 2.1
-	 */
-	private void hideLineNumberRuler() {
-		if (fLineNumberRulerColumn != null) {
-			IVerticalRuler v= getVerticalRuler();
-			if (v instanceof CompositeRuler) {
-				CompositeRuler c= (CompositeRuler) v;
-				c.removeDecorator(1);
-			}
-			fLineNumberRulerColumn = null;
-		}
-	}
-	
-	/**
-	 * Returns whether the line number ruler column should be 
-	 * visible according to the preference store settings.
-	 * 
-	 * @return <code>true</code> if the line numbers should be visible
-	 * @since 2.1
-	 */
-	private boolean isLineNumberRulerVisible() {
-		IPreferenceStore store= getPreferenceStore();
-		return store != null ? store.getBoolean(LINE_NUMBER_RULER) : false;
-	}
-
-	/**
-	 * Initializes the given line number ruler column from the preference store.
-	 * 
-	 * @param rulerColumn the ruler column to be initialized
-	 * @since 2.1
-	 */
-	protected void initializeLineNumberRulerColumn(LineNumberRulerColumn rulerColumn) {
-		ISharedTextColors sharedColors= EditorsPlugin.getDefault().getSharedTextColors();
-		IPreferenceStore store= getPreferenceStore();
-		if (store != null) {
-		
-			RGB rgb=  null;
-			// foreground color
-			if (store.contains(LINE_NUMBER_COLOR)) {
-				if (store.isDefault(LINE_NUMBER_COLOR))
-					rgb= PreferenceConverter.getDefaultColor(store, LINE_NUMBER_COLOR);
-				else
-					rgb= PreferenceConverter.getColor(store, LINE_NUMBER_COLOR);
-			}
-			rulerColumn.setForeground(sharedColors.getColor(rgb));
-			
-			
-			rgb= null;
-			// background color
-			if (!store.getBoolean(PREFERENCE_COLOR_BACKGROUND_SYSTEM_DEFAULT)) {
-				if (store.contains(PREFERENCE_COLOR_BACKGROUND)) {
-					if (store.isDefault(PREFERENCE_COLOR_BACKGROUND))
-						rgb= PreferenceConverter.getDefaultColor(store, PREFERENCE_COLOR_BACKGROUND);
-					else
-						rgb= PreferenceConverter.getColor(store, PREFERENCE_COLOR_BACKGROUND);
-				}
-			}
-			rulerColumn.setBackground(sharedColors.getColor(rgb));
-			
-			if (rulerColumn instanceof LineNumberChangeRulerColumn) {
-				LineNumberChangeRulerColumn changeColumn= (LineNumberChangeRulerColumn)rulerColumn;
-				
-				ISourceViewer v= getSourceViewer();
-				if (v != null && v.getAnnotationModel() != null) {
-					changeColumn.setModel(v.getAnnotationModel());
-				}
-				
-				rgb= null;
-				// change color
-				if (!store.getBoolean(TextEditorPreferenceConstants.LINE_NUMBER_CHANGED_COLOR)) {
-					if (store.contains(TextEditorPreferenceConstants.LINE_NUMBER_CHANGED_COLOR)) {
-						if (store.isDefault(TextEditorPreferenceConstants.LINE_NUMBER_CHANGED_COLOR))
-							rgb= PreferenceConverter.getDefaultColor(store, TextEditorPreferenceConstants.LINE_NUMBER_CHANGED_COLOR);
-						else
-							rgb= PreferenceConverter.getColor(store, TextEditorPreferenceConstants.LINE_NUMBER_CHANGED_COLOR);
-					}
-				}
-				changeColumn.setChangedColor(sharedColors.getColor(rgb));
-				
-				rgb= null;
-				// addition color
-				if (!store.getBoolean(TextEditorPreferenceConstants.LINE_NUMBER_ADDED_COLOR)) {
-					if (store.contains(TextEditorPreferenceConstants.LINE_NUMBER_ADDED_COLOR)) {
-						if (store.isDefault(TextEditorPreferenceConstants.LINE_NUMBER_ADDED_COLOR))
-							rgb= PreferenceConverter.getDefaultColor(store, TextEditorPreferenceConstants.LINE_NUMBER_ADDED_COLOR);
-						else
-							rgb= PreferenceConverter.getColor(store, TextEditorPreferenceConstants.LINE_NUMBER_ADDED_COLOR);
-					}
-				}
-				changeColumn.setAddedColor(sharedColors.getColor(rgb));
-				
-				rgb= null;
-				// deletion indicator color
-				if (!store.getBoolean(TextEditorPreferenceConstants.LINE_NUMBER_DELETED_COLOR)) {
-					if (store.contains(TextEditorPreferenceConstants.LINE_NUMBER_DELETED_COLOR)) {
-						if (store.isDefault(TextEditorPreferenceConstants.LINE_NUMBER_DELETED_COLOR))
-							rgb= PreferenceConverter.getDefaultColor(store, TextEditorPreferenceConstants.LINE_NUMBER_DELETED_COLOR);
-						else
-							rgb= PreferenceConverter.getColor(store, TextEditorPreferenceConstants.LINE_NUMBER_DELETED_COLOR);
-					}
-				}
-				changeColumn.setDeletedColor(sharedColors.getColor(rgb));
-			}
-			
-			rulerColumn.redraw();
-		}
-	}
-	
-	/**
-	 * Creates a new line number ruler column that is appropriately initialized.
-	 * 
-	 * @since 2.1
-	 */
-	protected IVerticalRulerColumn createLineNumberRulerColumn() {
-		if (getPreferenceStore().getBoolean(TextEditorPreferenceConstants.LINE_NUMBER_BAR_QUICK_DIFF)) {
-			fLineNumberRulerColumn= new LineNumberChangeRulerColumn();
-		} else {
-			fLineNumberRulerColumn= new LineNumberRulerColumn();
-		}
-		initializeLineNumberRulerColumn(fLineNumberRulerColumn);
-		return fLineNumberRulerColumn;
-	}
-	
-	/*
-	 * @see AbstractTextEditor#createVerticalRuler()
-	 * @since 2.1
-	 */
-	protected IVerticalRuler createVerticalRuler() {
-		CompositeRuler ruler= new CompositeRuler();
-		ruler.addDecorator(0, new AnnotationRulerColumn(VERTICAL_RULER_WIDTH));
-		if (isLineNumberRulerVisible())
-			ruler.addDecorator(1, createLineNumberRulerColumn());
-		return ruler;
-	}
-	
-	/*
-	 * @see AbstractTextEditor#handlePreferenceStoreChanged(PropertyChangeEvent)
-	 * @since 2.1
-	 */
-	protected void handlePreferenceStoreChanged(PropertyChangeEvent event) {
-		
-		try {			
-
-			ISourceViewer sourceViewer= getSourceViewer();
-			if (sourceViewer == null)
-				return;
-				
-			String property= event.getProperty();	
-			
-			if (fSourceViewerDecorationSupport != null && fOverviewRuler != null && OVERVIEW_RULER.equals(property))  {
-				if (isOverviewRulerVisible())
-					showOverviewRuler();
-				else
-					hideOverviewRuler();
-				return;
-			}
-			
-			if (LINE_NUMBER_RULER.equals(property)) {
-				if (isLineNumberRulerVisible())
-					showLineNumberRuler();
-				else
-					hideLineNumberRuler();
-				return;
-			}
-
-			if (isLineNumberRulerVisible() && TextEditorPreferenceConstants.LINE_NUMBER_BAR_QUICK_DIFF.equals(property)) {
-				hideLineNumberRuler();
-				showLineNumberRuler();
-			}
-				
-			if (fLineNumberRulerColumn != null &&
-						(LINE_NUMBER_COLOR.equals(property) || 
-						PREFERENCE_COLOR_BACKGROUND_SYSTEM_DEFAULT.equals(property)  ||
-						PREFERENCE_COLOR_BACKGROUND.equals(property) ||
-						TextEditorPreferenceConstants.LINE_NUMBER_CHANGED_COLOR.equals(property) ||
-						TextEditorPreferenceConstants.LINE_NUMBER_ADDED_COLOR.equals(property) ||
-						TextEditorPreferenceConstants.LINE_NUMBER_DELETED_COLOR.equals(property))) {
-					
-					initializeLineNumberRulerColumn(fLineNumberRulerColumn);
-			}
-				
-		} finally {
-			super.handlePreferenceStoreChanged(event);
-		}
-	}
-	
-	/*
-	 * @see org.eclipse.ui.IWorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
-	 * @since 2.1
-	 */
-	public void createPartControl(Composite parent) {
-		super.createPartControl(parent);
-		if (fSourceViewerDecorationSupport != null)
-			fSourceViewerDecorationSupport.install(getPreferenceStore());
-	}
-
 	/**
 	 * If the editor can be saved all marker ranges have been changed according to
 	 * the text manipulations. However, those changes are not yet propagated to the
