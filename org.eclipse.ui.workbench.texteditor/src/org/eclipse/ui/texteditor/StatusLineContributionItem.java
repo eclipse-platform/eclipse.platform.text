@@ -173,6 +173,7 @@ public class StatusLineContributionItem extends ContributionItem implements ISta
 	public void fill(Composite parent) {
 		
 		fLabel= new CLabel(parent, SWT.SHADOW_IN);
+		fLabel.setBackground(JFaceColors.getSchemeBackground(parent.getDisplay()));
 		fLabel.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
 				fMouseListener= null;
