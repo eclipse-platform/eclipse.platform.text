@@ -73,7 +73,7 @@ public class ResourceHelper {
 				i= MAX_RETRY;
 			} catch (CoreException x) {
 				if (i == MAX_RETRY - 1) {
-					FileBuffersTestPlugin.getDefault().getLog().log(x.getStatus());
+					FilebuffersTestPlugin.getDefault().getLog().log(x.getStatus());
 //					throw x;
 				}
 				try {
