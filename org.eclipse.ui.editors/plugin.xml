@@ -359,61 +359,61 @@
       <command
             name="%command.us_ascii.name"
             description="%command.us_ascii.description"
-            category="org.eclipse.ui.category.edit"
+            categoryId="org.eclipse.ui.category.edit"
             id="org.eclipse.ui.edit.text.encoding.us-ascii">
       </command>
       <command
             name="%command.iso_8859_1.name"
             description="%command.iso_8859_1.description"
-            category="org.eclipse.ui.category.edit"
+            categoryId="org.eclipse.ui.category.edit"
             id="org.eclipse.ui.edit.text.encoding.iso-8859-1">
       </command>
       <command
             name="%command.utf_8.name"
             description="%command.utf_8.description"
-            category="org.eclipse.ui.category.edit"
+            categoryId="org.eclipse.ui.category.edit"
             id="org.eclipse.ui.edit.text.encoding.utf-8">
       </command>
       <command
             name="%command.utf_16be.name"
             description="%command.utf_16be.description"
-            category="org.eclipse.ui.category.edit"
+            categoryId="org.eclipse.ui.category.edit"
             id="org.eclipse.ui.edit.text.encoding.utf-16be">
       </command>
       <command
             name="%command.utf_16le.name"
             description="%command.utf_16le.description"
-            category="org.eclipse.ui.category.edit"
+            categoryId="org.eclipse.ui.category.edit"
             id="org.eclipse.ui.edit.text.encoding.utf-16le">
       </command>
       <command
             name="%command.utf_16.name"
             description="%command.utf_16.description"
-            category="org.eclipse.ui.category.edit"
+            categoryId="org.eclipse.ui.category.edit"
             id="org.eclipse.ui.edit.text.encoding.utf-16">
       </command>
       <command
             name="%command.system.name"
             description="%command.system.description"
-            category="org.eclipse.ui.category.edit"
+            categoryId="org.eclipse.ui.category.edit"
             id="org.eclipse.ui.edit.text.encoding.system">
       </command>
       <command
             name="%command.custom.name"
             description="%command.custom.description"
-            category="org.eclipse.ui.category.edit"
+            categoryId="org.eclipse.ui.category.edit"
             id="org.eclipse.ui.edit.text.encoding.custom">
       </command>
       <command
             name="%ActionDefinition.quickDiff.name"
             description="%ActionDefinition.quickDiff.description"
-            category="org.eclipse.ui.category.edit"
+            categoryId="org.eclipse.ui.category.edit"
             id="org.eclipse.quickdiff.toggle">
       </command>
       <keyBinding
-            string="Ctrl+Shift+Q"
+            keySequence="Ctrl+Shift+Q"
             scope="org.eclipse.ui.textEditorScope"
-            command="org.eclipse.quickdiff.toggle"
+            commandId="org.eclipse.quickdiff.toggle"
             configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
       </keyBinding>
    </extension>
