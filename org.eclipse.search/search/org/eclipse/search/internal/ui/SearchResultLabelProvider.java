@@ -25,8 +25,8 @@ class SearchResultLabelProvider extends LabelProvider implements ILabelProvider 
 			
 			IResource resource= ((ISearchResultViewEntry) element).getResource();
 
-			// PR 1G47GDO
-			if (resource == null)
+			// PR 1G47GDO, 1GI7GCW
+			if (resource == null || !resource.exists())
 				return SearchMessages.getString("SearchResultView.removed_resource"); //$NON-NLS-1$
 		
 			return ((IResource)resource).getLocation().lastSegment();
