@@ -324,6 +324,8 @@
 		</viewerContribution>
 	</extension>
 	
+   <extension
+         point="org.eclipse.ui.actionSets">
       <actionSet
             label="%textEditorAnnotationNavigationActionSet.label"
             visible="false"
@@ -353,6 +355,7 @@
             hoverIcon="icons/full/ctool16/next_nav.gif"			
 			class="org.eclipse.ui.internal.texteditor.NextPulldownActionDelegate"/>
       </actionSet>
+   </extension>
 	
    <extension
          point="org.eclipse.ui.commands">
