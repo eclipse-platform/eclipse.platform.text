@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.StringBufferInputStream;
 
+import org.eclipse.core.internal.filebuffers.ContainerGenerator;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -23,9 +24,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
-
-import org.eclipse.core.filebuffers.manipulation.ContainerCreator;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -75,7 +73,7 @@ public class ResourceHelper {
 				i= MAX_RETRY;
 			} catch (CoreException x) {
 				if (i == MAX_RETRY - 1) {
-					FileBuffersTestPlugin.getDefault().getLog().log(x.getStatus());
+					FilebuffersTestPlugin.getDefault().getLog().log(x.getStatus());
 //					throw x;
 				}
 				try {
@@ -86,9 +84,9 @@ public class ResourceHelper {
 		}
 	}
 	
-	public static IFolder createFolder(String portableFolderPath) throws CoreException {
-		ContainerCreator creator= new ContainerCreator(ResourcesPlugin.getWorkspace(), new Path(portableFolderPath));
-		IContainer container= creator.createContainer(NULL_MONITOR);
+	public static IFolder createFolder(String folderPath) throws CoreException {
+		ContainerGenerator generator= new ContainerGenerator(ResourcesPlugin.getWorkspace(), new Path(folderPath));
+		IContainer container= generator.generateContainer(NULL_MONITOR);
 		if (container instanceof IFolder)
 			return (IFolder) container;
 		return null;
