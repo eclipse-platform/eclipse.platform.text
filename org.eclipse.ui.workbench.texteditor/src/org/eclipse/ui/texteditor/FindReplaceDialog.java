@@ -48,7 +48,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.JFaceColors;
-
 import org.eclipse.jface.text.DefaultInformationControl;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IFindReplaceTarget;
@@ -59,6 +58,7 @@ import org.eclipse.jface.text.IInformationControlCreator;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.TextUtilities;
+import org.eclipse.jface.text.contentassist.ComboContentAssistSubjectAdapter;
 import org.eclipse.jface.text.contentassist.ContentAssistant;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 import org.eclipse.jface.text.contentassist.IContentAssistant;
@@ -226,13 +226,25 @@ class FindReplaceDialog extends Dialog {
 	 */
 	private boolean fUseSelectedLines;
 	/**
-	 * The content assitant for the find combo.
+	 * The content assistant subject adapter for the find combo.
+	 *
+	 * @since 3.0
+	 */
+	private ComboContentAssistSubjectAdapter fFindFieldContentAssistAdapter;
+	/**
+	 * The content assistant subject adapter for the replace combo.
+	 *
+	 * @since 3.0
+	 */
+	private ComboContentAssistSubjectAdapter fReplaceFieldContentAssistAdapter;
+	/**
+	 * The content assistant for the find combo.
 	 *
 	 * @since 3.0
 	 */
 	private ContentAssistant fFindFieldContentAssistant;
 	/**
-	 * The content assitant for the replace combo.
+	 * The content assistant for the replace combo.
 	 *
 	 * @since 3.0
 	 */
@@ -454,8 +466,10 @@ class FindReplaceDialog extends Dialog {
 		fProposalPopupBackgroundColor= new Color(getShell().getDisplay(), new RGB(254, 241, 233));
 		fProposalPopupForegroundColor= new Color(getShell().getDisplay(), new RGB(0, 0, 0));
 		
-		fFindFieldContentAssistant= createContentAssistant(fFindField);
-		fReplaceFieldContentAssistant= createContentAssistant(fReplaceField);
+		fFindFieldContentAssistAdapter= new ComboContentAssistSubjectAdapter(fFindField);
+		fFindFieldContentAssistant= createContentAssistant(fFindField, fFindFieldContentAssistAdapter);
+		fReplaceFieldContentAssistAdapter= new ComboContentAssistSubjectAdapter(fReplaceField);
+		fReplaceFieldContentAssistant= createContentAssistant(fReplaceField, fReplaceFieldContentAssistAdapter);
 		
 		return panel;
 	}
@@ -722,7 +736,9 @@ class FindReplaceDialog extends Dialog {
 				updateButtonState();
 				storeSettings();
 				fFindFieldContentAssistant.enableAutoActivation(newState);
+				fFindFieldContentAssistAdapter.enableContentAssistCue(newState);
 				fReplaceFieldContentAssistant.enableAutoActivation(newState);
+				fReplaceFieldContentAssistAdapter.enableContentAssistCue(newState);
 			}
 		});
 		fWholeWordCheckBox.setEnabled(!isRegExSearchAvailableAndChecked());
@@ -1604,7 +1620,9 @@ class FindReplaceDialog extends Dialog {
 		}
 		
 		fFindFieldContentAssistant.enableAutoActivation(isRegExSearchAvailableAndChecked());
+		fFindFieldContentAssistAdapter.enableContentAssistCue(isRegExSearchAvailableAndChecked());
 		fReplaceFieldContentAssistant.enableAutoActivation(isRegExSearchAvailableAndChecked());
+		fReplaceFieldContentAssistAdapter.enableContentAssistCue(isRegExSearchAvailableAndChecked());
 	}
 
 	/** 
@@ -1713,7 +1731,7 @@ class FindReplaceDialog extends Dialog {
 	
 	// ------------- content assistant -----------------
 	
-	private ContentAssistant createContentAssistant(final Combo combo) {
+	private ContentAssistant createContentAssistant(final Combo combo, ComboContentAssistSubjectAdapter adapter) {
 		final ContentAssistant contentAssistant= new ContentAssistant();
 				
 		IContentAssistProcessor processor= new RegExContentAssistProcessor();
@@ -1763,7 +1781,7 @@ class FindReplaceDialog extends Dialog {
 			}
 					
 		}});
-		contentAssistant.install(new ComboContentAssistSubjectAdapter(combo));
+		contentAssistant.install(adapter);
 		return contentAssistant;
 	}
 }
