@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.ui.examples.javaeditor.java;
+package org.eclipse.ui.examples.javaeditor;
 
 
 import java.util.ArrayList;
@@ -23,6 +23,7 @@ public class JavaPartitionScanner extends RuleBasedPartitionScanner {
 
 	public final static String JAVA_MULTILINE_COMMENT= "__java_multiline_comment"; //$NON-NLS-1$
 	public final static String JAVA_DOC= "__java_javadoc"; //$NON-NLS-1$
+	public final static String[] JAVA_PARTITION_TYPES= new String[] { JAVA_MULTILINE_COMMENT, JAVA_DOC };
 
 	/**
 	 * Detector for empty comments.
@@ -42,7 +43,7 @@ public class JavaPartitionScanner extends RuleBasedPartitionScanner {
 		public boolean isWordPart(char c) {
 			return (c == '*' || c == '/');
 		}
-	};
+	}
 	
 	/**
 	 * 
@@ -70,7 +71,7 @@ public class JavaPartitionScanner extends RuleBasedPartitionScanner {
 		public IToken getSuccessToken() {
 			return fSuccessToken;
 		}
-	};
+	}
 
 	/**
 	 * Creates the partitioner and sets up the appropriate rules.
