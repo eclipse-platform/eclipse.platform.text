@@ -1222,7 +1222,7 @@ public class ProjectionViewer extends SourceViewer implements ITextViewerExtensi
 	public void setRangeIndication(int offset, int length, boolean moveCursor) {
 		
 		List expand= new ArrayList(2);
-		if (moveCursor) {
+		if (moveCursor && fProjectionAnnotationModel != null) {
 			
 			// expand the immediate effected collapsed regions
 			Iterator iterator= fProjectionAnnotationModel.getAnnotationIterator();
@@ -1571,7 +1571,7 @@ public class ProjectionViewer extends SourceViewer implements ITextViewerExtensi
 	protected int findAndSelectInRange(int startPosition, String findString, boolean forwardSearch, boolean caseSensitive, boolean wholeWord, int rangeOffset, int rangeLength, boolean regExSearch) {
 		
 		if (!isProjectionMode())
-			return super.findAndSelect(startPosition, findString, forwardSearch, caseSensitive, wholeWord, regExSearch);
+			return super.findAndSelectInRange(startPosition, findString, forwardSearch, caseSensitive, wholeWord, rangeOffset, rangeLength, regExSearch);
 		
 		StyledText textWidget= getTextWidget();
 		if (textWidget == null)
