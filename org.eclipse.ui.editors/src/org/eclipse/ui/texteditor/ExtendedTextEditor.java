@@ -47,6 +47,7 @@ import org.eclipse.jface.text.source.OverviewRuler;
 import org.eclipse.jface.text.source.SourceViewer;
 
 import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.ide.IDEActionFactory;
 import org.eclipse.ui.ide.IGotoMarker;
 import org.eclipse.ui.texteditor.quickdiff.QuickDiff;
 
@@ -957,12 +958,12 @@ public abstract class ExtendedTextEditor extends StatusTextEditor {
 		ResourceAction action= new AddMarkerAction(TextEditorMessages.getResourceBundle(), "Editor.AddBookmark.", this, IMarker.BOOKMARK, true); //$NON-NLS-1$
 		action.setHelpContextId(IAbstractTextEditorHelpContextIds.BOOKMARK_ACTION);
 		action.setActionDefinitionId(ITextEditorActionDefinitionIds.ADD_BOOKMARK);
-		setAction(ITextEditorActionConstants.BOOKMARK, action);
+		setAction(IDEActionFactory.BOOKMARK.getId(), action);
 
 		action= new AddTaskAction(TextEditorMessages.getResourceBundle(), "Editor.AddTask.", this); //$NON-NLS-1$
 		action.setHelpContextId(IAbstractTextEditorHelpContextIds.ADD_TASK_ACTION);
 		action.setActionDefinitionId(ITextEditorActionDefinitionIds.ADD_TASK);
-		setAction(ITextEditorActionConstants.ADD_TASK, action);		
+		setAction(IDEActionFactory.ADD_TASK.getId(), action);		
 	}
 	
 	/*

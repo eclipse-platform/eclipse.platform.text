@@ -18,6 +18,7 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.ide.IDEActionFactory;
 import org.eclipse.ui.texteditor.BasicTextEditorActionContributor;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
@@ -72,8 +73,8 @@ public class TextEditorActionContributor extends BasicTextEditorActionContributo
 		
 		IActionBars actionBars= getActionBars();
 		if (actionBars != null) {
-			actionBars.setGlobalActionHandler(ITextEditorActionConstants.ADD_TASK, getAction(textEditor, ITextEditorActionConstants.ADD_TASK));
-			actionBars.setGlobalActionHandler(ITextEditorActionConstants.BOOKMARK, getAction(textEditor, ITextEditorActionConstants.BOOKMARK));
+			actionBars.setGlobalActionHandler(IDEActionFactory.ADD_TASK.getId(), getAction(textEditor, IDEActionFactory.ADD_TASK.getId()));
+			actionBars.setGlobalActionHandler(IDEActionFactory.BOOKMARK.getId(), getAction(textEditor, IDEActionFactory.BOOKMARK.getId()));
 		}
 			
 		// line delimiter conversion

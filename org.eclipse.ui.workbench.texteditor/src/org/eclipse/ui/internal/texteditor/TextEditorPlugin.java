@@ -14,13 +14,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPluginDescriptor;
 
 import org.eclipse.jface.action.IAction;
 
 import org.eclipse.jface.text.Assert;
-import org.eclipse.jface.text.source.ISharedTextColors;
 
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 

@@ -192,12 +192,14 @@ public interface IAbstractTextEditorHelpContextIds {
 	/**
 	 * Help context id for the action.
 	 * Value: <code>"org.eclipse.ui.bookmark_action_context"</code>
+	 * @deprecated
 	 */
 	public static final String BOOKMARK_ACTION= PREFIX + ITextEditorActionConstants.BOOKMARK + ACTION_POSTFIX;
 
 	/**
 	 * Help context id for the action.
 	 * Value: <code>"org.eclipse.ui.addTask_action_context"</code>
+	 * @deprecated
 	 */
 	public static final String ADD_TASK_ACTION= PREFIX + ITextEditorActionConstants.ADD_TASK + ACTION_POSTFIX;
 

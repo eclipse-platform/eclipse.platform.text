@@ -13,6 +13,7 @@ package org.eclipse.ui.texteditor;
 
 
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.actions.ActionFactory;
  
 
 /**
@@ -86,14 +87,7 @@ public interface ITextEditorActionConstants extends IWorkbenchActionConstants {
 	 * Value: <code>"ShiftLeft"</code>
 	 */
 	static final String SHIFT_LEFT= "ShiftLeft"; //$NON-NLS-1$
-	
-	/** 
-	 * Name of the action for re-establishing the state after the 
-	 * most recent save operation. 
-	 * Value: <code>"IWorkbenchActionConstants.REVERT"</code>
-	 */
-	static final String REVERT_TO_SAVED= REVERT;
-	
+		
 	/** 
 	 * Name of the action to delete the current line. 
 	 * Value: <code>"DeleteLine"</code>
@@ -315,7 +309,29 @@ public interface ITextEditorActionConstants extends IWorkbenchActionConstants {
 	 * @since 2.0
 	 */
 	static final String STATUS_CATEGORY_ELEMENT_STATE= "ElementState"; //$NON-NLS-1$
-
+	
+	
+	static final String COPY= ActionFactory.COPY.getId();
+	static final String CUT= ActionFactory.CUT.getId();
+	static final String DELETE= ActionFactory.DELETE.getId();
+	static final String FIND= ActionFactory.FIND.getId();
+	static final String PASTE= ActionFactory.PASTE.getId();
+	static final String PRINT= ActionFactory.PRINT.getId();
+	static final String REDO= ActionFactory.REDO.getId();
+	static final String UNDO= ActionFactory.UNDO.getId();
+	static final String SAVE= ActionFactory.SAVE.getId();
+	static final String SELECT_ALL= ActionFactory.SELECT_ALL.getId();
+	static final String REVERT= ActionFactory.REVERT.getId();
+//	static final String GROUP_ADD= IWorkbenchActionConstants.GROUP_ADD;
+//	static final String MB_ADDITIONS= IWorkbenchActionConstants.MB_ADDITIONS;
+	
+	/** 
+	 * Name of the action for re-establishing the state after the 
+	 * most recent save operation. 
+	 * Value: <code>"IWorkbenchActionConstants.REVERT"</code>
+	 */
+	static final String REVERT_TO_SAVED= REVERT;
+	
 	/**
 	 * Status line category "findField".
 	 * Value: <code>"FindField"</code>
