@@ -470,7 +470,12 @@ public class ChainedPreferenceStore implements IPreferenceStore {
 			
 			if (eventBeforeVisibleStore) {
 				// removal in child, before visible store
-				Assert.isTrue(newValue == null);
+				
+				/*
+				 * The original event's new value can be non-null (removed assertion).
+				 * see: https://bugs.eclipse.org/bugs/show_bug.cgi?id=69419
+				 */
+				
 				newValue= getOtherValue(property, visibleStore, oldValue);
 				if (!newValue.equals(oldValue))
 					// removal in child, before visible store, different old value -> change in this chained preference store
