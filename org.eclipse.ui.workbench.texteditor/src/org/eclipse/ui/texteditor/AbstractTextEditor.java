@@ -4153,7 +4153,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 	/*
 	 * @see WorkbenchPart#firePropertyChange(int)
 	 */
-	public void firePropertyChange(int property) {
+	protected void firePropertyChange(int property) {
 		super.firePropertyChange(property);
 		updatePropertyDependentActions();
 	}
