@@ -46,6 +46,8 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ContainerGenerator;
 import org.eclipse.ui.part.FileEditorInput;
+import org.eclipse.ui.texteditor.AbstractMarkerAnnotationModel;
+import org.eclipse.ui.texteditor.IDocumentProviderOperationRunner;
 import org.eclipse.ui.texteditor.ResourceMarkerAnnotationModel;
 
 
@@ -63,6 +65,7 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 	 * @since 2.1
 	 */
 	private static final QualifiedName ENCODING_KEY = new QualifiedName("org.eclipse.ui.editors", "encoding"); //$NON-NLS-1$ //$NON-NLS-2$
+	private WorkspaceOperationRunner fOperationRunner;
 	
 	/**
 	 * Runnable encapsulating an element state change. This runnable ensures 
@@ -391,10 +394,9 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 	}
 	
 	/*
-	 * @see org.eclipse.ui.texteditor.IDocumentProviderExtension#synchronize(Object)
-	 * @since 2.0
+	 * @see org.eclipse.ui.texteditor.AbstractDocumentProvider#doSynchronize(java.lang.Object)
 	 */
-	public void synchronize(Object element)  throws CoreException {
+	protected void doSynchronize(Object element)  throws CoreException {
 		if (element instanceof IFileEditorInput) {
 			
 			IFileEditorInput input= (IFileEditorInput) element;
@@ -683,11 +685,9 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 	}
 	
 	/*
-	 * @see IDocumentProvider#resetDocument(Object)
-	 * @since 2.0
+	 * @see org.eclipse.ui.texteditor.AbstractDocumentProvider#doResetDocument(java.lang.Object)
 	 */
-	public void resetDocument(Object element) throws CoreException {
-		// http://dev.eclipse.org/bugs/show_bug.cgi?id=19014
+	protected void doResetDocument(Object element) throws CoreException {
 		if (element instanceof IFileEditorInput) {
 			IFileEditorInput input= (IFileEditorInput) element;
 			try {
@@ -696,7 +696,14 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 				handleCoreException(x,TextEditorMessages.getString("FileDocumentProvider.resetDocument")); //$NON-NLS-1$
 			}
 		}
-		super.resetDocument(element);	
+		
+		super.resetDocument(element);
+		
+		IAnnotationModel model= getAnnotationModel(element);
+		if (model instanceof AbstractMarkerAnnotationModel) {
+			AbstractMarkerAnnotationModel markerModel= (AbstractMarkerAnnotationModel) model;
+			markerModel.resetMarkers();
+		}
 	}
 	
 	/**
@@ -749,5 +756,14 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 			if (file != null)
 				file.setPersistentProperty(ENCODING_KEY, encoding);
 		}
+	}
+	
+	/*
+	 * @see org.eclipse.ui.texteditor.AbstractDocumentProvider#getOperationRunner()
+	 */
+	protected IDocumentProviderOperationRunner getOperationRunner() {
+		if (fOperationRunner == null)
+			fOperationRunner = new WorkspaceOperationRunner();
+		return fOperationRunner;
 	}
 }

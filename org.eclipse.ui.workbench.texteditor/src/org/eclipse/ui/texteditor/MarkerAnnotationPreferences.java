@@ -15,7 +15,6 @@ package org.eclipse.ui.texteditor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.Platform;
@@ -102,10 +101,10 @@ public class MarkerAnnotationPreferences {
 		if (s == null || s.trim().length() == 0) return null;
 		info.setMarkerType(s);
 		
-		i= IMarker.SEVERITY_INFO;
+		i= 0; // same as IMarker.SEVERITY_INFO
 		s= element.getAttribute("markerSeverity");  //$NON-NLS-1$
 		if (s != null && s.trim().length() > 0)
-			i= StringConverter.asInt(s, IMarker.SEVERITY_INFO);
+			i= StringConverter.asInt(s, i);
 		info.setSeverity(i);
 		
 		s= element.getAttribute("textPreferenceKey");  //$NON-NLS-1$

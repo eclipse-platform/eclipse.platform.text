@@ -17,6 +17,7 @@ import java.text.MessageFormat;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -56,6 +57,7 @@ import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.eclipse.ui.dialogs.SaveAsDialog;
 import org.eclipse.ui.part.FileEditorInput;
+import org.eclipse.ui.texteditor.AddMarkerAction;
 import org.eclipse.ui.texteditor.AddTaskAction;
 import org.eclipse.ui.texteditor.AnnotationPreference;
 import org.eclipse.ui.texteditor.ConvertLineDelimitersAction;
@@ -67,9 +69,8 @@ import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 import org.eclipse.ui.texteditor.MarkerAnnotationPreferences;
 import org.eclipse.ui.texteditor.ResourceAction;
+import org.eclipse.ui.texteditor.ResourceTextEditor;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
-import org.eclipse.ui.texteditor.StatusTextEditor;
-
 import org.eclipse.ui.internal.editors.text.EditorsPlugin;
 
 
@@ -86,7 +87,7 @@ import org.eclipse.ui.internal.editors.text.EditorsPlugin;
  * editor is needed for a workbench window.
  * </p>
  */
-public class TextEditor extends StatusTextEditor {
+public class TextEditor extends ResourceTextEditor {
 	
 	/**
 	 * Preference key for showing the line number ruler.
@@ -409,6 +410,11 @@ public class TextEditor extends StatusTextEditor {
 		action.setHelpContextId(IAbstractTextEditorHelpContextIds.ADD_TASK_ACTION);
 		action.setActionDefinitionId(ITextEditorActionDefinitionIds.ADD_TASK);
 		setAction(ITextEditorActionConstants.ADD_TASK, action);
+		
+		action= new AddMarkerAction(TextEditorMessages.getResourceBundle(), "Editor.AddBookmark.", this, IMarker.BOOKMARK, true); //$NON-NLS-1$
+		action.setHelpContextId(IAbstractTextEditorHelpContextIds.BOOKMARK_ACTION);
+		action.setActionDefinitionId(ITextEditorActionDefinitionIds.ADD_BOOKMARK);
+		setAction(ITextEditorActionConstants.BOOKMARK, action);
 
 		action= new ConvertLineDelimitersAction(TextEditorMessages.getResourceBundle(), "Editor.ConvertToWindows.", this, "\r\n"); //$NON-NLS-1$ //$NON-NLS-2$
 		action.setHelpContextId(IAbstractTextEditorHelpContextIds.CONVERT_LINE_DELIMITERS_TO_WINDOWS);

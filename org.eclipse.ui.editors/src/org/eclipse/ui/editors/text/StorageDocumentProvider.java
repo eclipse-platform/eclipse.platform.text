@@ -35,6 +35,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.AbstractDocumentProvider;
+import org.eclipse.ui.texteditor.IDocumentProviderOperationRunner;
 
 /**
  * Shareable document provider specialized for <code>IStorage</code>s.
@@ -393,5 +394,12 @@ public class StorageDocumentProvider extends AbstractDocumentProvider implements
 	 */
 	protected void persistEncoding(Object element, String encoding) throws CoreException {
 		// Default is to do nothing
+	}
+
+	/*
+	 * @see org.eclipse.ui.texteditor.AbstractDocumentProvider#getOperationRunner()
+	 */
+	protected IDocumentProviderOperationRunner getOperationRunner() {
+		return null;
 	}
 }

@@ -44,6 +44,7 @@ import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.ui.texteditor.AbstractDocumentProvider;
+import org.eclipse.ui.texteditor.IDocumentProviderOperationRunner;
 import org.eclipse.update.configuration.IActivity;
 import org.eclipse.update.configuration.IInstallConfiguration;
 import org.eclipse.update.configuration.ILocalSite;
@@ -54,28 +55,29 @@ import org.eclipse.update.core.SiteManager;
  * information about the Eclipse instance in which it is running.
  */
 class SystemSummaryDocumentProvider extends AbstractDocumentProvider {
-	/**
+	
+	/*
 	 * @see AbstractDocumentProvider#isDeleted(Object)
 	 */
 	public boolean isDeleted(Object element) {
 		return false;
 	}
 
-	/**
+	/*
 	 * @see AbstractDocumentProvider#getSynchronizationStamp(Object)
 	 */
 	public long getSynchronizationStamp(Object element) {
 		return 0;
 	}
 
-	/**
+	/*
 	 * @see AbstractDocumentProvider#getModificationStamp(Object)
 	 */
 	public long getModificationStamp(Object element) {
 		return 0;
 	}
 
-	/**
+	/*
 	 * @see AbstractDocumentProvider#doSaveDocument(IProgressMonitor, Object, IDocument, boolean)
 	 */
 	protected void doSaveDocument(
@@ -86,7 +88,7 @@ class SystemSummaryDocumentProvider extends AbstractDocumentProvider {
 		throws CoreException {
 	}
 
-	/**
+	/*
 	 * @see AbstractDocumentProvider#createDocument(Object)
 	 */
 	protected IDocument createDocument(Object element) throws CoreException {
@@ -95,11 +97,18 @@ class SystemSummaryDocumentProvider extends AbstractDocumentProvider {
 		return doc;
 	}
 
-	/**
+	/*
 	 * @see AbstractDocumentProvider#createAnnotationModel(Object)
 	 */
 	protected IAnnotationModel createAnnotationModel(Object element)
 		throws CoreException {
+		return null;
+	}
+	
+	/*
+	 * @see org.eclipse.ui.texteditor.AbstractDocumentProvider#getOperationRunner()
+	 */
+	protected IDocumentProviderOperationRunner getOperationRunner() {
 		return null;
 	}
 
