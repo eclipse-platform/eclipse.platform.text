@@ -26,7 +26,7 @@ public class JavaCompletionProcessor implements IContentAssistProcessor {
 	 * Simple content assist tip closer. The tip is valid in a range
 	 * of 5 characters around its popup location.
 	 */
-	protected static class Validator implements IContextInformationValidator, IContextInformationPresenter {
+	protected static class Validator implements IContextInformationValidator {
 
 		protected int fInstallOffset;
 
@@ -42,13 +42,6 @@ public class JavaCompletionProcessor implements IContentAssistProcessor {
 		 */
 		public void install(IContextInformation info, ITextViewer viewer, int offset) {
 			fInstallOffset= offset;
-		}
-		
-		/*
-		 * @see org.eclipse.jface.text.contentassist.IContextInformationPresenter#updatePresentation(int, TextPresentation)
-		 */
-		public boolean updatePresentation(int documentPosition, TextPresentation presentation) {
-			return false;
 		}
 	};
 
