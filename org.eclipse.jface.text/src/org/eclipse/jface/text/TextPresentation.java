@@ -344,7 +344,7 @@ public class TextPresentation {
 				defaultRange.start= start;
 				defaultRange.length= end - start;
 				defaultRange.background= range.background;
-				fRanges.add(last, defaultRange);
+				fRanges.add(last + insertOffset, defaultRange);
 			}
 		}
 	}
@@ -441,9 +441,12 @@ public class TextPresentation {
 	 * @return the window relative range based on the absolute range
 	 */
 	private StyleRange createWindowRelativeRange(IRegion window, StyleRange range) {
-		if (window == null || range == null)
-			return range;
-							
+		if (range == null)
+			return null;
+		
+		if (window == null) 
+			return (StyleRange)range.clone();
+		
 		int start= range.start - window.getOffset();
 		if (start < 0)
 			start= 0;
