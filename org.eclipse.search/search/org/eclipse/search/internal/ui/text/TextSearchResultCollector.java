@@ -19,6 +19,7 @@ import org.eclipse.search.internal.ui.SearchMessages;
 
 public class TextSearchResultCollector implements ITextSearchResultCollector {
 	
+	private static final String SPACE_MATCH= " " + SearchMessages.getString("SearchResultCollector.match"); //$NON-NLS-2$ //$NON-NLS-1$
 	private static final String SPACE_MATCHES= " " + SearchMessages.getString("SearchResultCollector.matches"); //$NON-NLS-2$ //$NON-NLS-1$
 
 	private IProgressMonitor fMonitor;
@@ -69,17 +70,33 @@ public class TextSearchResultCollector implements ITextSearchResultCollector {
 		attributes.put(IMarker.LINE_NUMBER, new Integer(lineNumber));
 		marker.setAttributes(attributes);
 		
-		fView.addMatch(resource.getFullPath().lastSegment().toString(), resource, resource, marker);
-		if (!getProgressMonitor().isCanceled())
-			getProgressMonitor().subTask(++fMatchCount + SPACE_MATCHES);
+		String description= resource.getFullPath().lastSegment();
+		if (description == null)
+			description= "";  //$NON-NLS-1$
+		fView.addMatch(description, resource, resource, marker);
+		fMatchCount= fMatchCount + 1;
+		if (!getProgressMonitor().isCanceled()) {
+			String text;
+			if (fMatchCount == 1)
+				text= fMatchCount + SPACE_MATCH;
+			else
+				text= fMatchCount + SPACE_MATCHES;
+			getProgressMonitor().subTask(text);
+		}
 	}
 	
 	/**
 	 * Called when the search has ended.
 	 */
 	public void done() {
-		if (!getProgressMonitor().isCanceled())
-			getProgressMonitor().setTaskName(SearchMessages.getString("SearchResultCollector.done") + ": " + fMatchCount + SPACE_MATCHES + "   "); //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+		if (!getProgressMonitor().isCanceled()) {
+			String matchString;
+			if (fMatchCount == 1)
+				matchString= fMatchCount + SPACE_MATCH;
+			else
+				matchString= fMatchCount + SPACE_MATCHES;
+			getProgressMonitor().setTaskName(SearchMessages.getString("SearchResultCollector.done") + ": " + matchString + "   "); //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+		}
 		if (fView != null)
 			fView.searchFinished();
 			

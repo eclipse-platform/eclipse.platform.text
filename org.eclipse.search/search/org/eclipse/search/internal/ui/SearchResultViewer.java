@@ -4,6 +4,8 @@
  */
 package org.eclipse.search.internal.ui;
 
+import org.eclipse.core.runtime.IPath;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.KeyAdapter;
@@ -31,9 +33,6 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
 
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IPath;
-
 import org.eclipse.search.ui.IContextMenuContributor;
 import org.eclipse.search.ui.ISearchResultViewEntry;
 
@@ -46,8 +45,6 @@ import org.eclipse.search.ui.ISearchResultViewEntry;
  */
 class SearchResultViewer extends TableViewer {
 	
-	private static final String MATCHES_POSTFIX= " " + SearchMessages.getString("SearchResultView.matches") + ")"; //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
-
 	private SearchResultView fOuterPart;
 	private boolean fFirstTime= true;
 	private ShowNextResultAction fShowNextResultAction;
@@ -137,6 +134,7 @@ class SearchResultViewer extends TableViewer {
 		Menu menu= menuMgr.createContextMenu(getTable());
 		getTable().setMenu(menu);		
 	}
+
 	void enableActions() {
 		/*
 		 * Note: The check before each set operation reduces flickering
@@ -180,7 +178,6 @@ class SearchResultViewer extends TableViewer {
 		return selection.size();
 	}
 
-
 	//--- Contribution management -----------------------------------------------
 
 	protected boolean enableRemoveMenuItem() {
@@ -203,8 +200,8 @@ class SearchResultViewer extends TableViewer {
 		if (!getSelection().isEmpty()) {
 			menu.add(fGotoMarkerAction);
 			if (enableRemoveMenuItem())
-				menu.add(new RemoveResultAction(this));				
-			menu.add(fRemoveMatchAction);
+				menu.add(fRemoveMatchAction);
+			menu.add(new RemoveResultAction(this));				
 			menu.add(new Separator());
 		}
 		// If we have elements
@@ -215,17 +212,14 @@ class SearchResultViewer extends TableViewer {
 		menu.add(fSortDropDownAction);
 	}
 
-
 	IAction getGotoMarkerAction() {
 		// null as return value is covered (no action will take place)
 		return fgGotoMarkerAction;
 	}
 
-
 	void setGotoMarkerAction(IAction gotoMarkerAction) {
 		fgGotoMarkerAction= gotoMarkerAction;
 	}
-
 
 	void setContextMenuTarget(IContextMenuContributor contributor) {
 		fgContextMenuContributor= contributor;
@@ -269,7 +263,6 @@ class SearchResultViewer extends TableViewer {
 			internalSetLabelProvider(provider);
 		}
 	}
-	
 	/**
 	 * Makes the first marker of the current result entry
 	 * visible in an editor. If no result
@@ -289,7 +282,6 @@ class SearchResultViewer extends TableViewer {
 		entry.setSelectedMarkerIndex(0);
 		openCurrentSelection();
 	}
-	
 	/**
 	 * Makes the next result (marker) visible in an editor. If no result
 	 * is visible, this method makes the first result visible.
@@ -321,7 +313,6 @@ class SearchResultViewer extends TableViewer {
 		entry.setSelectedMarkerIndex(fMarkerToShow);
 		openCurrentSelection();
 	}
-	
 	/**
 	 * Makes the previous result (marker) visible. If there isn't any
 	 * visible result, this method makes the last result visible.
@@ -372,17 +363,21 @@ class SearchResultViewer extends TableViewer {
 		if (action != null)
 			action.run();
 	}
-	
 	/**
 	 * Update the title and the title's tooltip
 	 */
 	protected void updateTitle() {
 		int count= SearchManager.getDefault().getCurrentItemCount();
 		boolean hasCurrentSearch= SearchManager.getDefault().getCurrentSearch() != null;
-		String title= SearchMessages.getString("SearchResultView.title"); //$NON-NLS-1$
-		if (count > 0 || hasCurrentSearch)
-		title= title + " (" + count + MATCHES_POSTFIX; //$NON-NLS-1$
-		if (!title.equals(fOuterPart.getTitle()))
+		String title;
+		if (count > 0 || hasCurrentSearch) {
+			if (count == 1)
+				title= SearchMessages.getString("SearchResultView.titleWithOneMatch"); //$NON-NLS-1$
+			else
+				title= SearchMessages.getFormattedString("SearchResultView.titleWithMatches", new Integer(count)); //$NON-NLS-1$
+		} else
+			title= SearchMessages.getString("SearchResultView.title"); //$NON-NLS-1$
+		if (title == null || !title.equals(fOuterPart.getTitle()))
 			fOuterPart.setTitle(title);
 		String toolTip= null;
 		if (hasCurrentSearch)
@@ -390,7 +385,6 @@ class SearchResultViewer extends TableViewer {
 		if (toolTip == null || !toolTip.equals(fOuterPart.getTitleToolTip()))
 			fOuterPart.setTitleToolTip(toolTip);
 	}
-
 	/**
 	 * Sets the message text to be displayed on the status line.
 	 * The image on the status line is cleared.
@@ -399,12 +393,14 @@ class SearchResultViewer extends TableViewer {
 		fOuterPart.getViewSite().getActionBars().getStatusLineManager().setMessage(message);
 	}
 
+
 	protected void handleDispose(DisposeEvent event) {
 		Menu menu= getTable().getMenu();
 		if (menu != null)
 			menu.dispose();
 		super.handleDispose(event);
 	}
+
 
 	//--- Change event handling -------------------------------------------------
 	
@@ -414,7 +410,6 @@ class SearchResultViewer extends TableViewer {
 	protected void handleAddMatch(ISearchResultViewEntry entry) {
 		insert(entry, -1);
 	}
-	
 	/**
 	 * Handle a single remove.
 	 */
@@ -430,14 +425,12 @@ class SearchResultViewer extends TableViewer {
 		else
 			updateItem(item, entry);
 	}
-	
 	/**
 	 * Handle remove all.
 	 */
 	protected void handleRemoveAll() {
 		setInput(null);
 	}
-	
 	/**
 	 * Handle an update of an entry.
 	 */
