@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.eclipse.core.resources.IMarker;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
@@ -24,12 +26,12 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Display;
 
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.text.source.Annotation;
 
-import org.eclipse.core.resources.IMarker;
+import org.eclipse.jface.text.source.Annotation;
 
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 
@@ -158,10 +160,10 @@ public class MarkerAnnotation extends Annotation {
 		int layer= 1;
 		
 		if (MarkerUtilities.isMarkerType(fMarker, IMarker.TASK)) {
-			name= ISharedImages.IMG_OBJS_TASK_TSK;
+			name= IDE.SharedImages.IMG_OBJS_TASK_TSK;
 			layer= 1;
 		} else if (MarkerUtilities.isMarkerType(fMarker, IMarker.BOOKMARK)) {
-			name= ISharedImages.IMG_OBJS_BKMRK_TSK;
+			name= IDE.SharedImages.IMG_OBJS_BKMRK_TSK;
 			layer= 2;
 		} else if (MarkerUtilities.isMarkerType(fMarker, IMarker.PROBLEM)) {
 			switch (fMarker.getAttribute(IMarker.SEVERITY, IMarker.SEVERITY_INFO)) {

@@ -304,8 +304,6 @@ public interface ITextEditorActionConstants /*extends IWorkbenchActionConstants*
 	
 	// -------------------------------------
 	
-	static final String ADD_TASK= IWorkbenchActionConstants.ADD_TASK;
-	static final String BOOKMARK= IWorkbenchActionConstants.BOOKMARK;
 	static final String COPY= ActionFactory.COPY.getId();
 	static final String CUT= ActionFactory.CUT.getId();
 	static final String DELETE= ActionFactory.DELETE.getId();

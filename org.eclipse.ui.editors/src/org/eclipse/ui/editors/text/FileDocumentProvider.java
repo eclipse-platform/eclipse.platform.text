@@ -417,7 +417,7 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 			return;
 			
 		}
-		super.synchronize(element);
+		super.doSynchronize(element);
 	}
 	
 	/*
@@ -697,7 +697,7 @@ public class FileDocumentProvider extends StorageDocumentProvider {
 			}
 		}
 		
-		super.resetDocument(element);
+		super.doResetDocument(element);
 		
 		IAnnotationModel model= getAnnotationModel(element);
 		if (model instanceof AbstractMarkerAnnotationModel) {

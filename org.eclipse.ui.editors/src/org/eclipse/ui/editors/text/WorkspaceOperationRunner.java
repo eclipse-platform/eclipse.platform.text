@@ -23,7 +23,7 @@ import org.eclipse.ui.texteditor.IDocumentProviderOperation;
 import org.eclipse.ui.texteditor.IDocumentProviderOperationRunner;
 
 /**
- * 
+ * @since 3.0
  */
 public class WorkspaceOperationRunner implements IDocumentProviderOperationRunner {
 	

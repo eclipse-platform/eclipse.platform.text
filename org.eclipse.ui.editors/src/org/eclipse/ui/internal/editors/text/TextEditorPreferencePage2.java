@@ -201,6 +201,8 @@ public class TextEditorPreferencePage2 extends PreferencePage implements IWorkbe
 
 	private void handleAnnotationListSelection() {
 		int i= fAnnotationList.getSelectionIndex();
+		if (i < 0)
+			return;
 		
 		String key= fAnnotationColorListModel[i][1];
 		RGB rgb= PreferenceConverter.getColor(fOverlayStore, key);

@@ -38,9 +38,13 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.AnnotationRulerColumn;
 import org.eclipse.jface.text.source.CompositeRuler;
 import org.eclipse.jface.text.source.IAnnotationAccess;
+import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.IOverviewRuler;
 import org.eclipse.jface.text.source.ISharedTextColors;
 import org.eclipse.jface.text.source.ISourceViewer;
@@ -56,21 +60,26 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.eclipse.ui.dialogs.SaveAsDialog;
+import org.eclipse.ui.ide.IDEActionFactory;
 import org.eclipse.ui.part.FileEditorInput;
+import org.eclipse.ui.texteditor.AbstractMarkerAnnotationModel;
 import org.eclipse.ui.texteditor.AddMarkerAction;
 import org.eclipse.ui.texteditor.AddTaskAction;
 import org.eclipse.ui.texteditor.AnnotationPreference;
 import org.eclipse.ui.texteditor.ConvertLineDelimitersAction;
 import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 import org.eclipse.ui.texteditor.DefaultRangeIndicator;
+import org.eclipse.ui.texteditor.DocumentProviderRegistry;
 import org.eclipse.ui.texteditor.IAbstractTextEditorHelpContextIds;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 import org.eclipse.ui.texteditor.MarkerAnnotationPreferences;
+import org.eclipse.ui.texteditor.MarkerUtilities;
 import org.eclipse.ui.texteditor.ResourceAction;
-import org.eclipse.ui.texteditor.ResourceTextEditor;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
+import org.eclipse.ui.texteditor.StatusTextEditor;
+
 import org.eclipse.ui.internal.editors.text.EditorsPlugin;
 
 
@@ -87,7 +96,7 @@ import org.eclipse.ui.internal.editors.text.EditorsPlugin;
  * editor is needed for a workbench window.
  * </p>
  */
-public class TextEditor extends ResourceTextEditor {
+public class TextEditor extends StatusTextEditor {
 	
 	/**
 	 * Preference key for showing the line number ruler.
@@ -175,6 +184,8 @@ public class TextEditor extends ResourceTextEditor {
 	 * @since 2.1
 	 */
 	private MarkerAnnotationPreferences fAnnotationPreferences;
+	/** The editor's implicit document provider. */
+	private IDocumentProvider fImplicitDocumentProvider;
 	
 	
 	/**
@@ -407,14 +418,14 @@ public class TextEditor extends ResourceTextEditor {
 		super.createActions();
 		
 		ResourceAction action= new AddTaskAction(TextEditorMessages.getResourceBundle(), "Editor.AddTask.", this); //$NON-NLS-1$
-		action.setHelpContextId(IAbstractTextEditorHelpContextIds.ADD_TASK_ACTION);
+		action.setHelpContextId(ITextEditorHelpContextIds.ADD_TASK_ACTION);
 		action.setActionDefinitionId(ITextEditorActionDefinitionIds.ADD_TASK);
-		setAction(ITextEditorActionConstants.ADD_TASK, action);
+		setAction(IDEActionFactory.ADD_TASK.getId(), action);
 		
 		action= new AddMarkerAction(TextEditorMessages.getResourceBundle(), "Editor.AddBookmark.", this, IMarker.BOOKMARK, true); //$NON-NLS-1$
-		action.setHelpContextId(IAbstractTextEditorHelpContextIds.BOOKMARK_ACTION);
+		action.setHelpContextId(ITextEditorHelpContextIds.BOOKMARK_ACTION);
 		action.setActionDefinitionId(ITextEditorActionDefinitionIds.ADD_BOOKMARK);
-		setAction(ITextEditorActionConstants.BOOKMARK, action);
+		setAction(IDEActionFactory.BOOKMARK.getId(), action);
 
 		action= new ConvertLineDelimitersAction(TextEditorMessages.getResourceBundle(), "Editor.ConvertToWindows.", this, "\r\n"); //$NON-NLS-1$ //$NON-NLS-2$
 		action.setHelpContextId(IAbstractTextEditorHelpContextIds.CONVERT_LINE_DELIMITERS_TO_WINDOWS);
@@ -815,4 +826,98 @@ public class TextEditor extends ResourceTextEditor {
 			fSourceViewerDecorationSupport.install(getPreferenceStore());
 	}
 
+	/**
+	 * If the editor can be saved all marker ranges have been changed according to
+	 * the text manipulations. However, those changes are not yet propagated to the
+	 * marker manager. Thus, when opening a marker, the marker's position in the editor
+	 * must be determined as it might differ from the position stated in the marker.
+	 * 
+	 * @param marker the marker to go to
+	 * @see EditorPart#gotoMarker(org.eclipse.core.resources.IMarker)
+	 * @since 3.0
+	 */
+	public void gotoMarker(IMarker marker) {
+		
+		if (getSourceViewer() == null)
+			return;
+		
+		int start= MarkerUtilities.getCharStart(marker);
+		int end= MarkerUtilities.getCharEnd(marker);
+		
+		if (start < 0 || end < 0) {
+			
+			// there is only a line number
+			int line= MarkerUtilities.getLineNumber(marker);
+			if (line > -1) {
+				
+				// marker line numbers are 1-based
+				-- line;
+				
+				try {
+					
+					IDocument document= getDocumentProvider().getDocument(getEditorInput());
+					selectAndReveal(document.getLineOffset(line), document.getLineLength(line));
+				
+				} catch (BadLocationException x) {
+					// marker refers to invalid text position -> do nothing
+				}
+			}
+			
+		} else {
+		
+			// look up the current range of the marker when the document has been edited
+			IAnnotationModel model= getDocumentProvider().getAnnotationModel(getEditorInput());
+			if (model instanceof AbstractMarkerAnnotationModel) {
+				
+				AbstractMarkerAnnotationModel markerModel= (AbstractMarkerAnnotationModel) model;
+				Position pos= markerModel.getMarkerPosition(marker);
+				if (pos != null && !pos.isDeleted()) {
+					// use position instead of marker values
+					start= pos.getOffset();
+					end= pos.getOffset() + pos.getLength();
+				}
+					
+				if (pos != null && pos.isDeleted()) {
+					// do nothing if position has been deleted
+					return;
+				}
+			}
+			
+			IDocument document= getDocumentProvider().getDocument(getEditorInput());
+			int length= document.getLength();
+			if (end - 1 < length && start < length)
+				selectAndReveal(start, end - start);
+		}
+	}
+
+	/**
+	 * If there is no explicit document provider set, the implicit one is
+	 * re-initialized based on the given editor input.
+	 *
+	 * @param input the editor input.
+	 * @since 3.0
+	 */
+	protected void setDocumentProvider(IEditorInput input) {
+		fImplicitDocumentProvider= DocumentProviderRegistry.getDefault().getDocumentProvider(input);		
+	}
+
+	/*
+	 * @see org.eclipse.ui.texteditor.ITextEditor#getDocumentProvider()
+	 * @since 3.0
+	 */
+	public IDocumentProvider getDocumentProvider() {
+		IDocumentProvider provider= super.getDocumentProvider();
+		if (provider == null)
+			return fImplicitDocumentProvider;
+		return provider;
+	}
+
+	/*
+	 * @see org.eclipse.ui.texteditor.AbstractTextEditor#disposeDocumentProvider()
+	 * @since 3.0
+	 */
+	protected void disposeDocumentProvider() {
+		super.disposeDocumentProvider();
+		fImplicitDocumentProvider= null;
+	}
 }
