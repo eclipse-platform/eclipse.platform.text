@@ -15,5 +15,5 @@
    <requires>
       <import plugin="org.junit"/>
    </requires>
-   
+
 </plugin>

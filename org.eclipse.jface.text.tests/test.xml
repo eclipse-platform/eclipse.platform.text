@@ -20,19 +20,6 @@
     </delete>
   </target>
 
-  <!-- This target defines the tests that need to be run. -->
-  <target name="suite">
-    <property name="jface-text-folder" 
-              value="${eclipse-home}/jface_text_folder"/>
-    <delete dir="${jface-text-folder}" quiet="true"/>
-    <ant target="core-test" antfile="${library-file}" dir="${eclipse-home}">
-      <property name="data-dir" value="${jface-text-folder}"/>
-      <property name="plugin-name" value="${plugin-name}"/>
-      <property name="classname" 
-                value="org.eclipse.jface.text.tests.JFaceTextTestSuite"/>
-    </ant>
-  </target>
-
   <!-- This target holds code to cleanup the testing environment after -->
   <!-- after all of the tests have been run. You can use this target to -->
   <!-- delete temporary files that have been created. -->
@@ -41,11 +28,7 @@
 
   <!-- This target runs the test suite. Any actions that need to happen -->
   <!-- after all the tests have been run should go here. -->
-  <target name="run" depends="init,suite,cleanup">
-    <ant target="collect" antfile="${library-file}" dir="${eclipse-home}">
-      <property name="includes" value="org*.xml"/>
-      <property name="output-file" value="${plugin-name}.xml"/>
-    </ant>
+  <target name="run">
   </target>
 
   <!-- This target runs the performance test suites. -->

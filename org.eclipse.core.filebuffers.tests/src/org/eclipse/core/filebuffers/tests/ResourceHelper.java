@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.StringBufferInputStream;
 
-import org.eclipse.core.internal.filebuffers.ContainerGenerator;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -73,7 +72,7 @@ public class ResourceHelper {
 				i= MAX_RETRY;
 			} catch (CoreException x) {
 				if (i == MAX_RETRY - 1) {
-					FileBuffersTestPlugin.getDefault().getLog().log(x.getStatus());
+					FilebuffersTestPlugin.getDefault().getLog().log(x.getStatus());
 //					throw x;
 				}
 				try {
