@@ -219,7 +219,7 @@ public class TextEditor extends ExtendedTextEditor {
 	 */
 	protected void performSaveAs(IProgressMonitor progressMonitor) {
 		Shell shell= getSite().getShell();
-		IEditorInput input = getEditorInput();
+		IEditorInput input= getEditorInput();
 		
 		SaveAsDialog dialog= new SaveAsDialog(shell);
 		
@@ -257,45 +257,33 @@ public class TextEditor extends ExtendedTextEditor {
 		IWorkspace workspace= ResourcesPlugin.getWorkspace();
 		IFile file= workspace.getRoot().getFile(filePath);
 		final IEditorInput newInput= new FileEditorInput(file);
-		
-		WorkspaceModifyOperation op= new WorkspaceModifyOperation() {
-			public void execute(final IProgressMonitor monitor) throws CoreException {
-				getDocumentProvider().saveDocument(monitor, newInput, getDocumentProvider().getDocument(getEditorInput()), true);
-			}
-		};
-		
+				
 		boolean success= false;
 		try {
 			
 			provider.aboutToChange(newInput);
-			new ProgressMonitorDialog(shell).run(false, true, op);
+			provider.saveDocument(progressMonitor, newInput, provider.getDocument(input), true);			
 			success= true;
 			
-		} catch (InterruptedException x) {
-		} catch (InvocationTargetException x) {
-			
-			Throwable targetException= x.getTargetException();
+		} catch (CoreException x) {
 			
 			String title= TextEditorMessages.getString("Editor.error.save.title"); //$NON-NLS-1$
-			String msg= MessageFormat.format(TextEditorMessages.getString("Editor.error.save.message"), new Object[] { targetException.getMessage() }); //$NON-NLS-1$
+			String msg= MessageFormat.format(TextEditorMessages.getString("Editor.error.save.message"), new Object[] { x.getMessage() }); //$NON-NLS-1$
 			
-			if (targetException instanceof CoreException) {
-				CoreException coreException= (CoreException) targetException;
-				IStatus status= coreException.getStatus();
-				if (status != null) {
-					switch (status.getSeverity()) {
-						case IStatus.INFO:
-							MessageDialog.openInformation(shell, title, msg);
-							break;
-						case IStatus.WARNING:
-							MessageDialog.openWarning(shell, title, msg);
-							break;
-						default:
-							MessageDialog.openError(shell, title, msg);
-					}
-				} else {
-				  	 MessageDialog.openError(shell, title, msg);
+			IStatus status= x.getStatus();
+			if (status != null) {
+				switch (status.getSeverity()) {
+					case IStatus.INFO:
+						MessageDialog.openInformation(shell, title, msg);
+						break;
+					case IStatus.WARNING:
+						MessageDialog.openWarning(shell, title, msg);
+						break;
+					default:
+						MessageDialog.openError(shell, title, msg);
 				}
+			} else {
+			  	 MessageDialog.openError(shell, title, msg);
 			}
 						
 		} finally {
