@@ -33,7 +33,6 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 
 import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.editors.text.EditorsPlugin;
 
 
@@ -108,7 +107,7 @@ public class DocumentProviderRegistry {
 	private void initialize() {
 		
 		IExtensionPoint extensionPoint;
-		extensionPoint= Platform.getPluginRegistry().getExtensionPoint(PlatformUI.PLUGIN_ID, "documentProviders"); //$NON-NLS-1$
+		extensionPoint= Platform.getPluginRegistry().getExtensionPoint(EditorsPlugin.getPluginId(), "documentProviders"); //$NON-NLS-1$
 		
 		if (extensionPoint == null) {
 			String msg= MessageFormat.format(TextEditorMessages.getString("DocumentProviderRegistry.error.extension_point_not_found"), new Object[] { EditorsPlugin.getPluginId() }); //$NON-NLS-1$

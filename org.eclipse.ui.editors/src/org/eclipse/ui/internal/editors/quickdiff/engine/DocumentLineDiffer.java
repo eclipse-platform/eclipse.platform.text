@@ -23,9 +23,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
-import org.eclipse.swt.widgets.Shell;
 
-import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.util.Assert;
 
@@ -43,11 +42,8 @@ import org.eclipse.jface.text.source.ILineDiffInfo;
 import org.eclipse.jface.text.source.ILineDiffer;
 import org.eclipse.jface.text.source.ILineRestorer;
 
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.editors.quickdiff.*;
+import org.eclipse.ui.editors.quickdiff.IQuickDiffReferenceProvider;
 
-import org.eclipse.ui.internal.WorkbenchPlugin;
 
 /**
  * Standard implementation of <code>ILineDiffer</code> as an incremental diff engine. A 
@@ -232,11 +228,17 @@ public class DocumentLineDiffer implements ILineDiffer, IDocumentListener, ILine
 	final DocumentListener fReferenceListener= new DocumentListener();
 	/** The lines changed in one document modification. The lines are checked whether they are real changes after their application. */
 	private Set fModified= new HashSet();
+	/** The runnable context used by this document line differ */
+	private IRunnableContext fRunnableContext;
 
 	/**
 	 * Creates a new differ.
+	 * 
+	 * @param context the runnable context used by this document line differ, may not be <code>null</code>
 	 */
-	public DocumentLineDiffer() {
+	public DocumentLineDiffer(IRunnableContext context) {
+		Assert.isNotNull(context);
+		fRunnableContext= context;
 	}
 
 	/* ILineDiffer implementation */
@@ -385,36 +387,17 @@ public class DocumentLineDiffer implements ILineDiffer, IDocumentListener, ILine
 			}
 		};
 
+		execute(runnable);
+	}
+
+	private void execute(IRunnableWithProgress runnable) {
 		try {
-			Shell shell= getShell();
-			if (shell == null)
-				runnable.run(null);
-//			else 
-//				DelayedProgressMonitor.run(shell, true, true, runnable);
-			else
-				new ProgressMonitorDialog(shell).run(true, true, runnable);
+			fRunnableContext.run(true, true, runnable);
 		} catch (InvocationTargetException e) {
 			// ignore
 		} catch (InterruptedException e) {
-			// user canceled - who cares...
+			// ignore
 		}
-	}
-
-	/**
-	 * Returns the current shell.
-	 */
-	private Shell getShell() {
-		// TODO this is a hack
-		WorkbenchPlugin wbp= WorkbenchPlugin.getDefault();
-		if (wbp == null)
-			return null;
-		IWorkbench wb= wbp.getWorkbench();
-		if (wb == null)
-			return null;
-		IWorkbenchWindow activeWindow= wb.getActiveWorkbenchWindow();
-		if (activeWindow == null)
-			return null;
-		return activeWindow.getShell();
 	}
 
 	/**

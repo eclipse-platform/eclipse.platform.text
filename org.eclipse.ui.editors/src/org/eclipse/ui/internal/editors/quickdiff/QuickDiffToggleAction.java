@@ -29,6 +29,7 @@ import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.viewers.ISelection;
 
 import org.eclipse.jface.text.IDocument;
@@ -322,7 +323,7 @@ public class QuickDiffToggleAction implements IEditorActionDelegate, IUpdate {
 	 */
 	private DocumentLineDiffer createDiffer(IAnnotationModelExtension model) {
 		DocumentLineDiffer differ;
-		differ= new DocumentLineDiffer();
+		differ= new DocumentLineDiffer(new ProgressMonitorDialog(fEditor.getSite().getShell()));
 		String defaultID= TextEditorPlugin.getDefault().getPreferenceStore().getString(PREF_PREFERRED_REFERENCE);
 		ReferenceProviderDescriptor[] descs= QuickDiffTestPlugin.getDefault().getExtensions();
 		IQuickDiffProviderImplementation provider= null;

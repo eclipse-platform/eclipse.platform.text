@@ -16,6 +16,7 @@ import java.util.Iterator;
 import org.eclipse.core.runtime.IAdaptable;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 
 import org.eclipse.jface.text.Assert;
 import org.eclipse.jface.text.source.CompositeRuler;
@@ -157,7 +158,7 @@ public class ReferenceSelectionAction extends Action implements IUpdate {
 		DocumentLineDiffer differ= (DocumentLineDiffer)model.getAnnotationModel(ILineDiffer.ID);
 
 		if (differ == null && createIfNeeded) {
-			differ= new DocumentLineDiffer();
+			differ= new DocumentLineDiffer(new ProgressMonitorDialog(fEditor.getSite().getShell()));
 			model.addAnnotationModel(ILineDiffer.ID, differ);
 		}
 		return differ;
