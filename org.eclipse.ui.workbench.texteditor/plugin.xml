@@ -483,7 +483,7 @@
 	        commandId="org.eclipse.ui.edit.text.showRulerContextMenu"
 	        contextId="org.eclipse.ui.textEditorScope"
 			keyConfigurationId="org.eclipse.ui.defaultAcceleratorConfiguration"
-	        keySequence="Ctrl+W">
+	        keySequence="Ctrl+F10">
 	  </keyBinding>
 	  <keyBinding
 	        commandId="org.eclipse.ui.edit.text.contentAssist.proposals"
@@ -673,6 +673,19 @@
             keyConfigurationId="org.eclipse.ui.defaultAcceleratorConfiguration"
             keySequence="Ctrl+Arrow_Down">
       </keyBinding>
+	  <keyBinding
+            platform="carbon"
+	        contextId="org.eclipse.ui.textEditorScope"
+			keyConfigurationId="org.eclipse.ui.defaultAcceleratorConfiguration"
+	        keySequence="Ctrl+F10">
+	  </keyBinding>
+	  <keyBinding
+            platform="carbon"
+	        commandId="org.eclipse.ui.edit.text.showRulerContextMenu"
+	        contextId="org.eclipse.ui.textEditorScope"
+			keyConfigurationId="org.eclipse.ui.defaultAcceleratorConfiguration"
+	        keySequence="Command+F10">
+	  </keyBinding>
       <keyBinding
             platform="carbon"
             commandId="org.eclipse.ui.edit.text.delete.line"
@@ -1030,24 +1043,6 @@
                label="%onlyShowSelectedElement.label"
                retarget="true"
                tooltip="%onlyShowSelectedElement.tooltip">
-         </action>
-      </actionSet>
-      <actionSet
-            label="%textEditorNavigationActionSet.label"
-            visible="true"
-            id="org.eclipse.ui.edit.text.actionSet.navigation">
-         <action
-               toolbarPath="org.eclipse.ui.workbench.navigate/history.group"
-               id="org.eclipse.ui.edit.text.gotoLastEditPosition"
-               hoverIcon="icons/full/ctool16/last_edit_pos.gif"
-               class="org.eclipse.ui.internal.texteditor.GotoLastEditPositionAction"
-               definitionId="org.eclipse.ui.edit.text.gotoLastEditPosition"
-               disabledIcon="icons/full/dtool16/last_edit_pos.gif"
-               icon="icons/full/etool16/last_edit_pos.gif"
-               helpContextId="goto_last_edit_position_action_context"
-               label="%goToLastEditPosition.label"
-               menubarPath="navigate/"
-               tooltip="%goToLastEditPosition.tooltip">
          </action>
       </actionSet>
    </extension>
