@@ -18,6 +18,7 @@ import java.util.List;
 import org.eclipse.swt.graphics.Image;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.LabelProvider;
 
 import org.eclipse.search.internal.ui.util.ListDialog;
@@ -28,7 +29,10 @@ import org.eclipse.search.internal.ui.util.ListDialog;
  */
 class ShowSearchesAction extends Action {
 
-	private static final LabelProvider fgLabelProvider= new LabelProvider() {
+	private static final class SearchesLabelProvider extends LabelProvider {
+		
+		private ArrayList fImages= new ArrayList();
+		
 		public String getText(Object element) {
 			if (!(element instanceof ShowSearchAction))
 				return ""; //$NON-NLS-1$
@@ -37,7 +41,23 @@ class ShowSearchesAction extends Action {
 		public Image getImage(Object element) {
 			if (!(element instanceof ShowSearchAction))
 				return null;
-			return ((ShowSearchAction)element).getImageDescriptor().createImage();
+
+			ImageDescriptor imageDescriptor= ((ShowSearchAction)element).getImageDescriptor(); 
+			if (imageDescriptor == null)
+				return null;
+			
+			Image image= imageDescriptor.createImage();
+			fImages.add(image);
+
+			return image;
+		}
+		
+		public void dispose() {
+			Iterator iter= fImages.iterator();
+			while (iter.hasNext())
+				((Image)iter.next()).dispose();
+				
+			fImages= null;
 		}
 	};
 
@@ -88,7 +108,7 @@ class ShowSearchesAction extends Action {
 			title= SearchMessages.getString("OtherSearchesDialog.title"); //$NON-NLS-1$
 			message= SearchMessages.getString("OtherSearchesDialog.message"); //$NON-NLS-1$
 		}		
-		ListDialog dlg= new ListDialog(SearchPlugin.getActiveWorkbenchShell(),input, title, message, new SearchResultContentProvider(), fgLabelProvider);
+		ListDialog dlg= new ListDialog(SearchPlugin.getActiveWorkbenchShell(),input, title, message, new SearchResultContentProvider(), new SearchesLabelProvider());
 		if (selectedAction != null) {
 			Object[] selected= new Object[1];
 			selected[0]= selectedAction;
