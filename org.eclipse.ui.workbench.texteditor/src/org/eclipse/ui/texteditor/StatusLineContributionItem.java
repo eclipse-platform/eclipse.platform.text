@@ -27,7 +27,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.StatusLineLayoutData;
-import org.eclipse.jface.preference.JFacePreferences;
 import org.eclipse.jface.resource.JFaceColors;
 
 /**
@@ -174,8 +173,14 @@ public class StatusLineContributionItem extends ContributionItem implements ISta
 	 */
 	public void fill(Composite parent) {
 		
-		fLabel= new CLabel(parent, SWT.SHADOW_IN);
-		fLabel.setBackground(JFaceColors.getSchemeBackground(parent.getDisplay()));
+		fLabel= new CLabel(parent, SWT.NONE);
+		
+		Color[] colors = new Color[2];
+		colors[0] = parent.getDisplay().getSystemColor(SWT.COLOR_WIDGET_LIGHT_SHADOW);
+		colors[1] = fLabel.getBackground();
+		int[] gradient = new int[] {JFaceColors.STATUS_PERCENT};
+		fLabel.setBackground(colors, gradient);
+		
 		fLabel.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
 				fMouseListener= null;
