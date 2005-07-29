@@ -82,9 +82,25 @@ public class SearchPluginImages {
 		return result;
 	}
 	
-	private static ImageDescriptor create(String prefix, String name) {
+	/*
+	 * Creates an image descriptor for the given prefix and name in the JDT UI bundle. The path can
+	 * contain variables like $NL$.
+	 * If no image could be found, <code>useMissingImageDescriptor</code> decides if either
+	 * the 'missing image descriptor' is returned or <code>null</code>.
+	 * or <code>null</code>.
+	 */
+	private static ImageDescriptor create(String prefix, String name, boolean useMissingImageDescriptor) {
 		IPath path= ICONS_PATH.append(prefix).append(name);
-		return createImageDescriptor(SearchPlugin.getDefault().getBundle(), path);
+		return createImageDescriptor(SearchPlugin.getDefault().getBundle(), path, useMissingImageDescriptor);
+	}
+	
+	/*
+	 * Creates an image descriptor for the given prefix and name in the Search-plugin bundle. The path can
+	 * contain variables like $NL$.
+	 * If no image could be found, the 'missing image descriptor' is returned.
+	 */
+	private static ImageDescriptor create(String prefix, String name) {
+		return create(prefix, name, true);
 	}
 
 	/*
@@ -92,18 +108,28 @@ public class SearchPluginImages {
 	 */	
 	public static void setImageDescriptors(IAction action, String type, String relPath) {
 		relPath= relPath.substring(NAME_PREFIX_LENGTH);
-		action.setDisabledImageDescriptor(create("d" + type, relPath)); //$NON-NLS-1$
-		action.setHoverImageDescriptor(create("e" + type, relPath)); //$NON-NLS-1$
-		action.setImageDescriptor(create("e" + type, relPath)); //$NON-NLS-1$
+		
+		action.setDisabledImageDescriptor(create("d" + type, relPath, false)); //$NON-NLS-1$
+		
+		ImageDescriptor desc= create("e" + type, relPath, true); //$NON-NLS-1$
+		action.setHoverImageDescriptor(desc); 
+		action.setImageDescriptor(desc);
 	}
 	
 	/*
-	 * Since 3.1.1. Load from icon paths with $NL$
+	 * Creates an image descriptor for the given path in a bundle. The path can contain variables
+	 * like $NL$.
+	 * If no image could be found, <code>useMissingImageDescriptor</code> decides if either
+	 * the 'missing image descriptor' is returned or <code>null</code>.
+	 * Added for 3.1.1.
 	 */
-	public static ImageDescriptor createImageDescriptor(Bundle bundle, IPath path) {
+	public static ImageDescriptor createImageDescriptor(Bundle bundle, IPath path, boolean useMissingImageDescriptor) {
 		URL url= Platform.find(bundle, path);
 		if (url != null) {
 			return ImageDescriptor.createFromURL(url);
+		}
+		if (useMissingImageDescriptor) {
+			return ImageDescriptor.getMissingImageDescriptor();
 		}
 		return null;
 	}
