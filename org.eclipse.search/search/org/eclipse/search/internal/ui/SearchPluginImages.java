@@ -74,16 +74,13 @@ public class SearchPluginImages {
 	}
 	
 	private static ImageDescriptor createManaged(String prefix, String name) {
-		ImageDescriptor result= create(prefix, name.substring(NAME_PREFIX_LENGTH));
-		if (result == null) {
-			result= ImageDescriptor.getMissingImageDescriptor();
-		}
+		ImageDescriptor result= create(prefix, name.substring(NAME_PREFIX_LENGTH), true);
 		PLUGIN_REGISTRY.put(name, result);
 		return result;
 	}
 	
 	/*
-	 * Creates an image descriptor for the given prefix and name in the JDT UI bundle. The path can
+	 * Creates an image descriptor for the given prefix and name in the Search-plugin. The path can
 	 * contain variables like $NL$.
 	 * If no image could be found, <code>useMissingImageDescriptor</code> decides if either
 	 * the 'missing image descriptor' is returned or <code>null</code>.
@@ -94,15 +91,6 @@ public class SearchPluginImages {
 		return createImageDescriptor(SearchPlugin.getDefault().getBundle(), path, useMissingImageDescriptor);
 	}
 	
-	/*
-	 * Creates an image descriptor for the given prefix and name in the Search-plugin bundle. The path can
-	 * contain variables like $NL$.
-	 * If no image could be found, the 'missing image descriptor' is returned.
-	 */
-	private static ImageDescriptor create(String prefix, String name) {
-		return create(prefix, name, true);
-	}
-
 	/*
 	 * Sets all available image descriptors for the given action.
 	 */	
