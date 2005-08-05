@@ -114,8 +114,6 @@ class CompletionProposalPopup implements IContentAssistListener {
 	private List fDocumentEvents= new ArrayList();
 	/** Listener filling the document event queue. */
 	private IDocumentListener fDocumentListener;
-	/** Reentrance count for filtered proposals. */
-	private long fInvocationCounter= 0;
 	/** The filter list of proposals. */
 	private ICompletionProposal[] fFilteredProposals;
 	/** The computed list of proposals. */
@@ -161,6 +159,48 @@ class CompletionProposalPopup implements IContentAssistListener {
 	 * @since 3.1
 	 */
 	private boolean fIsFilteredSubset;
+	/**
+	 * The filter runnable.
+	 * 
+	 * @since 3.1.1
+	 */
+	private final Runnable fFilterRunnable= new Runnable() {
+		public void run() {
+			if (!fIsFilterPending)
+				return;
+			
+			fIsFilterPending= false;
+
+			Control control= fContentAssistSubjectControlAdapter.getControl();
+			if (control.isDisposed())
+				return;
+
+			int offset= fContentAssistSubjectControlAdapter.getSelectedRange().x;
+			ICompletionProposal[] proposals= null;
+			try  {
+				if (offset > -1) {
+					DocumentEvent event= TextUtilities.mergeProcessedDocumentEvents(fDocumentEvents);
+					proposals= computeFilteredProposals(offset, event);
+				}
+			} catch (BadLocationException x)  {
+			} finally  {
+				fDocumentEvents.clear();
+			}
+			fFilterOffset= offset;
+
+			if (proposals != null && proposals.length > 0)
+				setProposals(proposals, fIsFilteredSubset);
+			else
+				hide();
+		}
+	};
+	/**
+	 * <code>true</code> if <code>fFilterRunnable</code> has been
+	 * posted, <code>false</code> if not.
+	 * 
+	 * @since 3.1.1
+	 */
+	private boolean fIsFilterPending= false;
 
 
 	/**
@@ -363,7 +403,7 @@ class CompletionProposalPopup implements IContentAssistListener {
 		fContentAssistant.addToLayout(this, fProposalShell, ContentAssistant.LayoutManager.LAYOUT_PROPOSAL_SELECTOR, fContentAssistant.getSelectionOffset());
 	}
 
-	/**
+	/*
 	 * @since 3.1
 	 */
 	private void handleSetData(Event event) {
@@ -388,6 +428,12 @@ class CompletionProposalPopup implements IContentAssistListener {
 	 * @since 2.0
 	 */
 	private ICompletionProposal getSelectedProposal() {
+		/* Make sure that there is no filter runnable pending.
+		 * See https://bugs.eclipse.org/bugs/show_bug.cgi?id=31427
+		 */
+		if (fIsFilterPending)
+			fFilterRunnable.run();
+		
 		int i= fProposalTable.getSelectionIndex();
 		if (fFilteredProposals == null || i < 0 || i >= fFilteredProposals.length)
 			return null;
@@ -869,37 +915,11 @@ class CompletionProposalPopup implements IContentAssistListener {
 	 * offset of the original invocation of the content assistant.
 	 */
 	private void filterProposals() {
-		++ fInvocationCounter;
-		final Control control= fContentAssistSubjectControlAdapter.getControl();
-		control.getDisplay().asyncExec(new Runnable() {
-			final long fCounter= fInvocationCounter;
-			public void run() {
-
-				if (fCounter != fInvocationCounter)
-					return;
-
-				if (control.isDisposed())
-					return;
-
-				int offset= fContentAssistSubjectControlAdapter.getSelectedRange().x;
-				ICompletionProposal[] proposals= null;
-				try  {
-					if (offset > -1) {
-						DocumentEvent event= TextUtilities.mergeProcessedDocumentEvents(fDocumentEvents);
-						proposals= computeFilteredProposals(offset, event);
-					}
-				} catch (BadLocationException x)  {
-				} finally  {
-					fDocumentEvents.clear();
-				}
-				fFilterOffset= offset;
-
-				if (proposals != null && proposals.length > 0)
-					setProposals(proposals, fIsFilteredSubset);
-				else
-					hide();
-			}
-		});
+		if (!fIsFilterPending) {
+			fIsFilterPending= true;
+			Control control= fContentAssistSubjectControlAdapter.getControl();
+			control.getDisplay().asyncExec(fFilterRunnable);
+		}
 	}
 
 	/**
@@ -1186,7 +1206,7 @@ class CompletionProposalPopup implements IContentAssistListener {
 		}
 	}
 
-	/**
+	/*
 	 * @since 3.1
 	 */
 	private boolean isPrefixCompatible(CharSequence oneSequence, int oneOffset, CharSequence twoSequence, int twoOffset, IDocument document) throws BadLocationException {
