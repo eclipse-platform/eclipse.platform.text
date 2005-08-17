@@ -428,11 +428,16 @@ class CompletionProposalPopup implements IContentAssistListener {
 	 * @since 2.0
 	 */
 	private ICompletionProposal getSelectedProposal() {
-		/* Make sure that there is no filter runnable pending.
+		/* 
+		 * Make sure that there is no filter runnable pending.
 		 * See https://bugs.eclipse.org/bugs/show_bug.cgi?id=31427
 		 */
 		if (fIsFilterPending)
 			fFilterRunnable.run();
+		
+		// Filter runnable may have hidden the proposals
+		if (!Helper.okToUse(fProposalTable))
+			return null;
 		
 		int i= fProposalTable.getSelectionIndex();
 		if (fFilteredProposals == null || i < 0 || i >= fFilteredProposals.length)
