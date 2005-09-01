@@ -611,6 +611,11 @@ public class ProjectionViewer extends SourceViewer implements ITextViewerExtensi
 		} else {
 			try {
 				fHandleProjectionChanges= false;
+				// https://bugs.eclipse.org/bugs/show_bug.cgi?id=108258
+				// make sure the document range is strictly line based
+				int end= offset + length;
+				offset= toLineStart(projection.getMasterDocument(), offset, false);
+				length= toLineStart(projection.getMasterDocument(), end, true) - offset;
 				projection.addMasterDocumentRange(offset, length);
 			} finally {
 				fHandleProjectionChanges= true;
@@ -636,11 +641,37 @@ public class ProjectionViewer extends SourceViewer implements ITextViewerExtensi
 		} else {
 			try {
 				fHandleProjectionChanges= false;
+				// https://bugs.eclipse.org/bugs/show_bug.cgi?id=108258
+				// make sure the document range is strictly line based
+				int end= offset + length;
+				offset= toLineStart(projection.getMasterDocument(), offset, false);
+				length= toLineStart(projection.getMasterDocument(), end, true) - offset;
 				projection.removeMasterDocumentRange(offset, length);
 			} finally {
 				fHandleProjectionChanges= true;
 			}
 		}
+	}
+	
+	/**
+	 * Returns the first line offset &lt;= <code>offset</code>. If <code>testLastLine</code>
+	 * is <code>true</code> and the offset is on last line then <code>offset</code> is returned.
+	 * 
+	 * @param document the document
+	 * @param offset the master document offset
+	 * @param testLastLine <code>true</code> if the test for the last line should be performed
+	 * @return the closest line offset &gt;= <code>offset</code>
+	 * @throws BadLocationException if the offset is invalid
+	 * @since 3.2
+	 */
+	private int toLineStart(IDocument document, int offset, boolean testLastLine) throws BadLocationException {
+		if (document == null)
+			return offset;
+		
+		if (testLastLine && offset >= document.getLineInformationOfOffset(document.getLength() - 1).getOffset())
+			return offset;
+		
+		return document.getLineInformationOfOffset(offset).getOffset();
 	}
 
 	/*
