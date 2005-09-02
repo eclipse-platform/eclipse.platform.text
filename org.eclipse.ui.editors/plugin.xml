@@ -365,7 +365,7 @@
                hoverIcon="$nl$/icons/full/ctool16/prev_nav.gif"
                class="org.eclipse.ui.internal.editors.text.PreviousPulldownActionDelegate"
                definitionId="org.eclipse.ui.navigate.previous"
-               disabledIcon="$nl$//full/dtool16/prev_nav.gif"
+               disabledIcon="$nl$/icons/full/dtool16/prev_nav.gif"
                icon="$nl$/icons/full/etool16/prev_nav.gif"
                label="%goToPreviousAnnotation.label"
                retarget="true"
