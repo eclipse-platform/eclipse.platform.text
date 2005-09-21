@@ -156,6 +156,11 @@ public abstract class AbstractDocument implements IDocument, IDocumentExtension,
 	 */
 	private long fModificationStamp= IDocumentExtension4.UNKNOWN_MODIFICATION_STAMP;
 	/**
+	 * Keeps track of next modification stamp.
+	 * @since 3.1.1
+	 */
+	private long fNextModificationStamp= IDocumentExtension4.UNKNOWN_MODIFICATION_STAMP;
+	/**
 	 * This document's default line delimiter.
 	 * @since 3.1
 	 */
@@ -1070,10 +1075,12 @@ public abstract class AbstractDocument implements IDocument, IDocumentExtension,
 	}
 
 	private long getNextModificationStamp() {
-		if (fModificationStamp == Long.MAX_VALUE || fModificationStamp == IDocumentExtension4.UNKNOWN_MODIFICATION_STAMP)
-			return 0;
+		if (fNextModificationStamp == Long.MAX_VALUE || fNextModificationStamp == IDocumentExtension4.UNKNOWN_MODIFICATION_STAMP)
+			fNextModificationStamp= 0;
+		else
+			fNextModificationStamp= fNextModificationStamp + 1;
 
-		return fModificationStamp + 1;
+		return fNextModificationStamp;
 	}
 
 	/*
@@ -1099,6 +1106,7 @@ public abstract class AbstractDocument implements IDocument, IDocumentExtension,
 		getTracker().replace(pos, length, text);
 
 		fModificationStamp= modificationStamp;
+		fNextModificationStamp= Math.max(fModificationStamp, fNextModificationStamp);
 		e.fModificationStamp= fModificationStamp;
 
 		fireDocumentChanged(e);
@@ -1131,6 +1139,7 @@ public abstract class AbstractDocument implements IDocument, IDocumentExtension,
 		getTracker().set(text);
 
 		fModificationStamp= modificationStamp;
+		fNextModificationStamp= Math.max(fModificationStamp, fNextModificationStamp);
 		e.fModificationStamp= fModificationStamp;
 
 		fireDocumentChanged(e);
