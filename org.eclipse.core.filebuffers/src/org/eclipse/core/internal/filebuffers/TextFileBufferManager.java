@@ -357,12 +357,20 @@ public class TextFileBufferManager implements ITextFileBufferManager {
 	}
 
 	private AbstractFileBuffer createFileBuffer(IPath location) {
-		if (isTextFileLocation(location)) {
-			if (FileBuffers.getWorkspaceFileAtLocation(location) != null)
-				return new ResourceTextFileBuffer(this);
-			return new JavaTextFileBuffer(this);
-		}
-		return null;
+		if (isTextFileLocation(location))
+			return createTextFileBuffer(location);
+		return createBinaryFileBuffer(location);
+	}
+
+	private AbstractFileBuffer createTextFileBuffer(IPath location) {
+		if (FileBuffers.getWorkspaceFileAtLocation(location) != null)
+			return new ResourceTextFileBuffer(this);
+		return new JavaTextFileBuffer(this);
+	}
+
+	private AbstractFileBuffer createBinaryFileBuffer(IPath location) {
+		// XXX: should return a binary file buffer - using text file buffer for now
+		return createTextFileBuffer(location);
 	}
 
 	protected void fireDirtyStateChanged(final IFileBuffer buffer, final boolean isDirty) {
