@@ -39,7 +39,7 @@ import org.eclipse.ui.IEditorPart;
 public abstract class AbstractRulerActionDelegate implements IEditorActionDelegate, MouseListener, IMenuListener {
 
 	/** The editor. */
-	private IEditorPart fEditor;
+	private ITextEditor fEditor;
 	/** The action calling the action delegate. */
 	private IAction fCallerAction;
 	/** The underlying action. */
@@ -71,17 +71,17 @@ public abstract class AbstractRulerActionDelegate implements IEditorActionDelega
 				((ITextEditorExtension) fEditor).removeRulerContextMenuListener(this);
 		}
 
-		fEditor= targetEditor;
+		fEditor= (ITextEditor)(targetEditor == null ? null : targetEditor.getAdapter(ITextEditor.class));
 		fCallerAction= callerAction;
 		fAction= null;
 
-		if (fEditor != null && fEditor instanceof ITextEditor) {
+		if (fEditor != null) {
 			if (fEditor instanceof ITextEditorExtension)
 				((ITextEditorExtension) fEditor).addRulerContextMenuListener(this);
 
 			IVerticalRulerInfo rulerInfo= (IVerticalRulerInfo) fEditor.getAdapter(IVerticalRulerInfo.class);
 			if (rulerInfo != null) {
-				fAction= createAction((ITextEditor) fEditor, rulerInfo);
+				fAction= createAction(fEditor, rulerInfo);
 				update();
 
 				Control control= rulerInfo.getControl();
