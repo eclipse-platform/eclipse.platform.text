@@ -357,6 +357,11 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 			 */
 			Shell fHoverShell;
 			/**
+			 * This info hover's shell region.
+			 * @since 3.1.2
+			 */
+			private Region fHoverRegion;
+			/**
 			 * The info hover text.
 			 */
 			String fText= ""; //$NON-NLS-1$
@@ -390,6 +395,8 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 			void dispose() {
 				if (!fHoverShell.isDisposed())
 					fHoverShell.dispose();
+				if (fHoverRegion != null)
+					fHoverRegion.dispose();
 			}
 
 			void setVisible(boolean visible) {
@@ -411,9 +418,12 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 					fHoverShell.redraw();
 					Point newSize= getExtent();
 					if (!oldSize.equals(newSize)) {
-						Region region= new Region();
-						region.add(getPolygon(false));
-						fHoverShell.setRegion(region);
+						Region oldRegion= fHoverRegion;
+						fHoverRegion= new Region();
+						fHoverRegion.add(getPolygon(false));
+						fHoverShell.setRegion(fHoverRegion);
+						if (oldRegion != null)
+							oldRegion.dispose();
 					}
 				}
 			}
