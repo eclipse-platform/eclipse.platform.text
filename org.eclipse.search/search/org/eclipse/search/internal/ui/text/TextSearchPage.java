@@ -77,6 +77,7 @@ import org.eclipse.search.internal.ui.Messages;
 import org.eclipse.search.internal.ui.ScopePart;
 import org.eclipse.search.internal.ui.SearchMessages;
 import org.eclipse.search.internal.ui.SearchPlugin;
+import org.eclipse.search.internal.ui.SearchPreferencePage;
 import org.eclipse.search.internal.ui.util.FileTypeEditor;
 import org.eclipse.search.internal.ui.util.SWTUtil;
 
@@ -147,7 +148,7 @@ public class TextSearchPage extends DialogPage implements ISearchPage, IReplaceP
 			if (workingSets != null) {
 				String[] wsIds= new String[workingSets.length];
 				for (int i= 0; i < workingSets.length; i++) {
-					wsIds[i]= workingSets[i].getId();
+					wsIds[i]= workingSets[i].getLabel();
 				}
 				settings.put("workingSets", wsIds); //$NON-NLS-1$
 			} else {
@@ -189,8 +190,13 @@ public class TextSearchPage extends DialogPage implements ISearchPage, IReplaceP
 	//---- Action Handling ------------------------------------------------
 	
 	public boolean performAction() {
-		NewSearchUI.runQueryInBackground(getNewSearchQuery());
-//            NewSearchUI.runQueryInBackground(getSearchQuery());
+		if (!SearchPreferencePage.useNewTextSearch() ||  getPattern().length() == 0) {
+			// bugzilla 128050
+			NewSearchUI.runQueryInBackground(getSearchQuery());
+		}
+		else {
+			NewSearchUI.runQueryInBackground(getNewSearchQuery());
+		}
  		return true;
 	}
 	
@@ -249,6 +255,10 @@ public class TextSearchPage extends DialogPage implements ISearchPage, IReplaceP
 				IWorkingSet[] workingSets= getContainer().getSelectedWorkingSets();
 				String desc= Messages.format(SearchMessages.WorkingSetScope, ScopePart.toString(workingSets)); 
 				scope= FileNamePatternSearchScope.newSearchScope(desc, workingSets, fSearchDerived);
+				break;
+			default:
+				// unknown scope
+				scope= FileNamePatternSearchScope.newWorkspaceScope(fSearchDerived);
 		}
 		String[] fileExtensions= patternData.fileNamePatterns;
 		for (int i= 0; i < fileExtensions.length; i++) {
