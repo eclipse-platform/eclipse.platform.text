@@ -85,7 +85,7 @@ public class LineNumberRulerColumn implements IVerticalRulerColumn {
 				return;
 			}
 
-			if (fSensitiveToTextChanges || event.getDocumentEvent() == null)
+			if (fSensitiveToTextChanges || event.getDocumentEvent() == null || isViewerCompletelyShown())
 				postRedraw();
 		}
 	}
