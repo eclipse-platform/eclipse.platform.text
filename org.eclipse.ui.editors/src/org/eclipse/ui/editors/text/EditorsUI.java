@@ -160,7 +160,7 @@ public final class EditorsUI {
 	 * @return the shared text colors
 	 * @since 3.2
 	 */
-	public ISharedTextColors getSharedTextColors() {
+	public static ISharedTextColors getSharedTextColors() {
 		return EditorsPlugin.getDefault().getSharedTextColors();
 	}
 
