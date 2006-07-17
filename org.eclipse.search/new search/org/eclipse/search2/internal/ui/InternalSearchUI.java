@@ -305,7 +305,9 @@ public class InternalSearchUI {
 		
 		QueryManager searchManager= getSearchManager();
 		while (searchManager.getQueries().length >= historyLimit) {
-			removeQuery(searchManager.getOldestQuery());
+			ISearchQuery oldestQuery= searchManager.getOldestQuery();
+			if (oldestQuery != null) 
+				removeQuery(oldestQuery);
 		}
 		searchManager.addQuery(query);
 	}	
