@@ -301,13 +301,13 @@ public class InternalSearchUI {
 	}
 
 	public void addQuery(ISearchQuery query) {
-		int historyLimit= SearchPreferencePage.getHistoryLimit();
+		int historyLimit= SearchPreferencePage.getHistoryLimit(); // guaranteed to be > 0
 		
 		QueryManager searchManager= getSearchManager();
-		while (searchManager.getQueries().length >= historyLimit) {
-			ISearchQuery oldestQuery= searchManager.getOldestQuery();
-			if (oldestQuery != null) 
-				removeQuery(oldestQuery);
+		ISearchQuery[] queries= searchManager.getQueries();
+
+		for (int i= historyLimit - 1; i < queries.length; i++) {
+			removeQuery(queries[i]);
 		}
 		searchManager.addQuery(query);
 	}	

@@ -31,13 +31,15 @@ class QueryManager {
 		fLRU= new ArrayList();
 	}
 	
-	synchronized boolean hasQueries() {
+	boolean hasQueries() {
 		return !fQueries.isEmpty();
 	}
 	
-	synchronized ISearchQuery[] getQueries() {
-		ISearchQuery[] result= new ISearchQuery[fQueries.size()];
-		return (ISearchQuery[]) fQueries.toArray(result);
+	ISearchQuery[] getQueries() {
+		synchronized (fQueries) {
+			ISearchQuery[] result= new ISearchQuery[fQueries.size()];
+			return (ISearchQuery[]) fQueries.toArray(result);
+		}
 	}
 
 	void removeQuery(ISearchQuery query) {
@@ -146,11 +148,4 @@ class QueryManager {
 			fLRU.add(0, query);
 		}
 	}
-	
-	ISearchQuery getOldestQuery() {
-		if (fLRU.size() > 0)
-			return (ISearchQuery) fLRU.get(fLRU.size()-1);
-		return null;
-	}
-
 }

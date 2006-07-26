@@ -360,7 +360,11 @@ public class SearchPreferencePage extends FieldEditorPreferencePage implements I
 	
 	public static int getHistoryLimit() {
 		IPreferenceStore store= SearchPlugin.getDefault().getPreferenceStore();
-		return store.getInt(LIMIT_HISTORY);
+		int limit= store.getInt(LIMIT_HISTORY);
+		if (limit > 0) {
+			return limit;
+		}
+		return 10; // default
 	}
 	
 }
