@@ -187,6 +187,12 @@ class CompletionProposalPopup implements IContentAssistListener {
 	}
 
 	private final class CommandKeyListener extends KeyAdapter {
+		private KeySequence fCommandSequence;
+		
+		private CommandKeyListener(KeySequence keySequence) {
+			fCommandSequence= keySequence;
+		}
+		
 		public void keyPressed(KeyEvent e) {
 			if (!Helper.okToUse(fProposalShell))
 				return;
@@ -340,12 +346,6 @@ class CompletionProposalPopup implements IContentAssistListener {
 	 * @since 3.2
 	 */
 	private String fEmptyMessage= null;
-	/**
-	 * The invoking command sequence, possibly <code>null</code>.
-	 *
-	 * @since 3.2
-	 */
-	private KeySequence fCommandSequence= KeySequence.getInstance();
 
 	/**
 	 * Creates a new completion proposal popup for the given elements.
@@ -585,14 +585,14 @@ class CompletionProposalPopup implements IContentAssistListener {
 	 * @since 3.2
 	 */
     private void addCommandSupport(final Control control) {
-    	fCommandSequence= fContentAssistant.getTriggerSequence();
-    	if (!fCommandSequence.isEmpty() && fContentAssistant.isRepeatedInvocationMode()) {
+    	final KeySequence commandSequence= fContentAssistant.getTriggerSequence();
+    	if (commandSequence != null && !commandSequence.isEmpty() && fContentAssistant.isRepeatedInvocationMode()) {
     		control.addFocusListener(new FocusListener() {
     			private CommandKeyListener fCommandKeyListener;
     			public void focusGained(FocusEvent e) {
     				if (Helper.okToUse(control)) {
     					if (fCommandKeyListener == null) {
-    						fCommandKeyListener= new CommandKeyListener();
+    						fCommandKeyListener= new CommandKeyListener(commandSequence);
     						fProposalTable.addKeyListener(fCommandKeyListener);
     					}
     				}
