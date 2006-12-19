@@ -1270,8 +1270,8 @@ public class AnnotationPainter implements IPainter, PaintListener, IAnnotationMo
 			int firstWidgetLine= fTextWidget.getLineAtOffset(widgetClippingStartOffset);
 			widgetOffset= fTextWidget.getOffsetAtLine(firstWidgetLine);
 		} catch (IllegalArgumentException x) {
-			// should not happen
-			widgetOffset= 0;
+			int firstVisibleLine= JFaceTextUtil.getPartialTopIndex(fTextWidget);
+			widgetOffset= fTextWidget.getOffsetAtLine(firstVisibleLine);
 		}
 		
 		int widgetEndOffset;
@@ -1280,9 +1280,13 @@ public class AnnotationPainter implements IPainter, PaintListener, IAnnotationMo
 			int lastWidgetLine= fTextWidget.getLineAtOffset(widgetClippingEndOffset);
 			widgetEndOffset= fTextWidget.getOffsetAtLine(lastWidgetLine + 1);
 		} catch (IllegalArgumentException x) {
-			// happens if the editor is not "full", eg. the last line of the document is visible in the editor
-			// in that case, simply use the last character
-			widgetEndOffset= fTextWidget.getCharCount();
+			// happens if the editor is not "full", e.g. the last line of the document is visible in the editor
+			int lastVisibleLine= JFaceTextUtil.getPartialBottomIndex(fTextWidget);
+			if (lastVisibleLine == fTextWidget.getLineCount() - 1)
+				// last line
+				widgetEndOffset= fTextWidget.getCharCount();
+			else
+				widgetEndOffset= fTextWidget.getOffsetAtLine(lastVisibleLine + 1) - 1;
 		}
 		
 		IRegion clippingRegion= getModelRange(widgetOffset, widgetEndOffset - widgetOffset);
