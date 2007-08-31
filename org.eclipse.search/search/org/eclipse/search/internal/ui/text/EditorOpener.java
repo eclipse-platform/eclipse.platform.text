@@ -20,6 +20,7 @@ import org.eclipse.ui.IEditorRegistry;
 import org.eclipse.ui.IReusableEditor;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
@@ -73,8 +74,7 @@ public class EditorOpener {
 			if (canBeReused) {
 				boolean showsSameInputType= reusedEditorRef.getId().equals(editorId);
 				if (!showsSameInputType) {
-					IViewReference searchViewRef= page.findViewReference(NewSearchUI.SEARCH_VIEW_ID);
-					if (searchViewRef == null || !searchViewRef.isFastView())
+					if (isOkToClose(page)) // workaround for https://bugs.eclipse.org/bugs/show_bug.cgi?id=188587
 						page.closeEditors(new IEditorReference[] { reusedEditorRef }, false);
 					fReusedEditor= null;
 				} else {
@@ -100,5 +100,11 @@ public class EditorOpener {
 		return editor;
 	}
 
+	private boolean isOkToClose(IWorkbenchPage page) {
+		IWorkbenchPartReference searchViewRef= page.getActivePartReference();
+		return searchViewRef == null ||
+			!NewSearchUI.SEARCH_VIEW_ID.equals(searchViewRef.getId()) ||
+			!((IViewReference) searchViewRef).isFastView();
+	}
 	
 }
