@@ -18,6 +18,7 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.IEditorRegistry;
 import org.eclipse.ui.IReusableEditor;
+import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.ide.IDE;
@@ -72,7 +73,9 @@ public class EditorOpener {
 			if (canBeReused) {
 				boolean showsSameInputType= reusedEditorRef.getId().equals(editorId);
 				if (!showsSameInputType) {
-					page.closeEditors(new IEditorReference[] { reusedEditorRef }, false);
+					IViewReference searchViewRef= page.findViewReference(NewSearchUI.SEARCH_VIEW_ID);
+					if (searchViewRef == null || !searchViewRef.isFastView())
+						page.closeEditors(new IEditorReference[] { reusedEditorRef }, false);
 					fReusedEditor= null;
 				} else {
 					editor= reusedEditorRef.getEditor(true);
