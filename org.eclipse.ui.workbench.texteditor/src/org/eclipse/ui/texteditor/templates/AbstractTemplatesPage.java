@@ -16,49 +16,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.eclipse.core.runtime.Assert;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.IMenuListener;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.layout.TreeColumnLayout;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.Document;
-import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.IRegion;
-import org.eclipse.jface.text.ITextViewerExtension5;
-import org.eclipse.jface.text.source.ISourceViewer;
-import org.eclipse.jface.text.source.SourceViewer;
-import org.eclipse.jface.text.source.SourceViewerConfiguration;
-import org.eclipse.jface.text.templates.ContextTypeRegistry;
-import org.eclipse.jface.text.templates.Template;
-import org.eclipse.jface.text.templates.TemplateContextType;
-import org.eclipse.jface.text.templates.persistence.TemplatePersistenceData;
-import org.eclipse.jface.text.templates.persistence.TemplateStore;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.AbstractTreeViewer;
-import org.eclipse.jface.viewers.ColumnPixelData;
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.IDoubleClickListener;
-import org.eclipse.jface.viewers.IPostSelectionProvider;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.ISelectionProvider;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ITableLabelProvider;
-import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerComparator;
-import org.eclipse.jface.window.Window;
+import com.ibm.icu.text.Collator;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.custom.SashForm;
@@ -86,6 +45,53 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
+
+import org.eclipse.core.runtime.Assert;
+
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.layout.TreeColumnLayout;
+import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.jface.viewers.ColumnPixelData;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.IPostSelectionProvider;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.ISelectionProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
+import org.eclipse.jface.window.Window;
+
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.ITextViewerExtension5;
+import org.eclipse.jface.text.source.ISourceViewer;
+import org.eclipse.jface.text.source.SourceViewer;
+import org.eclipse.jface.text.source.SourceViewerConfiguration;
+import org.eclipse.jface.text.templates.ContextTypeRegistry;
+import org.eclipse.jface.text.templates.Template;
+import org.eclipse.jface.text.templates.TemplateContextType;
+import org.eclipse.jface.text.templates.persistence.TemplatePersistenceData;
+import org.eclipse.jface.text.templates.persistence.TemplateStore;
+
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.actions.ActionFactory;
@@ -94,13 +100,12 @@ import org.eclipse.ui.internal.texteditor.NLSUtility;
 import org.eclipse.ui.internal.texteditor.PixelConverter;
 import org.eclipse.ui.internal.texteditor.TextEditorPlugin;
 import org.eclipse.ui.part.Page;
+
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.ui.texteditor.ITextEditorExtension2;
 import org.eclipse.ui.texteditor.IWorkbenchActionDefinitionIds;
 import org.eclipse.ui.texteditor.templates.TemplatePreferencePage.EditTemplateDialog;
-
-import com.ibm.icu.text.Collator;
 
 
 /**
@@ -752,31 +757,30 @@ public abstract class AbstractTemplatesPage extends Page implements ITemplatesPa
 		fEditorOldPasteAction= fTextEditor.getAction(ITextEditorActionConstants.PASTE);
 		fEditorPasteAction= new Action(TemplatesMessages.TemplatesPage_paste) {
 			public void run() {
-				Clipboard clipBoard= new Clipboard(getShell().getDisplay());
-				Template template= getTemplateFromClipboard(clipBoard);
-				if (template != null)
-					insertTemplate(template);
-				else
-					fEditorOldPasteAction.run();
+				Clipboard clipboard= new Clipboard(getShell().getDisplay());
+				try {
+					Template template= getTemplateFromClipboard(clipboard);
+					if (template != null)
+						insertTemplate(template);
+					else
+						fEditorOldPasteAction.run();
+				} finally {
+					clipboard.dispose();
+				}
 			}
 
 			public void runWithEvent(Event event) {
-				Clipboard clipBoard= new Clipboard(getShell().getDisplay());
-				Template template= getTemplateFromClipboard(clipBoard);
-				if (template != null)
-					insertTemplate(template);
-				else
-					fEditorOldPasteAction.runWithEvent(event);
+				run();
 			}
 
 			/**
 			 * Convert the clipboard contents into a template
 			 * 
-			 * @param clipBoard
+			 * @param clipboard
 			 * @return the template or null if contents are not valid
 			 */
-			private Template getTemplateFromClipboard(Clipboard clipBoard) {
-				TemplatePersistenceData[] contents= (TemplatePersistenceData[]) clipBoard
+			private Template getTemplateFromClipboard(Clipboard clipboard) {
+				TemplatePersistenceData[] contents= (TemplatePersistenceData[])clipboard
 						.getContents(TemplatesTransfer.getInstance());
 				if (contents != null && contents.length == 1)
 					return contents[0].getTemplate();
@@ -920,32 +924,36 @@ public abstract class AbstractTemplatesPage extends Page implements ITemplatesPa
 
 		fPasteAction= new Action() {
 			public void run() {
-				Clipboard clipBoard= new Clipboard(getShell().getDisplay());
-				String pattern= ((String) clipBoard.getContents(TextTransfer.getInstance()));
-				if (pattern != null) {
-					final Template template= new Template(createTemplateName(),
-							TemplatesMessages.TemplatesPage_paste_description,
-							getContextTypeId(), pattern.replaceAll("\\$", "\\$\\$"), true); //$NON-NLS-1$//$NON-NLS-2$
-					if (template != null)
+				Clipboard clipboard= new Clipboard(getShell().getDisplay());
+				try {
+					String pattern= ((String)clipboard.getContents(TextTransfer.getInstance()));
+					if (pattern != null) {
+						final Template template= new Template(createTemplateName(), TemplatesMessages.TemplatesPage_paste_description, getContextTypeId(), pattern.replaceAll("\\$", "\\$\\$"), true); //$NON-NLS-1$//$NON-NLS-2$
 						getShell().getDisplay().asyncExec(new Runnable() {
 							public void run() {
 								addTemplate(template);
 							}
 						});
-					return ;
+						return;
+					}
+					TemplatePersistenceData[] templates= (TemplatePersistenceData[])clipboard.getContents(TemplatesTransfer.getInstance());
+					if (templates != null)
+						copyTemplates(templates, getContextTypeId());
+				} finally {
+					clipboard.dispose();
 				}
-				TemplatePersistenceData[] templates= (TemplatePersistenceData[]) clipBoard
-						.getContents(TemplatesTransfer.getInstance());
-				if (templates != null)
-					copyTemplates(templates, getContextTypeId());
+
 			}
 		};
 
 		fCopyAction= new Action() {
 			public void run() {
-				Clipboard clipBoard= new Clipboard(getShell().getDisplay());
-				clipBoard.setContents(new Object[] { getSelectedTemplates() },
-						new Transfer[] { TemplatesTransfer.getInstance() });
+				Clipboard clipboard= new Clipboard(getShell().getDisplay());
+				try {
+					clipboard.setContents(new Object[] { getSelectedTemplates() }, new Transfer[] { TemplatesTransfer.getInstance() });
+				} finally {
+					clipboard.dispose();
+				}
 			}
 		};
 	}
