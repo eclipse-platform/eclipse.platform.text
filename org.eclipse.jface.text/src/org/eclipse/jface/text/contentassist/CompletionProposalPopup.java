@@ -81,6 +81,8 @@ import org.eclipse.jface.text.AbstractInformationControlManager.Anchor;
 import org.eclipse.jface.util.Geometry;
 import org.eclipse.jface.viewers.StyledString;
 
+import org.eclipse.osgi.util.TextProcessor;
+
 
 /**
  * This class is used to present proposals to the user. If additional
@@ -1609,7 +1611,7 @@ class CompletionProposalPopup implements IContentAssistListener {
 			int start= ((ICompletionProposalExtension3)proposal).getPrefixCompletionStart(fContentAssistSubjectControlAdapter.getDocument(), fFilterOffset);
 			CharSequence insertion= ((ICompletionProposalExtension3)proposal).getPrefixCompletionText(fContentAssistSubjectControlAdapter.getDocument(), fFilterOffset);
 			if (insertion == null)
-				insertion= proposal.getDisplayString();
+				insertion= TextProcessor.deprocess(proposal.getDisplayString());
 			try {
 				int prefixLength= fFilterOffset - start;
 				int relativeCompletionOffset= Math.min(insertion.length(), prefixLength);
