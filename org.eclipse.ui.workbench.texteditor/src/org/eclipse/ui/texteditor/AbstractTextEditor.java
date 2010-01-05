@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2009 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -735,6 +735,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 				Font blockFont= JFaceResources.getFont(BLOCK_SELECTION_MODE_FONT);
 				setFont(fSourceViewer, blockFont);
 				disposeFont();
+				updateCaret();
 				return;
 			}
 			if (getFontPropertyPreferenceKey().equals(property) && !isBlockSelectionModeEnabled()) {
@@ -7231,8 +7232,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			StyledText styledText= viewer.getTextWidget();
 			if (styledText != null) {
 				/*
-				 * Font switching. block selection mode needs a monospace font. We try to adapt the
-				 * column font size to the current (normal) font size.
+				 * Font switching. block selection mode needs a monospace font.
 				 *  - set the font _before enabling_ block selection mode in order to maintain the
 				 * selection
 				 * - revert the font _after disabling_ block selection mode in order to maintain the
@@ -7242,27 +7242,18 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 					Font blockFont= JFaceResources.getFont(BLOCK_SELECTION_MODE_FONT);
 					Font normalFont= styledText.getFont();
 					if (!blockFont.equals(normalFont) && !normalFont.getFontData()[0].equals(blockFont.getFontData()[0])) {
-						int size= normalFont.getFontData()[0].getHeight();
-						FontData[] fontData= blockFont.getFontData();
-						boolean created= false;
-						if (fontData[0].getHeight() != size) {
-							for (int i= 0; i < fontData.length; i++) {
-								fontData[i].setHeight(size);
-							}
-							blockFont= new Font(blockFont.getDevice(), fontData);
-							created= true;
-						}
 						setFont(viewer, blockFont);
 						disposeFont();
-						if (created)
-							fFont= blockFont;
+						updateCaret();
 					}
 				}
 
 				styledText.setBlockSelection(enable);
 				
-				if (!enable)
+				if (!enable) {
 					initializeViewerFont(viewer);
+					updateCaret();
+				}
 			}
 		}
 	}
