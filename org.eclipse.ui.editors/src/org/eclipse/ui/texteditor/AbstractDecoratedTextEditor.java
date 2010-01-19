@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2009 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -277,6 +277,15 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 	 * @since 3.2
 	 */
 	protected boolean fIsUpdatingMarkerViews= false;
+
+	/**
+	 * Indicates whether it wants to update the marker views after a gotoMarker call.
+	 * @see #updateMarkerViews(Annotation)
+	 * @see #gotoMarker(IMarker)
+	 * @since 3.6
+	 */
+	private boolean fIsComingFromGotoMarker= false;
+	
 	/**
 	 * Tells whether editing the current derived editor input is allowed.
 	 * @since 3.3
@@ -1009,8 +1018,10 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 		}
 
 		int length= document.getLength();
-		if (end <= length && start <= length)
+		if (end <= length && start <= length) {
+			fIsComingFromGotoMarker= true;
 			selectAndReveal(start, end - start);
+		}
 	}
 
 	/*
@@ -2024,6 +2035,11 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 	 * @since 3.2
 	 */
 	protected void updateMarkerViews(Annotation annotation) {
+		if (fIsComingFromGotoMarker) {
+			fIsComingFromGotoMarker= false;
+			return;
+		}
+
 		IMarker marker= null;
 		if (annotation instanceof MarkerAnnotation)
 			marker= ((MarkerAnnotation)annotation).getMarker();
