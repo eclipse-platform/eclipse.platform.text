@@ -19,6 +19,8 @@ import org.eclipse.swt.SWTError;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 
 import org.eclipse.jface.util.Util;
 
@@ -47,8 +49,8 @@ public class HTMLPrinter {
 					 * @see java.lang.Runnable#run()
 					 */
 					public void run() {
-						BG_COLOR_RGB= display.getSystemColor(SWT.COLOR_INFO_BACKGROUND).getRGB();
-						FG_COLOR_RGB= display.getSystemColor(SWT.COLOR_INFO_FOREGROUND).getRGB();
+						cacheColors(display);
+						installColorUpdater(display);
 					}
 				});
 			} catch (SWTError err) {
@@ -62,6 +64,19 @@ public class HTMLPrinter {
 	private HTMLPrinter() {
 	}
 
+	private static void cacheColors(Display display) {
+		BG_COLOR_RGB= display.getSystemColor(SWT.COLOR_INFO_BACKGROUND).getRGB();
+		FG_COLOR_RGB= display.getSystemColor(SWT.COLOR_INFO_FOREGROUND).getRGB();
+	}
+	
+	private static void installColorUpdater(final Display display) {
+		display.addListener(SWT.Settings, new Listener() {
+			public void handleEvent(Event event) {
+				cacheColors(display);
+			}
+		});
+	}
+	
 	private static String replace(String text, char c, String s) {
 
 		int previous= 0;
@@ -117,7 +132,7 @@ public class HTMLPrinter {
 
 		pageProlog.append("<html>"); //$NON-NLS-1$
 
-		appendStyleSheetURL(pageProlog, styleSheet);
+		appendStyleSheet(pageProlog, styleSheet);
 
 		appendColors(pageProlog, fgRGB, bgRGB);
 
@@ -174,9 +189,17 @@ public class HTMLPrinter {
 		}
 	}
 
-	private static void appendStyleSheetURL(StringBuffer buffer, String styleSheet) {
+	private static void appendStyleSheet(StringBuffer buffer, String styleSheet) {
 		if (styleSheet == null)
 			return;
+		
+		// workaround for https://bugs.eclipse.org/318243
+		StringBuffer fg= new StringBuffer();
+		appendColor(fg, FG_COLOR_RGB);
+		styleSheet= styleSheet.replaceAll("InfoText", fg.toString()); //$NON-NLS-1$
+		StringBuffer bg= new StringBuffer();
+		appendColor(bg, BG_COLOR_RGB);
+		styleSheet= styleSheet.replaceAll("InfoBackground", bg.toString()); //$NON-NLS-1$
 
 		buffer.append("<head><style CHARSET=\"ISO-8859-1\" TYPE=\"text/css\">"); //$NON-NLS-1$
 		buffer.append(styleSheet);
