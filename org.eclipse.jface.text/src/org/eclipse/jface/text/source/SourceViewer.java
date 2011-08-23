@@ -135,8 +135,6 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 			if (fOverviewRuler != null && fIsOverviewRulerVisible) {
 				overviewRulerWidth= fOverviewRuler.getWidth();
 				width -= overviewRulerWidth + fGap;
-				if (scrollbarHeight <= 0)
-					scrollbarHeight= overviewRulerWidth;
 			}
 
 			if (fVerticalRuler != null && fIsVerticalRulerVisible) {
@@ -154,6 +152,9 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 			textWidget.setBounds(x, clArea.y, width, clArea.height);
 
 			if (overviewRulerWidth != -1) {
+				if (scrollbarHeight <= 0)
+					scrollbarHeight= overviewRulerWidth;
+				
 				int bottomOffset= clArea.y + clArea.height - scrollbarHeight;
 				int[] arrowHeights= getVerticalScrollArrowHeights(textWidget, bottomOffset);
 				
@@ -161,7 +162,7 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 				fOverviewRuler.getControl().setBounds(overviewRulerX, clArea.y + arrowHeights[0], overviewRulerWidth, clArea.height - arrowHeights[0] - arrowHeights[1] - scrollbarHeight);
 				
 				Control headerControl= fOverviewRuler.getHeaderControl();
-				boolean noArrows= arrowHeights[0] == 0 && arrowHeights[1] == 0;
+				boolean noArrows= arrowHeights[0] < 6 && arrowHeights[1] < 6; // need at least 6px to render the header control
 				if (noArrows || arrowHeights[0] < arrowHeights[1] && arrowHeights[0] < scrollbarHeight && arrowHeights[1] > scrollbarHeight) {
 					// // not enough space for header at top => move to bottom
 					int headerHeight= noArrows ? scrollbarHeight : arrowHeights[1];
@@ -221,6 +222,9 @@ public class SourceViewer extends TextViewer implements ISourceViewer, ISourceVi
 		private int[] computeScrollArrowHeights(StyledText textWidget, int bottomOffset) {
 			ScrollBar verticalBar= textWidget.getVerticalBar();
 			Rectangle thumbTrackBounds= verticalBar.getThumbTrackBounds();
+			if (thumbTrackBounds.height == 0) // SWT returns bogus values on Cocoa in this case, see https://bugs.eclipse.org/352990
+				return new int[] { 0, 0 };
+			
 			int topArrowHeight= thumbTrackBounds.y;
 			int bottomArrowHeight= bottomOffset - (thumbTrackBounds.y + thumbTrackBounds.height);
 			return new int[] { topArrowHeight, bottomArrowHeight };
