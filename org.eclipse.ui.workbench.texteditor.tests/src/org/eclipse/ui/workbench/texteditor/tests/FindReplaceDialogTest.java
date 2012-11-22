@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2010 IBM Corporation and others.
+ * Copyright (c) 2000, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -187,11 +187,17 @@ public class FindReplaceDialogTest extends TestCase {
 		event.doit= true;
 		findField.traverse(SWT.TRAVERSE_RETURN, event);
 		runEventQueue();
+		
 		Shell shell= ((Shell)fFindReplaceDialog.get("fActiveShell"));
 		if (shell == null && Util.isGtk())
 			fail("this test does not work on GTK unless the runtime workbench has focus");
 		
 		assertTrue(findField.isFocusControl());
+		
+		if (Util.isMac())
+			/* On the Mac, checkboxes only take focus if "Full Keyboard Access" is enabled in the System Preferences.
+			 * Let's not assume that someone pressed Ctrl+F7 on every test machine... */
+			return;
 
 		Button wrapSearchBox= (Button)fFindReplaceDialog.get("fWrapCheckBox");
 		wrapSearchBox.setFocus();
@@ -209,6 +215,9 @@ public class FindReplaceDialogTest extends TestCase {
 	}
 
 	public void testFocusNotChangedWhenButtonMnemonicPressed() {
+		if (Util.isMac())
+			return; // Mac doesn't support mnemonics.
+		
 		openTextViewerAndFindReplaceDialog();
 
 		Combo findField= (Combo)fFindReplaceDialog.get("fFindField");
