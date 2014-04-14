@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -1806,9 +1806,6 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			if (getRuler() == null)
 				return false;
 
-			if (descriptor == null)
-				return false;
-
 			return descriptor.matchesEditor(fEditor);
 		}
 
@@ -3120,6 +3117,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 					public void run() {
 						// check whether editor has not been disposed yet
 						if (fSourceViewer != null && fSourceViewer.getDocument() != null) {
+							handleCursorPositionChanged();
 							updateSelectionDependentActions();
 						}
 					}
@@ -3130,8 +3128,10 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 				public void selectionChanged(SelectionChangedEvent event) {
 					if (fDisplay == null)
 						fDisplay= getSite().getShell().getDisplay();
-					fDisplay.asyncExec(fRunnable);
-					handleCursorPositionChanged();
+					if (Display.getCurrent() == fDisplay)
+						fRunnable.run();
+					else
+						fDisplay.asyncExec(fRunnable);
 				}
 			};
 		}
