@@ -19,6 +19,11 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 
+import org.eclipse.core.runtime.ILog;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
+
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IPaintPositionManager;
@@ -178,8 +183,17 @@ public final class MatchingCharacterPainter implements IPainter, PaintListener {
 
 	@Override
 	public void paintControl(PaintEvent event) {
-		if (fTextWidget != null)
-			handleDrawRequest(event.gc);
+		if (fTextWidget != null) {
+			try {
+				handleDrawRequest(event.gc);
+			} catch (IllegalStateException e) {
+				// Do not allow the exception to escape this PaintListener method into the SWT code.
+				// See http://bugs.eclipse.org/498907
+				String PLUGIN_ID= "org.eclipse.jface.text"; //$NON-NLS-1$
+				ILog log= Platform.getLog(Platform.getBundle(PLUGIN_ID));
+				log.log(new Status(IStatus.ERROR, PLUGIN_ID, e.getMessage(), e));
+			}
+		}
 	}
 
 	/**
