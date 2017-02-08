@@ -875,7 +875,6 @@ public class LineNumberRulerColumn implements IVerticalRulerColumn {
 		if (fCachedTextViewer != null && fCanvas != null && !fCanvas.isDisposed()) {
 			if (VerticalRuler.AVOID_NEW_GC) {
 				fCanvas.redraw();
-				fCanvas.update();
 			} else {
 				GC gc= new GC(fCanvas);
 				doubleBufferPaint(gc);
