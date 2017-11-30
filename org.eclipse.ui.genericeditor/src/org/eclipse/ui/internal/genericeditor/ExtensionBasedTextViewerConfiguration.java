@@ -14,9 +14,11 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -187,5 +189,12 @@ public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewe
 	@Override
 	public IReconciler getReconciler(ISourceViewer sourceViewer) {
 		return null; // to disable spell-checker
+	}
+
+	@Override
+	protected Map<String, IAdaptable> getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
+		Map<String, IAdaptable> targets= super.getHyperlinkDetectorTargets(sourceViewer);
+		targets.put("org.eclipse.ui.genericeditor.GenericEditor", editor); //$NON-NLS-1$
+		return targets;
 	}
 }
