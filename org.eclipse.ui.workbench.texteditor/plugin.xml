@@ -305,6 +305,42 @@
 	        id="org.eclipse.ui.edit.text.select.windowEnd">
 	  </command>
 	  <command
+	        name="%command.selectAddAllMatchesToMultiSelection.name"
+	        description="%command.selectAddAllMatchesToMultiSelection.description"
+	        categoryId="org.eclipse.ui.category.textEditor"
+	        id="org.eclipse.ui.edit.text.select.addAllMatchesToMultiSelection">
+	  </command>
+	  <command
+	        name="%command.selectMultiSelectionDown.name"
+	        description="%command.selectMultiSelectionDown.description"
+	        categoryId="org.eclipse.ui.category.textEditor"
+	        id="org.eclipse.ui.edit.text.select.selectMultiSelectionDown">
+	  </command>
+	  <command
+	        name="%command.selectMultiSelectionUp.name"
+	        description="%command.selectMultiSelectionUp.description"
+	        categoryId="org.eclipse.ui.category.textEditor"
+	        id="org.eclipse.ui.edit.text.select.selectMultiSelectionUp">
+	  </command>
+	  <command
+	        name="%command.stopMultiSelection.name"
+	        description="%command.stopMultiSelection.description"
+	        categoryId="org.eclipse.ui.category.textEditor"
+	        id="org.eclipse.ui.edit.text.select.stopMultiSelection">
+	  </command>
+	  <command
+	        name="%command.multiCaretUp.name"
+	        description="%command.multiCaretUp.description"
+	        categoryId="org.eclipse.ui.category.textEditor"
+	        id="org.eclipse.ui.edit.text.select.multiCaretUp">
+	  </command>	  
+	  <command
+	        name="%command.multiCaretDown.name"
+	        description="%command.multiCaretDown.description"
+	        categoryId="org.eclipse.ui.category.textEditor"
+	        id="org.eclipse.ui.edit.text.select.multiCaretDown">
+	  </command>	  
+	  <command
 	        name="%command.deletePrevious.name"
 	        description="%command.deletePrevious.description"
 	        categoryId="org.eclipse.ui.category.textEditor"
@@ -1357,12 +1393,63 @@
             class="org.eclipse.ui.internal.texteditor.ToMultiSelectionHandler"
             commandId="org.eclipse.ui.edit.text.toMultiSelection">
          <enabledWhen>
-            <with
-                 variable="activeEditor">
-              <instanceof
-                    value="org.eclipse.ui.texteditor.ITextEditor">
-              </instanceof>
-           </with>
+            <with variable="activeEditor">
+              <adapt type="org.eclipse.ui.texteditor.ITextEditor"/>
+            </with>
+         </enabledWhen>
+      </handler>
+      <handler
+            class="org.eclipse.ui.internal.texteditor.multiselection.AddAllMatchesToMultiSelectionHandler"
+            commandId="org.eclipse.ui.edit.text.select.addAllMatchesToMultiSelection">
+         <enabledWhen>
+            <with variable="activeEditor">
+              <adapt type="org.eclipse.ui.texteditor.ITextEditor"/>
+            </with>
+         </enabledWhen>
+      </handler>	
+      <handler
+            class="org.eclipse.ui.internal.texteditor.multiselection.MultiSelectionDownHandler"
+            commandId="org.eclipse.ui.edit.text.select.selectMultiSelectionDown">
+         <enabledWhen>
+            <with variable="activeEditor">
+              <adapt type="org.eclipse.ui.texteditor.ITextEditor"/>
+            </with>
+         </enabledWhen>
+      </handler>
+      <handler
+            class="org.eclipse.ui.internal.texteditor.multiselection.MultiSelectionUpHandler"
+            commandId="org.eclipse.ui.edit.text.select.selectMultiSelectionUp">
+         <enabledWhen>
+            <with variable="activeEditor">
+              <adapt type="org.eclipse.ui.texteditor.ITextEditor"/>
+            </with>
+         </enabledWhen>
+      </handler>
+      <handler
+            class="org.eclipse.ui.internal.texteditor.multiselection.StopMultiSelectionHandler"
+            commandId="org.eclipse.ui.edit.text.select.stopMultiSelection">
+         <enabledWhen>
+            <with variable="activeEditor">
+              <adapt type="org.eclipse.ui.texteditor.ITextEditor"/>
+            </with>
+         </enabledWhen>
+      </handler>
+      <handler
+            class="org.eclipse.ui.internal.texteditor.multiselection.MultiCaretUpHandler"
+            commandId="org.eclipse.ui.edit.text.select.multiCaretUp">
+         <enabledWhen>
+            <with variable="activeEditor">
+              <adapt type="org.eclipse.ui.texteditor.ITextEditor"/>
+            </with>
+         </enabledWhen>
+      </handler>
+      <handler
+            class="org.eclipse.ui.internal.texteditor.multiselection.MultiCaretDownHandler"
+            commandId="org.eclipse.ui.edit.text.select.multiCaretDown">
+         <enabledWhen>
+            <with variable="activeEditor">
+              <adapt type="org.eclipse.ui.texteditor.ITextEditor"/>
+            </with>
          </enabledWhen>
       </handler>
    </extension>
