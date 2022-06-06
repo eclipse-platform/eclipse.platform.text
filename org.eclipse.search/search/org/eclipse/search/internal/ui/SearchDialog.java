@@ -434,13 +434,11 @@ public class SearchDialog extends ExtendedDialogWindow implements ISearchPageCon
 			if (imageDesc != null)
 				item.setImage(imageDesc.createImage());
 
-			if (i == fCurrentIndex) {
-				Control pageControl= createPageControl(folder, descriptor);
-				pageControl.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-				item.setControl(pageControl);
-				fCurrentPage= descriptor.getPage();
-				fDialogSettings.put(STORE_PREVIOUS_PAGE, descriptor.getId());
-			}
+			Control pageControl = createPageControl(folder, descriptor);
+			pageControl.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+			item.setControl(pageControl);
+			fCurrentPage = descriptor.getPage();
+			fDialogSettings.put(STORE_PREVIOUS_PAGE, descriptor.getId());
 		}
 
 		folder.addSelectionListener(new SelectionAdapter() {
@@ -545,11 +543,6 @@ public class SearchDialog extends ExtendedDialogWindow implements ISearchPageCon
 		CTabFolder folder = item.getParent();
 
 		SearchPageDescriptor descriptor= (SearchPageDescriptor) item.getData("descriptor"); //$NON-NLS-1$
-
-
-		if (item.getControl() == null) {
-			item.setControl(createPageControl(folder, descriptor));
-		}
 
 		Control oldControl= folder.getItem(fCurrentIndex).getControl();
 		Point oldSize= oldControl.getSize();
