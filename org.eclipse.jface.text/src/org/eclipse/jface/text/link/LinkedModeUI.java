@@ -280,11 +280,37 @@ public class LinkedModeUI {
 	}
 
 	/**
+	 * An extension to exit policy can be registered by a caller to get custom exit behavior for
+	 * external changes like Copy-Paste operations.
+	 * <p>
+	 * Clients may implement this interface.
+	 * </p>
+	 *
+	 * @since 3.21
+	 */
+	public interface IExitPolicyExt extends IExitPolicy {
+		/**
+		 * Checks whether the linked mode should be left after receiving the given
+		 * <code>DocumentEvent</code>, especially allowing to control Copy-Paste operations.
+		 *
+		 * @param model the linked mode model
+		 * @param event the document event
+		 * @return valid exit flags or <code>null</code> if no special action should be taken
+		 */
+		ExitFlags doExit(LinkedModeModel model, DocumentEvent event);
+	}
+
+	/**
 	 * A NullObject implementation of <code>IExitPolicy</code>.
 	 */
-	private static class NullExitPolicy implements IExitPolicy {
+	private static class NullExitPolicy implements IExitPolicyExt {
 		@Override
 		public ExitFlags doExit(LinkedModeModel model, VerifyEvent event, int offset, int length) {
+			return null;
+		}
+
+		@Override
+		public ExitFlags doExit(LinkedModeModel model, DocumentEvent event) {
 			return null;
 		}
 	}
@@ -393,6 +419,15 @@ public class LinkedModeUI {
 					}
 
 					leave(ILinkedModeListener.EXTERNAL_MODIFICATION);
+					return;
+				}
+			}
+
+			// Apply  ExitPolicy to any inserted text if the insertion is made inside a linked region
+			if (fExitPolicy instanceof IExitPolicyExt) {
+				ExitFlags flags= ((IExitPolicyExt) fExitPolicy).doExit(fModel, event);
+				if (flags != null) {
+					leave(flags.flags);
 					return;
 				}
 			}
