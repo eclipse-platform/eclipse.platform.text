@@ -32,6 +32,7 @@ import org.junit.runners.Suite.SuiteClasses;
 		GotoLineTest.class,
 		SegmentedModeTest.class,
 		MarkerAnnotationOrderTest.class,
+		RulerTest.class,
 		ZoomTest.class,
 		FileDocumentProviderTest.class,
 		TextFileDocumentProviderTest.class,
