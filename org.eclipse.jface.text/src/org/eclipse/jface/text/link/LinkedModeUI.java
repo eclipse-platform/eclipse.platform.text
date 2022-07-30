@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -29,6 +29,10 @@ import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+
+import org.eclipse.core.commands.operations.IOperationHistoryListener;
+import org.eclipse.core.commands.operations.OperationHistoryEvent;
+import org.eclipse.core.commands.operations.OperationHistoryFactory;
 
 import org.eclipse.core.runtime.Assert;
 
@@ -292,7 +296,7 @@ public class LinkedModeUI {
 	/**
 	 * Listens for shell events and acts upon them.
 	 */
-	private class Closer implements ShellListener, ITextInputListener {
+	private class Closer implements ShellListener, ITextInputListener, IOperationHistoryListener {
 
 		@Override
 		public void shellActivated(ShellEvent e) {
@@ -369,6 +373,13 @@ public class LinkedModeUI {
 		public void inputDocumentChanged(IDocument oldInput, IDocument newInput) {
 		}
 
+		@Override
+		public void historyNotification(OperationHistoryEvent event) {
+			final int type= event.getEventType();
+			if (type == OperationHistoryEvent.ABOUT_TO_UNDO || type == OperationHistoryEvent.ABOUT_TO_REDO) {
+				leave(ILinkedModeListener.EXIT_ALL);
+			}
+		}
 	}
 
 	/**
@@ -955,6 +966,8 @@ public class LinkedModeUI {
 		viewer.addTextInputListener(fCloser);
 
 		viewer.getDocument().addDocumentListener(fDocumentListener);
+
+		OperationHistoryFactory.getOperationHistory().addOperationHistoryListener(fCloser);
 	}
 
 	/**
@@ -1096,6 +1109,8 @@ public class LinkedModeUI {
 			fCurrentTarget.fKeyListener.setEnabled(false);
 
 		((IPostSelectionProvider) viewer).removePostSelectionChangedListener(fSelectionListener);
+
+		OperationHistoryFactory.getOperationHistory().removeOperationHistoryListener(fCloser);
 
 		redraw();
 	}
