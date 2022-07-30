@@ -31,7 +31,7 @@ import org.eclipse.ui.quickaccess.IQuickAccessComputerExtension;
 import org.eclipse.ui.quickaccess.QuickAccessElement;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-public class QuickSearchQuickAccessComputer extends QuickTextSearchRequestor implements IQuickAccessComputer, IQuickAccessComputerExtension {
+public class QuickSearchQuickAccessComputer implements QuickTextSearchRequestor, IQuickAccessComputer, IQuickAccessComputerExtension {
 
 	private static final int MAX_ENTRIES = 20;
 	private static final long TIMEOUT = 200;

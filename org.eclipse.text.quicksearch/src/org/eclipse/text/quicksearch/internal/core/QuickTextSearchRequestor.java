@@ -13,7 +13,7 @@
 package org.eclipse.text.quicksearch.internal.core;
 
 /**
- * Plays a similar role than SearchReqeustor in eclipse Searches. I.e. a search requestor
+ * Plays a similar role than SearchReqeustor in Eclipse searches. I.e. a search requestor
  * is some entity accepting the results of a search. Typically the requestor displays the
  * result to the user.
  * <p>
@@ -24,30 +24,31 @@ package org.eclipse.text.quicksearch.internal.core;
  *
  * @author Kris De Volder
  */
-public class QuickTextSearchRequestor {
+@SuppressWarnings("unused")
+public interface QuickTextSearchRequestor {
 
 	/**
 	 * Called when a line of text containing the search text is found.
 	 */
-	public void add(LineItem match) {}
+	default void add(LineItem match) {}
 
 	/**
 	 * Called when a previously added line of text needs to be redisplayed (this happens if
 	 * the query has changed but still matches the line. I.e. the line is still a match, but
 	 * the highlighting of the search term is different.
 	 */
-	public void update(LineItem match) {}
+	default void update(LineItem match) {}
 
 	/**
 	 * Called when a line of text previously added is no longer a match for the current query.
 	 * I.e. the line should no longer be displayed.
 	 */
-	public void revoke(LineItem line) {}
+	default void revoke(LineItem line) {}
 
 	/**
 	 * Called when all previous results have become revoked at once.
 	 * This happens when a query is changed in such a way that it can't be updated
 	 * incrementally but needs to be completely restarted.
 	 */
-	public void clear() {}
+	default void clear() {}
 }
