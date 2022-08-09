@@ -2797,7 +2797,6 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 	 *
 	 * @param helpContextId the help context id
 	 */
-	@Override
 	protected void setHelpContextId(String helpContextId) {
 		Assert.isNotNull(helpContextId);
 		fHelpContextId= helpContextId;
