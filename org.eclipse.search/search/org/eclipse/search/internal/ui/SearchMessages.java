@@ -160,6 +160,10 @@ public final class SearchMessages extends NLS {
 	public static String FileSearchQuery_singularLabel;
 	public static String FileSearchQuery_singularLabel_fileNameSearch;
 	public static String FileSearchQuery_pluralPattern_fileNameSearch;
+	public static String FileResearchQuery_pluralPattern;
+	public static String FileResearchQuery_singularLabel;
+	public static String FileResearchQuery_singularLabel_fileNameSearch;
+	public static String FileResearchQuery_pluralPattern_fileNameSearch;
 	public static String OpenSearchDialogAction_label;
 	public static String OpenSearchDialogAction_tooltip;
 	public static String FileTypeEditor_typeDelimiter;
@@ -220,4 +224,6 @@ public final class SearchMessages extends NLS {
 	public static String TextSearchEngineRegistry_defaulttextsearch_label;
 	public static String FileSearchQuery_singularPatternWithFileExt;
 	public static String FileSearchQuery_pluralPatternWithFileExt;
+	public static String FileResearchQuery_singularPatternWithFileExt;
+	public static String FileResearchQuery_pluralPatternWithFileExt;
 }

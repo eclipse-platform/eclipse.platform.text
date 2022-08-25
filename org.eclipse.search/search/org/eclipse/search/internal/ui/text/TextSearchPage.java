@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,6 +20,7 @@ package org.eclipse.search.internal.ui.text;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -110,6 +111,7 @@ public class TextSearchPage extends DialogPage implements ISearchPage, IReplaceP
 	 * @since 3.6
 	 */
 	private static final String STORE_EXTENSIONS= "EXTENSIONS"; //$NON-NLS-1$
+	private static WeakReference<ISearchQuery> lastQuery;
 
 	private List<SearchPatternData> fPreviousSearchPatterns= new ArrayList<>(HISTORY_SIZE);
 
@@ -274,7 +276,13 @@ public class TextSearchPage extends DialogPage implements ISearchPage, IReplaceP
 	@Override
 	public boolean performAction() {
 		try {
-			NewSearchUI.runQueryInBackground(newQuery());
+			ISearchQuery last = lastQuery == null ? null : lastQuery.get();
+			if (last != null) {
+				NewSearchUI.cancelQuery(last);
+			}
+			ISearchQuery newQuery = newQuery();
+			lastQuery=new WeakReference<>(newQuery);
+			NewSearchUI.runQueryInBackground(newQuery);
 		} catch (CoreException e) {
 			ErrorDialog.openError(getShell(), SearchMessages.TextSearchPage_replace_searchproblems_title, SearchMessages.TextSearchPage_replace_searchproblems_message, e.getStatus());
 			return false;

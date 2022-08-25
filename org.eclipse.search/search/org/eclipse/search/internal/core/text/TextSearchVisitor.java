@@ -333,38 +333,45 @@ public class TextSearchVisitor {
 		long startTime= TRACING ? System.currentTimeMillis() : 0;
 
 		Job monitorUpdateJob= new Job(SearchMessages.TextSearchVisitor_progress_updating_job) {
-			private int fLastNumberOfScannedFiles= 0;
 
 			@Override
 			public IStatus run(IProgressMonitor inner) {
-				while (!inner.isCanceled()) {
-					// Propagate user cancellation to the JobGroup.
-					if (fProgressMonitor.isCanceled()) {
-						jobGroup.cancel();
-						break;
-					}
+				int fLastNumberOfScannedFiles = 0;
+				try {
+					while (!inner.isCanceled()) {
+						// Propagate user cancellation to the JobGroup.
+						if (fProgressMonitor.isCanceled()) {
+							break;
+						}
 
-					IFile file;
-					int numberOfScannedFiles;
-					synchronized (fLock) {
-						file= fCurrentFile;
-						numberOfScannedFiles= fNumberOfScannedFiles;
+						IFile file;
+						int numberOfScannedFiles;
+						synchronized (fLock) {
+							file = fCurrentFile;
+							numberOfScannedFiles = fNumberOfScannedFiles;
+						}
+						if (numberOfScannedFiles == fNumberOfFilesToScan) {
+							return Status.OK_STATUS;
+						}
+						if (file != null) {
+							String fileName = file.getName();
+							Object[] args = { fileName, Integer.valueOf(numberOfScannedFiles),
+									Integer.valueOf(fNumberOfFilesToScan) };
+							fProgressMonitor.subTask(Messages.format(SearchMessages.TextSearchVisitor_scanning, args));
+							int steps = numberOfScannedFiles - fLastNumberOfScannedFiles;
+							fProgressMonitor.worked(steps);
+							fLastNumberOfScannedFiles += steps;
+						}
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							return Status.OK_STATUS;
+						}
 					}
-					if (file != null) {
-						String fileName= file.getName();
-						Object[] args= { fileName, Integer.valueOf(numberOfScannedFiles), Integer.valueOf(fNumberOfFilesToScan)};
-						fProgressMonitor.subTask(Messages.format(SearchMessages.TextSearchVisitor_scanning, args));
-						int steps= numberOfScannedFiles - fLastNumberOfScannedFiles;
-						fProgressMonitor.worked(steps);
-						fLastNumberOfScannedFiles += steps;
-					}
-					try {
-						Thread.sleep(100);
-					} catch (InterruptedException e) {
-						return Status.OK_STATUS;
-					}
+					return Status.OK_STATUS;
+				} finally {
+					jobGroup.cancel();
 				}
-				return Status.OK_STATUS;
 			}
 		};
 
@@ -373,8 +380,6 @@ public class TextSearchVisitor {
 					? SearchMessages.TextSearchVisitor_filesearch_task_label
 					: ""; //$NON-NLS-1$
 			fProgressMonitor.beginTask(taskName, fNumberOfFilesToScan);
-			monitorUpdateJob.setSystem(true);
-			monitorUpdateJob.schedule();
 			try {
 				fCollector.beginReporting();
 				Map<IFile, IDocument> documentsInEditors= PlatformUI.isWorkbenchRunning() ? evalNonFileBufferDocuments() : Collections.emptyMap();
@@ -384,13 +389,15 @@ public class TextSearchVisitor {
 				Map<String, List<IFile>> localFilesByLocation = new LinkedHashMap<>();
 				Map<String, List<IFile>> remotFilesByLocation = new LinkedHashMap<>();
 
-				for (IFile file : files) {
-					IPath path = file.getLocation();
-					String key = path == null ? file.getLocationURI().toString() : path.toString();
-					Map<String, List<IFile>> filesByLocation = (path != null) ? localFilesByLocation
-							: remotFilesByLocation;
-					filesByLocation.computeIfAbsent(key, k -> new ArrayList<>()).add(file);
+				if (!fProgressMonitor.isCanceled()) {
+					for (IFile file : files) {
+						IPath path = file.getLocation();
+						String key = path == null ? file.getLocationURI().toString() : path.toString();
+						Map<String, List<IFile>> filesByLocation = (path != null) ? localFilesByLocation
+								: remotFilesByLocation;
+						filesByLocation.computeIfAbsent(key, k -> new ArrayList<>()).add(file);
 
+					}
 				}
 				localFilesByLocation.values().forEach(fileBatches::offer);
 				remotFilesByLocation.values().forEach(fileBatches::offer);
@@ -400,10 +407,22 @@ public class TextSearchVisitor {
 					job.setJobGroup(jobGroup);
 					job.schedule();
 				}
+				monitorUpdateJob.setSystem(true);
+				monitorUpdateJob.schedule();
 
 				// The monitorUpdateJob is managing progress and cancellation,
 				// so it is ok to pass a null monitor into the job group.
-				jobGroup.join(0, null);
+				try {
+					// avoid stale jobs
+					monitorUpdateJob.join(0, null);
+				} catch (InterruptedException e) {
+					// ignore
+				}
+				jobGroup.join(0, null); // XXX can deadlock, but using
+										// fProgressMonitor shows wrong
+										// progress. no guarantee
+										// monitorUpdateJob is running in
+										// another worker
 				if (fProgressMonitor.isCanceled())
 					throw new OperationCanceledException(SearchMessages.TextSearchVisitor_canceled);
 
@@ -412,7 +431,6 @@ public class TextSearchVisitor {
 			} catch (InterruptedException e) {
 				throw new OperationCanceledException(SearchMessages.TextSearchVisitor_canceled);
 			} finally {
-				monitorUpdateJob.cancel();
 				fileBatches.clear();
 			}
 		} finally {

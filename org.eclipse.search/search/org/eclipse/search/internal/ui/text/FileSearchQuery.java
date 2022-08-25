@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -38,6 +38,7 @@ import org.eclipse.search.core.text.TextSearchRequestor;
 import org.eclipse.search.internal.core.text.PatternConstructor;
 import org.eclipse.search.internal.ui.Messages;
 import org.eclipse.search.internal.ui.SearchMessages;
+import org.eclipse.search.ui.IResearchQuery;
 import org.eclipse.search.ui.ISearchQuery;
 import org.eclipse.search.ui.ISearchResult;
 import org.eclipse.search.ui.text.AbstractTextSearchResult;
@@ -45,7 +46,7 @@ import org.eclipse.search.ui.text.FileTextSearchScope;
 import org.eclipse.search.ui.text.Match;
 
 
-public class FileSearchQuery implements ISearchQuery {
+public class FileSearchQuery implements ISearchQuery, IResearchQuery {
 
 	private final static class TextSearchResultCollector extends TextSearchRequestor {
 
@@ -195,7 +196,7 @@ public class FileSearchQuery implements ISearchQuery {
 	}
 
 	private final FileTextSearchScope fScope;
-	private final String fSearchText;
+	private volatile String fSearchText;
 	private final boolean fIsRegEx;
 	private final boolean fIsCaseSensitive;
 	private final boolean fIsWholeWord;
@@ -218,11 +219,6 @@ public class FileSearchQuery implements ISearchQuery {
 
 	public FileTextSearchScope getSearchScope() {
 		return fScope;
-	}
-
-	@Override
-	public boolean canRunInBackground() {
-		return true;
 	}
 
 	@Override
@@ -251,43 +247,55 @@ public class FileSearchQuery implements ISearchQuery {
 
 	@Override
 	public String getLabel() {
-		Pattern searchPattern = getSearchPattern();
-		return searchPattern.pattern().isEmpty() ? SearchMessages.FileSearchQuery_label
+		return isFileNameSearch() ? SearchMessages.FileSearchQuery_label
 				: Messages.format(SearchMessages.TextSearchVisitor_textsearch_task_label, getSearchString());
 	}
 
+	@Override
 	public String getSearchString() {
 		return fSearchText;
 	}
 
+	@Override
+	public void setSearchString(String s) {
+		this.fSearchText = s;
+	}
+
 	public String getResultLabel(int nMatches) {
 		String searchString= getSearchString();
+		boolean research = true; /// TODO?
 		if (!searchString.isEmpty()) {
 			// text search
 			if (isScopeAllFileTypes()) {
 				// search all file extensions
 				if (nMatches == 1) {
 					Object[] args= { searchString, fScope.getDescription() };
-					return Messages.format(SearchMessages.FileSearchQuery_singularLabel, args);
+					return Messages.format(research ? SearchMessages.FileResearchQuery_singularLabel
+							: SearchMessages.FileSearchQuery_singularLabel, args);
 				}
 				Object[] args= { searchString, Integer.valueOf(nMatches), fScope.getDescription() };
-				return Messages.format(SearchMessages.FileSearchQuery_pluralPattern, args);
+				return Messages.format(research ? SearchMessages.FileResearchQuery_pluralPattern
+						: SearchMessages.FileSearchQuery_pluralPattern, args);
 			}
 			// search selected file extensions
 			if (nMatches == 1) {
 				Object[] args= { searchString, fScope.getDescription(), fScope.getFilterDescription() };
-				return Messages.format(SearchMessages.FileSearchQuery_singularPatternWithFileExt, args);
+				return Messages.format(research ? SearchMessages.FileResearchQuery_singularPatternWithFileExt
+						: SearchMessages.FileSearchQuery_singularPatternWithFileExt, args);
 			}
 			Object[] args= { searchString, Integer.valueOf(nMatches), fScope.getDescription(), fScope.getFilterDescription() };
-			return Messages.format(SearchMessages.FileSearchQuery_pluralPatternWithFileExt, args);
+			return Messages.format(research ? SearchMessages.FileResearchQuery_pluralPatternWithFileExt
+					: SearchMessages.FileSearchQuery_pluralPatternWithFileExt, args);
 		}
 		// file search
 		if (nMatches == 1) {
 			Object[] args= { fScope.getFilterDescription(), fScope.getDescription() };
-			return Messages.format(SearchMessages.FileSearchQuery_singularLabel_fileNameSearch, args);
+			return Messages.format(research ? SearchMessages.FileResearchQuery_singularLabel_fileNameSearch
+					: SearchMessages.FileSearchQuery_singularLabel_fileNameSearch, args);
 		}
 		Object[] args= { fScope.getFilterDescription(), Integer.valueOf(nMatches), fScope.getDescription() };
-		return Messages.format(SearchMessages.FileSearchQuery_pluralPattern_fileNameSearch, args);
+		return Messages.format(research ? SearchMessages.FileResearchQuery_pluralPattern_fileNameSearch
+				: SearchMessages.FileSearchQuery_pluralPattern_fileNameSearch, args);
 	}
 
 	/**
@@ -323,11 +331,6 @@ public class FileSearchQuery implements ISearchQuery {
 
 	public boolean isWholeWord() {
 		return fIsWholeWord;
-	}
-
-	@Override
-	public boolean canRerun() {
-		return true;
 	}
 
 	@Override

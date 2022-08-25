@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,8 +15,9 @@
 package org.eclipse.search2.internal.ui;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -39,6 +40,7 @@ import org.eclipse.search.ui.IQueryListener;
 import org.eclipse.search.ui.ISearchQuery;
 import org.eclipse.search.ui.ISearchResult;
 import org.eclipse.search.ui.ISearchResultViewPart;
+import org.eclipse.search.ui.NewSearchUI;
 
 import org.eclipse.search2.internal.ui.text.PositionTracker;
 
@@ -48,31 +50,28 @@ public class InternalSearchUI {
 	private static InternalSearchUI fgInstance;
 
 	// contains all running jobs
-	private HashMap<ISearchQuery, SearchJobRecord> fSearchJobs;
+	private final Map<ISearchQuery, SearchJobRecord> fSearchJobs;
 
-	private QueryManager fSearchResultsManager;
-	private PositionTracker fPositionTracker;
+	private final QueryManager fSearchResultsManager;
+	private final PositionTracker fPositionTracker;
 
-	private SearchViewManager fSearchViewManager;
+	private final SearchViewManager fSearchViewManager;
 
 	public static final Object FAMILY_SEARCH = new Object();
 
 	private static class SearchJobRecord {
-		public ISearchQuery query;
-		public Job job;
-		public boolean isRunning;
+		public final ISearchQuery query;
+		public volatile Job job;
 
 		public SearchJobRecord(ISearchQuery job) {
 			this.query= job;
-			this.isRunning= false;
 			this.job= null;
 		}
 	}
 
-
 	private class InternalSearchJob extends Job {
 
-		private SearchJobRecord fSearchJobRecord;
+		private final SearchJobRecord fSearchJobRecord;
 
 		public InternalSearchJob(SearchJobRecord sjr) {
 			super(sjr.query.getLabel());
@@ -102,6 +101,7 @@ public class InternalSearchUI {
 			fSearchJobRecord.job= null;
 			return status;
 		}
+
 		@Override
 		public boolean belongsTo(Object family) {
 			return family == InternalSearchUI.FAMILY_SEARCH;
@@ -110,12 +110,10 @@ public class InternalSearchUI {
 	}
 
 	private void searchJobStarted(SearchJobRecord record) {
-		record.isRunning= true;
 		getSearchManager().queryStarting(record.query);
 	}
 
 	private void searchJobFinished(SearchJobRecord record) {
-		record.isRunning= false;
 		fSearchJobs.remove(record.query);
 		getSearchManager().queryFinished(record.query);
 	}
@@ -125,7 +123,7 @@ public class InternalSearchUI {
 	 */
 	public InternalSearchUI() {
 		fgInstance= this;
-		fSearchJobs= new HashMap<>();
+		fSearchJobs= new ConcurrentHashMap<>();
 		fSearchResultsManager= new QueryManager();
 		fPositionTracker= new PositionTracker();
 
@@ -137,7 +135,7 @@ public class InternalSearchUI {
 	/**
 	 * @return returns the shared instance.
 	 */
-	public static InternalSearchUI getInstance() {
+	public static synchronized InternalSearchUI getInstance() {
 		if (fgInstance ==null)
 			fgInstance= new InternalSearchUI();
 		return fgInstance;
@@ -158,8 +156,13 @@ public class InternalSearchUI {
 	}
 
 	public boolean runSearchInBackground(ISearchQuery query, ISearchResultViewPart view) {
-		if (isQueryRunning(query))
+		SearchJobRecord sjr = new SearchJobRecord(query);
+		// do not rerun same query in parallel (avoid MT issues):
+		NewSearchUI.waitFinished(query); // blocks UI :-(
+		SearchJobRecord queryRunning = fSearchJobs.putIfAbsent(query, sjr);
+		if (queryRunning != null) {
 			return false;
+		}
 
 		// prepare view
 		if (view == null) {
@@ -170,8 +173,6 @@ public class InternalSearchUI {
 
 		addQuery(query);
 
-		SearchJobRecord sjr= new SearchJobRecord(query);
-		fSearchJobs.put(query, sjr);
 
 		Job job= new InternalSearchJob(sjr);
 		job.setPriority(Job.BUILD);
@@ -188,12 +189,13 @@ public class InternalSearchUI {
 	}
 
 	public boolean isQueryRunning(ISearchQuery query) {
-		SearchJobRecord sjr= fSearchJobs.get(query);
-		return sjr != null && sjr.isRunning;
+		return fSearchJobs.containsKey(query);
 	}
 
 	public IStatus runSearchInForeground(IRunnableContext context, final ISearchQuery query, ISearchResultViewPart view) {
-		if (isQueryRunning(query)) {
+		SearchJobRecord sjr = new SearchJobRecord(query);
+		SearchJobRecord queryRunning = fSearchJobs.putIfAbsent(query, sjr);
+		if (queryRunning != null) {
 			return Status.CANCEL_STATUS;
 		}
 
@@ -205,9 +207,6 @@ public class InternalSearchUI {
 		}
 
 		addQuery(query);
-
-		SearchJobRecord sjr= new SearchJobRecord(query);
-		fSearchJobs.put(query, sjr);
 
 		if (context == null)
 			context= new ProgressMonitorDialog(null);
@@ -264,13 +263,30 @@ public class InternalSearchUI {
 
 	}
 
-	public void cancelSearch(ISearchQuery job) {
-		SearchJobRecord rec= fSearchJobs.get(job);
-		if (rec != null && rec.job != null)
-			rec.job.cancel();
+	public void cancelSearch(ISearchQuery query) {
+		SearchJobRecord rec = fSearchJobs.get(query);
+		Job job = rec == null ? null : rec.job;
+		if (job != null) {
+			job.cancel();
+			// note that the job may still be running for some time
+			// which can cause multithreading issues.
+		}
 	}
 
-
+	public boolean waitFinished(ISearchQuery query) {
+		SearchJobRecord rec = fSearchJobs.get(query);
+		Job job = rec == null ? null : rec.job;
+		if (job != null) {
+			try {
+				job.cancel();
+				job.join();
+				return true;
+			} catch (InterruptedException e) {
+				// ignore
+			}
+		}
+		return false;
+	}
 
 	public QueryManager getSearchManager() {
 		return fSearchResultsManager;
@@ -347,6 +363,5 @@ public class InternalSearchUI {
 		getSearchManager().touch(result.getQuery());
 		searchView.showSearchResult(result);
 	}
-
 
 }

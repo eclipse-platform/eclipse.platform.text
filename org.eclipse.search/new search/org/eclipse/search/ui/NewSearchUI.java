@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2008 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,8 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.search.ui;
+
+import java.util.Objects;
 
 import org.eclipse.core.runtime.IStatus;
 
@@ -243,9 +245,12 @@ public class NewSearchUI {
 	/**
 	 * Sends a 'cancel' command to the given query running in background.
 	 * The call has no effect if the query is not running, not in background or is not cancelable.
+	 * 
+	 * The query may still running.
 	 *
 	 * @param query
 	 *            the query
+	 * @see #waitFinished
 	 * @since 3.1
 	 */
 	public static void cancelQuery(ISearchQuery query) {
@@ -253,6 +258,19 @@ public class NewSearchUI {
 			throw new IllegalArgumentException("query must not be null"); //$NON-NLS-1$
 		}
 		InternalSearchUI.getInstance().cancelSearch(query);
+	}
+
+	/**
+	 * waits till the query is finished
+	 * 
+	 * @param query
+	 *            the query
+	 * @see #cancelQuery
+	 * @since 3.15
+	 */
+	public static void waitFinished(ISearchQuery query) {
+		Objects.requireNonNull(query, "query must not be null"); //$NON-NLS-1$
+		InternalSearchUI.getInstance().waitFinished(query);
 	}
 
 	/**

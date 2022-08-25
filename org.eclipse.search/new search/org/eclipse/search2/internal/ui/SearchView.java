@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -18,12 +18,19 @@
 package org.eclipse.search2.internal.ui;
 
 import java.text.MessageFormat;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.eclipse.osgi.util.NLS;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
@@ -34,6 +41,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
+import org.eclipse.swt.widgets.Text;
 
 import org.eclipse.core.commands.operations.IUndoContext;
 
@@ -49,7 +57,13 @@ import org.eclipse.jface.action.LegacyActionTools;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.util.Throttler;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.ISelectionProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+
+import org.eclipse.jface.text.ITextSelection;
 
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
@@ -81,6 +95,7 @@ import org.eclipse.search.internal.ui.OpenSearchDialogAction;
 import org.eclipse.search.internal.ui.SearchPlugin;
 import org.eclipse.search.ui.IContextMenuConstants;
 import org.eclipse.search.ui.IQueryListener;
+import org.eclipse.search.ui.IResearchQuery;
 import org.eclipse.search.ui.ISearchQuery;
 import org.eclipse.search.ui.ISearchResult;
 import org.eclipse.search.ui.ISearchResultPage;
@@ -112,6 +127,7 @@ public class SearchView extends PageBookView implements ISearchResultViewPart, I
 
 	private Composite fPageContent;
 	private Link fDescription;
+	private Text filterText;
 	private Composite fDescriptionComposite;
 
 	/**
@@ -429,6 +445,7 @@ public class SearchView extends PageBookView implements ISearchResultViewPart, I
 		}
 		updatePartName();
 		updateLabel();
+		updateFilter();
 		updateCancelAction();
 
 		updateHelpContextID(page);
@@ -477,18 +494,163 @@ public class SearchView extends PageBookView implements ISearchResultViewPart, I
 					fDescriptionComposite.setLayout(layout);
 					fDescriptionComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-					fDescription= new Link(fDescriptionComposite, SWT.NONE);
-					GridData gridData= new GridData(SWT.FILL, SWT.CENTER, true, false);
-					gridData.horizontalIndent= 5;
+					fDescription = new Link(fDescriptionComposite, SWT.NONE);
+					GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+					gridData.horizontalIndent = 5;
 					fDescription.setLayoutData(gridData);
-					fDescription.setText(label);
 
-					Label separator= new Label(fDescriptionComposite, SWT.SEPARATOR | SWT.HORIZONTAL);
+					Label separator = new Label(fDescriptionComposite, SWT.SEPARATOR | SWT.HORIZONTAL);
 					separator.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+					ISearchQuery query = fCurrentSearch.getQuery();
+					if (query instanceof IResearchQuery) {
+						filterText = new Text(fDescriptionComposite,
+								SWT.SINGLE | SWT.BORDER | SWT.SEARCH | SWT.ICON_CANCEL | SWT.ICON_SEARCH);
+						filterText.addKeyListener(new KeyAdapter() {
+							@Override
+							public void keyPressed(KeyEvent e) {
+								if (e.character == SWT.CR)
+									openSearch();
+							}
+							// optional
+							// filterText.setMessage(WorkbenchMessages.FilteredTree_FilterMessage);
+						});
+						filterText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+					} else {
+						if (filterText != null) {
+							filterText.dispose();
+							filterText = null;
+						}
+					}
+
 					fPageContent.layout();
-				} else {
-					fDescription.setText(label);
 				}
+				fDescription.setText(label);
+			}
+		}
+	}
+
+	public void updateFilter() {
+		if (filterText != null && !filterText.isDisposed()) {
+			String searchString = null;
+			ISearchQuery query = fCurrentSearch.getQuery();
+			if (query instanceof IResearchQuery) {
+				searchString = ((IResearchQuery) query).getSearchString();
+			}
+			if (searchString != null) {
+				searchString = LegacyActionTools.escapeMnemonics(searchString);
+			}
+			filterText.setVisible(searchString != null);
+			if (searchString != null && !Objects.equals(filterText.getText(), searchString)) {
+				filterText.setText(searchString);
+			}
+			// after setting text to avoid initial modification fires event
+			ModifyListener inputListener = this::textChanged;
+			filterText.removeModifyListener(inputListener);
+			filterText.addModifyListener(inputListener);
+		}
+	}
+
+	private void openSearch() {
+		ISelectionProvider backup = getSite().getSelectionProvider();
+		try {
+			String searchText = filterText.getText();
+			getSite().setSelectionProvider(new SelectionProviderAdapter(searchText));
+			new OpenSearchDialogAction().run(); // uses selection
+		} finally {
+			getSite().setSelectionProvider(backup);
+		}
+	}
+
+	private Throttler researchThrottled = new Throttler(PlatformUI.getWorkbench().getDisplay(), Duration.ofMillis(50),
+			this::research);
+
+	private void research() {
+		String searchText = filterText.getText();
+		ISearchQuery query = fCurrentSearch.getQuery();
+		if (query instanceof IResearchQuery) {
+			((IResearchQuery) query).setSearchString(searchText);
+			fSearchAgainAction.run();
+		}
+	}
+
+	private void textChanged(@SuppressWarnings("unused") ModifyEvent ignored) {
+		researchThrottled.throttledExec();
+	}
+
+	private class SelectionProviderAdapter implements ISelectionProvider, ISelectionChangedListener {
+		private final String fakeSelection;
+
+		private final class StringSelection implements ITextSelection {
+			private final String text;
+
+			public StringSelection(String text) {
+				this.text = text;
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return text.isEmpty();
+			}
+
+			@Override
+			public int getOffset() {
+				return 0;
+			}
+
+			@Override
+			public int getLength() {
+				return text.length();
+			}
+
+			@Override
+			public int getStartLine() {
+				return 0;
+			}
+
+			@Override
+			public int getEndLine() {
+				return 0;
+			}
+
+			@Override
+			public String getText() {
+				return text;
+			}
+		}
+
+		private final ArrayList<ISelectionChangedListener> fListeners = new ArrayList<>();
+
+		public SelectionProviderAdapter(String searchText) {
+			this.fakeSelection = searchText;
+		}
+
+		@Override
+		public void addSelectionChangedListener(ISelectionChangedListener listener) {
+			fListeners.add(listener);
+		}
+
+		@Override
+		public ISelection getSelection() {
+			return new StringSelection(fakeSelection);
+		}
+
+		@Override
+		public void removeSelectionChangedListener(ISelectionChangedListener listener) {
+			fListeners.remove(listener);
+		}
+
+		@Override
+		public void setSelection(ISelection selection) {
+			// ignore
+		}
+
+		@Override
+		public void selectionChanged(SelectionChangedEvent event) {
+			// forward to my listeners
+			SelectionChangedEvent wrappedEvent = new SelectionChangedEvent(this, event.getSelection());
+			for (ISelectionChangedListener listener : fListeners) {
+				listener.selectionChanged(wrappedEvent);
 			}
 		}
 	}
