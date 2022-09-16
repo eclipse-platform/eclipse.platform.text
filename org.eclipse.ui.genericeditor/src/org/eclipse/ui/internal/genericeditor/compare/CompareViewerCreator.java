@@ -20,7 +20,8 @@ import org.eclipse.swt.widgets.Composite;
 
 public class CompareViewerCreator implements IViewerCreator {
 
-	@Override public Viewer createViewer(Composite parent, CompareConfiguration compareConfiguration) {
+	@Override
+	public Viewer createViewer(Composite parent, CompareConfiguration compareConfiguration) {
 		return new GenericEditorMergeViewer(parent, compareConfiguration);
 	}
 

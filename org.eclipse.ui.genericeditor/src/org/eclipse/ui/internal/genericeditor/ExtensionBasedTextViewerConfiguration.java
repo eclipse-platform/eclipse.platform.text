@@ -19,25 +19,15 @@
 package org.eclipse.ui.internal.genericeditor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.core.filebuffers.FileBuffers;
-import org.eclipse.core.filebuffers.ITextFileBuffer;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.AbstractReusableInformationControlCreator;
@@ -73,7 +63,6 @@ import org.eclipse.ui.internal.genericeditor.folding.DefaultFoldingReconciler;
 import org.eclipse.ui.internal.genericeditor.hover.CompositeInformationControlCreator;
 import org.eclipse.ui.internal.genericeditor.hover.CompositeTextHover;
 import org.eclipse.ui.internal.genericeditor.markers.MarkerResoltionQuickAssistProcessor;
-import org.eclipse.ui.texteditor.ITextEditor;
 
 /**
  * The configuration of the {@link ExtensionBasedTextEditor}. It registers the
@@ -86,78 +75,26 @@ import org.eclipse.ui.texteditor.ITextEditor;
 public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewerConfiguration
 		implements IDocumentPartitioningListener {
 
-	private ITextEditor editor;
-	private Set<IContentType> resolvedContentTypes;
-	private Set<IContentType> fallbackContentTypes = Set.of();
+	private ExtensionBasedTextEditor editor;
 	private IDocument document;
 
 	private GenericEditorContentAssistant contentAssistant;
+	private Set<IContentType> fallbackContentTypes = Set.of();
 
 	/**
 	 *
 	 * @param editor          the editor we're creating.
 	 * @param preferenceStore the preference store.
 	 */
-	public ExtensionBasedTextViewerConfiguration(ITextEditor editor, IPreferenceStore preferenceStore) {
+	public ExtensionBasedTextViewerConfiguration(ExtensionBasedTextEditor editor, IPreferenceStore preferenceStore) {
 		super(preferenceStore);
 		this.editor = editor;
 	}
 
-	public Set<IContentType> getContentTypes(IDocument document) {
-		if (this.resolvedContentTypes != null) {
-			return this.resolvedContentTypes;
-		}
-		this.resolvedContentTypes = new LinkedHashSet<>();
-		ITextFileBuffer buffer = getCurrentBuffer(document);
-		if (buffer != null) {
-			try {
-				IContentType contentType = buffer.getContentType();
-				if (contentType != null) {
-					this.resolvedContentTypes.add(contentType);
-				}
-			} catch (CoreException ex) {
-				GenericEditorPlugin.getDefault().getLog()
-						.log(new Status(IStatus.ERROR, GenericEditorPlugin.BUNDLE_ID, ex.getMessage(), ex));
-			}
-		}
-		String fileName = getCurrentFileName(document);
-		if (fileName != null) {
-			Queue<IContentType> types = new LinkedList<>(
-					Arrays.asList(Platform.getContentTypeManager().findContentTypesFor(fileName)));
-			while (!types.isEmpty()) {
-				IContentType type = types.poll();
-				this.resolvedContentTypes.add(type);
-				IContentType parent = type.getBaseType();
-				if (parent != null) {
-					types.add(parent);
-				}
-			}
-		}
-		return this.resolvedContentTypes.isEmpty() ? fallbackContentTypes : resolvedContentTypes;
-	}
-
-	private static ITextFileBuffer getCurrentBuffer(IDocument document) {
-		if (document != null) {
-			return FileBuffers.getTextFileBufferManager().getTextFileBuffer(document);
-		}
-		return null;
-	}
-
-	private String getCurrentFileName(IDocument document) {
-		String fileName = null;
-		if (this.editor != null) {
-			fileName = editor.getEditorInput().getName();
-		}
-		if (fileName == null) {
-			ITextFileBuffer buffer = getCurrentBuffer(document);
-			if (buffer != null) {
-				IPath path = buffer.getLocation();
-				if (path != null) {
-					fileName = path.lastSegment();
-				}
-			}
-		}
-		return fileName;
+	private Set<IContentType> getContentTypes(IDocument document) {
+		Set<IContentType> resolvedContentTypes = editor != null ? editor.getContentTypes(document)
+				: Collections.emptySet();
+		return resolvedContentTypes.isEmpty() ? fallbackContentTypes : resolvedContentTypes;
 	}
 
 	@Override

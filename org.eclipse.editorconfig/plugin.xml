@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<!--
+###############################################################################
+# Copyright (c) 2017 Angelo Zerr and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#     Angelo Zerr <angelo.zerr@gmail.com> - Initial API and implementation 
+###############################################################################
+ -->
+<plugin>
+
+   <!-- EditorConfig -->
+   
+   <extension
+         point="org.eclipse.core.contenttype.contentTypes">
+      <content-type
+            base-type="org.eclipse.core.runtime.text"
+            id="org.eclipse.editorconfig"
+            file-names=".editorconfig"
+            name="EditorConfig"
+            priority="normal"/>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.editors">
+      <editorContentTypeBinding
+            contentTypeId="org.eclipse.editorconfig"
+            editorId="org.eclipse.ui.genericeditor.GenericEditor">
+      </editorContentTypeBinding>
+   </extension>
+   
+   <!-- Completion for EditorConfig -->
+   <extension
+         point="org.eclipse.ui.genericeditor.contentAssistProcessors">
+      <contentAssistProcessor
+            class="org.eclipse.editorconfig.internal.completion.EditorConfigContentAssistProcessor"
+            contentType="org.eclipse.editorconfig">
+      </contentAssistProcessor>
+   </extension>
+
+   <!-- Hover for EditorConfig -->
+   <extension
+         point="org.eclipse.ui.genericeditor.hoverProviders">
+      <hoverProvider
+            contentType="org.eclipse.editorconfig"
+            class="org.eclipse.editorconfig.internal.hover.EditorConfigTextHover">
+      </hoverProvider>
+   </extension>
+         
+   <!-- editorconfig validation -->
+   <extension
+         id="problem"
+         name="%EditorConfigProblem.name"
+         point="org.eclipse.core.resources.markers">
+      <super
+            type="org.eclipse.core.resources.problemmarker">
+      </super>
+   </extension>
+   <extension
+         point="org.eclipse.ui.ide.markerResolution">
+      <markerResolutionGenerator
+            class="org.eclipse.editorconfig.internal.validation.marker.EditorConfigMarkerResolution"
+            markerType="org.eclipse.editorconfig.problem">
+      </markerResolutionGenerator>
+   </extension>
+      
+   <extension
+         point="org.eclipse.ui.genericeditor.reconcilers">
+      <reconciler
+            class="org.eclipse.editorconfig.internal.validation.EditorConfigValidator"
+            contentType="org.eclipse.editorconfig">
+      </reconciler>
+   </extension> -->
+           
+   <!-- EditorConfig Outline -->
+              
+   <extension
+         point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="org.eclipse.ui.internal.genericeditor.ExtensionBasedTextEditor"
+            class="org.eclipse.editorconfig.internal.outline.EditorConfigToOutlineAdapterFactory">
+         <adapter
+               type="org.eclipse.ui.views.contentoutline.IContentOutlinePage">
+         </adapter>
+      </factory>
+    </extension>
+    
+   <extension
+         point="org.eclipse.ui.navigator.navigatorContent">
+      <navigatorContent
+            activeByDefault="true"
+            contentProvider="org.eclipse.editorconfig.internal.outline.EditorConfigContentProvider"
+            labelProvider="org.eclipse.editorconfig.internal.outline.EditorConfigLabelProvider"
+            id="org.eclipse.editorconfig.outline.content"
+            name="%EditorConfig.navigatorContent">
+         <triggerPoints>
+            <or>
+		        <and>
+					<instanceof value="org.eclipse.core.resources.IFile" />
+  					<test property="org.eclipse.core.resources.contentTypeId" value="org.eclipse.editorconfig" args="useFilenameOnly"/>
+  				</and>				
+			</or>
+         </triggerPoints>
+      </navigatorContent>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.navigator.viewer">
+      <viewer
+            viewerId="org.eclipse.editorconfig.outline">
+      </viewer>
+      <viewerContentBinding
+            viewerId="org.eclipse.editorconfig.outline">
+         <includes>
+            <contentExtension
+                  isRoot="true"
+                  pattern="org.eclipse.editorconfig.outline.content">
+            </contentExtension>
+         </includes>
+      </viewerContentBinding>
+   </extension>
+              
+   <!-- EditorConfig Wizards -->
+   <extension
+	      point="org.eclipse.ui.newWizards">
+	 	<wizard
+		   id="org.eclipse.editorconfig.wizards.new"
+	       name="%NewEditorConfigWizard.name"
+		   class="org.eclipse.editorconfig.internal.wizards.NewEditorConfigWizard"
+		   category="org.eclipse.ui.Basic"
+		   icon="icons/editorconfig.png" >
+	       <description>%NewEditorConfigWizard.desc</description>
+		</wizard>		
+   </extension>
+
+   <extension
+		point="org.eclipse.ui.navigator.navigatorContent">
+		<commonWizard
+			type="new"
+			wizardId="org.eclipse.editorconfig.wizards.new">
+			<enablement>
+         		<or>
+            	<adapt type="org.eclipse.core.resources.IFile" /> 
+    			<adapt type="org.eclipse.core.resources.IFolder" />
+           		<adapt type="org.eclipse.core.resources.IProject" /> 
+             	<adapt type="org.eclipse.core.resources.IWorkspaceRoot" /> 
+         		</or>
+      		</enablement>
+		</commonWizard>
+   </extension> 
+
+   <extension
+         point="org.eclipse.ui.workbench.texteditor.codeMiningProviders">
+      <codeMiningProvider
+            class="org.eclipse.editorconfig.internal.codemining.EditorConfigCodeLensProvider"
+            id="org.eclipse.editorconfig.codelens"
+            label="CodeLens">
+         <enabledWhen>
+         	<with variable="editorInput">
+	           <and>
+		          <adapt type="org.eclipse.core.resources.IFile">
+	              	<test property="org.eclipse.core.resources.contentTypeId" value="org.eclipse.editorconfig" />
+	              </adapt>
+	           </and>
+		    </with>
+         </enabledWhen>
+      </codeMiningProvider>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.genericeditor.preferenceStoreProviders">
+         <provider 
+            class="org.eclipse.editorconfig.internal.EditorConfigPreferenceStoreProvider"
+            contentType="org.eclipse.core.runtime.text" >            
+         </provider>   
+   </extension>
+
+   <extension
+	       point="org.eclipse.ui.startup">	
+	       <startup class="org.eclipse.editorconfig.internal.EditorConfigStartup" />       
+   </extension>
+      
+</plugin>
