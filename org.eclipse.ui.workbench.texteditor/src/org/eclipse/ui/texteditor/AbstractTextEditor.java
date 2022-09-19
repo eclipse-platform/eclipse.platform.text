@@ -6175,6 +6175,9 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		if (ITextViewer.class.equals(required))
 			return (fSourceViewer == null ? null : (T) fSourceViewer);
 
+		if (IPreferenceStore.class.equals(required))
+			return (fSourceViewer == null ? null : (T) fPreferenceStore);
+
 		return super.getAdapter(required);
 	}
 

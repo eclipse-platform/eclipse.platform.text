@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<!--
+###############################################################################
+# Copyright (c) 2022 Angelo Zerr and others.
+#
+# This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License 2.0
+# which accompanies this distribution, and is available at
+# https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#     Angelo Zerr <angelo.zerr@gmail.com> - Initial API and implementation 
+###############################################################################
+ -->
+<plugin>
+
+   <!-- EditorConfig -->
+   
+   <extension
+         point="org.eclipse.core.contenttype.contentTypes">
+      <content-type
+            base-type="org.eclipse.core.runtime.text"
+            id="org.eclipse.text.editorconfig"
+            file-names=".editorconfig"
+            name="EditorConfig"
+            priority="normal"/>
+   </extension>
+
+   <extension
+        point="org.eclipse.ui.editors">
+     <editorContentTypeBinding
+           contentTypeId="org.eclipse.text.editorconfig"
+           editorId="org.eclipse.ui.genericeditor.GenericEditor">
+     </editorContentTypeBinding>
+   </extension>
+
+   <extension
+	       point="org.eclipse.ui.startup">	
+	       <startup class="org.eclipse.text.editorconfig.internal.EditorConfigStartup" />       
+   </extension>
+
+   <extension
+         point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="org.eclipse.ui.texteditor.ITextEditor"
+            class="org.eclipse.text.editorconfig.internal.EditorConfigPreferenceStoreAdapter">
+         <adapter
+               type="org.eclipse.core.runtime.preferences.IEclipsePreferences">
+         </adapter>
+      </factory>
+   </extension>
+   
+</plugin>

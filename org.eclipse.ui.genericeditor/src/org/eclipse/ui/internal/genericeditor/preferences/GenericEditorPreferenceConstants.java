@@ -11,7 +11,9 @@
 package org.eclipse.ui.internal.genericeditor.preferences;
 
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.internal.genericeditor.GenericEditorPlugin;
+import org.eclipse.ui.texteditor.ChainedPreferenceStore;
 
 /**
  * Preference constants used in the Generic Editor preference store. Clients
@@ -101,6 +103,11 @@ public class GenericEditorPreferenceConstants {
 		store.setDefault(GenericEditorPreferenceConstants.EDITOR_ENCLOSING_BRACKETS, false);
 		// Colors that are set by the current theme
 		GenericEditorPluginPreferenceInitializer.setThemeBasedPreferences(store, false);
+	}
+
+	public static IPreferenceStore createEditorPreferenceStore() {
+		return new ChainedPreferenceStore(new IPreferenceStore[] { new DocumentPreferenceStore(),
+				GenericEditorPreferenceConstants.getPreferenceStore(), EditorsUI.getPreferenceStore() });
 	}
 
 }

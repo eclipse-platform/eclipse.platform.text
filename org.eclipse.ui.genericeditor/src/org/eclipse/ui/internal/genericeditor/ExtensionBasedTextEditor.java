@@ -22,7 +22,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
@@ -39,10 +38,9 @@ import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.internal.genericeditor.preferences.GenericEditorPreferenceConstants;
-import org.eclipse.ui.texteditor.ChainedPreferenceStore;
+import org.eclipse.ui.internal.genericeditor.preferences.GenericEditorPreferenceStore;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 
 /**
@@ -165,6 +163,7 @@ public class ExtensionBasedTextEditor extends TextEditor {
 	public void createPartControl(Composite parent) {
 		super.createPartControl(parent);
 		ProjectionViewer viewer = (ProjectionViewer) getSourceViewer();
+		((GenericEditorPreferenceStore) getPreferenceStore()).install(this);
 
 		new ProjectionSupport(viewer, getAnnotationAccess(), getSharedColors()).install();
 		viewer.doOperation(ProjectionViewer.TOGGLE);
@@ -174,8 +173,7 @@ public class ExtensionBasedTextEditor extends TextEditor {
 	@Override
 	protected void initializeEditor() {
 		super.initializeEditor();
-		setPreferenceStore(new ChainedPreferenceStore(new IPreferenceStore[] {
-				GenericEditorPreferenceConstants.getPreferenceStore(), EditorsUI.getPreferenceStore() }));
+		setPreferenceStore(new GenericEditorPreferenceStore());
 	}
 
 	/**

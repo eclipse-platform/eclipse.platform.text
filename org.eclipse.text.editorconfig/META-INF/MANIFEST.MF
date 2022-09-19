@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: %pluginName
+Bundle-Vendor: %providerName
+Bundle-Localization: plugin
+Bundle-SymbolicName: org.eclipse.text.editorconfig;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Require-Bundle: org.eclipse.jface.text,
+ org.eclipse.core.runtime,
+ org.eclipse.ui,
+ org.eclipse.core.resources,
+ org.eclipse.core.filesystem,
+ org.eclipse.ui.ide;bundle-version="3.12.0",
+ org.eclipse.ui.editors
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-Activator: org.eclipse.text.editorconfig.EditorConfigPlugin
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: lib/ec4j-core-0.3.0.jar,
+ lib/ec4j-ide-support-0.3.0.jar,
+ .
+
