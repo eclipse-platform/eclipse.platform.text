@@ -43,14 +43,18 @@ public class IconsRegistry {
 		if (this.outOfSync) {
 			sync();
 		}
-		return Arrays.stream(contentTypes).sorted(Collections.reverseOrder(Comparator.comparingInt(ContentTypeSpecializationComparator::depth))).map(extensions::get).filter(Objects::nonNull).findFirst().orElse(null);
+		return Arrays.stream(contentTypes)
+				.sorted(Collections.reverseOrder(Comparator.comparingInt(ContentTypeSpecializationComparator::depth)))
+				.map(extensions::get).filter(Objects::nonNull).findFirst().orElse(null);
 	}
 
 	private void sync() {
 		Set<IContentType> toRemoveContentTypes = new HashSet<>(this.extensions.keySet());
-		for (IConfigurationElement extension : Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID)) {
+		for (IConfigurationElement extension : Platform.getExtensionRegistry()
+				.getConfigurationElementsFor(EXTENSION_POINT_ID)) {
 			try {
-				final String contentTypeId = extension.getAttribute(GenericContentTypeRelatedExtension.CONTENT_TYPE_ATTRIBUTE);
+				final String contentTypeId = extension
+						.getAttribute(GenericContentTypeRelatedExtension.CONTENT_TYPE_ATTRIBUTE);
 				if (contentTypeId == null || contentTypeId.isEmpty()) {
 					continue;
 				}
@@ -65,10 +69,12 @@ public class IconsRegistry {
 					if (icon == null || icon.isEmpty()) {
 						continue;
 					}
-					ResourceLocator.imageDescriptorFromBundle(extension.getNamespaceIdentifier(), icon).ifPresent(imageDescriptor -> this.extensions.put(contentType, imageDescriptor));
+					ResourceLocator.imageDescriptorFromBundle(extension.getNamespaceIdentifier(), icon)
+							.ifPresent(imageDescriptor -> this.extensions.put(contentType, imageDescriptor));
 				}
 			} catch (Exception ex) {
-				GenericEditorPlugin.getDefault().getLog().log(new Status(IStatus.ERROR, GenericEditorPlugin.BUNDLE_ID, ex.getMessage(), ex));
+				GenericEditorPlugin.getDefault().getLog()
+						.log(new Status(IStatus.ERROR, GenericEditorPlugin.BUNDLE_ID, ex.getMessage(), ex));
 			}
 		}
 

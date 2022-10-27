@@ -16,14 +16,27 @@
  *******************************************************************************/
 package org.eclipse.ui.internal.genericeditor;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
+import org.eclipse.core.filebuffers.FileBuffers;
+import org.eclipse.core.filebuffers.ITextFileBuffer;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.Region;
@@ -39,10 +52,10 @@ import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.editors.text.EditorsUI;
+import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.internal.genericeditor.preferences.GenericEditorPreferenceConstants;
-import org.eclipse.ui.texteditor.ChainedPreferenceStore;
+import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 
 /**
@@ -64,6 +77,8 @@ public class ExtensionBasedTextEditor extends TextEditor {
 	private ExtensionBasedTextViewerConfiguration configuration;
 	private Image contentTypeImage;
 	private ImageDescriptor contentTypeImageDescripter;
+	private Set<IContentType> resolvedContentTypes;
+	private PreferenceStoreWrapper preferenceStoreWrapper;
 
 	/**
 	 *
@@ -165,7 +180,9 @@ public class ExtensionBasedTextEditor extends TextEditor {
 	public void createPartControl(Composite parent) {
 		super.createPartControl(parent);
 		ProjectionViewer viewer = (ProjectionViewer) getSourceViewer();
-
+		if (preferenceStoreWrapper != null) {
+			preferenceStoreWrapper.install(viewer);
+		}
 		new ProjectionSupport(viewer, getAnnotationAccess(), getSharedColors()).install();
 		viewer.doOperation(ProjectionViewer.TOGGLE);
 		computeImage();
@@ -174,8 +191,8 @@ public class ExtensionBasedTextEditor extends TextEditor {
 	@Override
 	protected void initializeEditor() {
 		super.initializeEditor();
-		setPreferenceStore(new ChainedPreferenceStore(new IPreferenceStore[] {
-				GenericEditorPreferenceConstants.getPreferenceStore(), EditorsUI.getPreferenceStore() }));
+		preferenceStoreWrapper = new PreferenceStoreWrapper(this);
+		setPreferenceStore(preferenceStoreWrapper);
 	}
 
 	/**
@@ -188,7 +205,7 @@ public class ExtensionBasedTextEditor extends TextEditor {
 	 */
 	private void configureCharacterPairMatcher(ISourceViewer viewer, SourceViewerDecorationSupport support) {
 		List<ICharacterPairMatcher> matchers = GenericEditorPlugin.getDefault().getCharacterPairMatcherRegistry()
-				.getCharacterPairMatchers(viewer, this, configuration.getContentTypes(viewer.getDocument()));
+				.getCharacterPairMatchers(viewer, this, getContentTypes(viewer.getDocument()));
 		if (!matchers.isEmpty()) {
 			ICharacterPairMatcher matcher = matchers.get(0);
 			support.setCharacterPairMatcher(matcher);
@@ -204,18 +221,86 @@ public class ExtensionBasedTextEditor extends TextEditor {
 
 	private void computeImage() {
 		contentTypeImageDescripter = GenericEditorPlugin.getDefault().getContentTypeImagesRegistry()
-				.getImageDescriptor(getContentTypes());
+				.getImageDescriptor(getContentTypes().toArray(new IContentType[getContentTypes().size()]));
 		if (contentTypeImageDescripter != null) {
 			this.contentTypeImage = contentTypeImageDescripter.createImage();
 		}
 	}
 
-	private IContentType[] getContentTypes() {
+	Set<IContentType> getContentTypes() {
 		ISourceViewer sourceViewer = getSourceViewer();
 		if (sourceViewer != null) {
-			return configuration.getContentTypes(sourceViewer.getDocument()).toArray(new IContentType[] {});
+			return getContentTypes(sourceViewer.getDocument());
 		}
-		return new IContentType[] {};
+		return Collections.emptySet();
+	}
+
+	public Set<IContentType> getContentTypes(IDocument document) {
+		if (this.resolvedContentTypes != null) {
+			return this.resolvedContentTypes;
+		}
+		return this.resolvedContentTypes = collectContentTypes(document, this);
+	}
+
+	public static Set<IContentType> collectContentTypes(IDocument document, ITextEditor editor) {
+		Set<IContentType> collectedContentTypes = new LinkedHashSet<>();
+		ITextFileBuffer buffer = getCurrentBuffer(document);
+		if (buffer != null) {
+			try {
+				IContentType contentType = buffer.getContentType();
+				if (contentType != null) {
+					collectedContentTypes.add(contentType);
+				}
+			} catch (CoreException ex) {
+				GenericEditorPlugin.getDefault().getLog()
+						.log(new Status(IStatus.ERROR, GenericEditorPlugin.BUNDLE_ID, ex.getMessage(), ex));
+			}
+		}
+		String fileName = getCurrentFileName(editor, buffer);
+		if (fileName != null) {
+			Queue<IContentType> types = new LinkedList<>(
+					Arrays.asList(Platform.getContentTypeManager().findContentTypesFor(fileName)));
+			while (!types.isEmpty()) {
+				IContentType type = types.poll();
+				collectedContentTypes.add(type);
+				IContentType parent = type.getBaseType();
+				if (parent != null) {
+					types.add(parent);
+				}
+			}
+		}
+		return collectedContentTypes;
+	}
+
+	private static ITextFileBuffer getCurrentBuffer(IDocument document) {
+		if (document != null) {
+			return FileBuffers.getTextFileBufferManager().getTextFileBuffer(document);
+		}
+		return null;
+	}
+
+	private static String getCurrentFileName(ITextEditor editor, ITextFileBuffer buffer) {
+		String fileName = editor != null ? editor.getEditorInput().getName() : null;
+		if (fileName == null) {
+			if (buffer != null) {
+				IPath path = buffer.getLocation();
+				if (path != null) {
+					fileName = path.lastSegment();
+				}
+			}
+		}
+		return fileName;
+	}
+
+	ISourceViewer getViewer() {
+		return getSourceViewer();
+	}
+
+	IResource getResource() {
+		if (getEditorInput() instanceof IFileEditorInput) {
+			return (((IFileEditorInput) getEditorInput()).getFile());
+		}
+		return null;
 	}
 
 	@Override
@@ -223,6 +308,10 @@ public class ExtensionBasedTextEditor extends TextEditor {
 		if (this.contentTypeImage != null) {
 			this.contentTypeImage.dispose();
 			this.contentTypeImage = null;
+		}
+		if (this.preferenceStoreWrapper != null) {
+			this.preferenceStoreWrapper.uninstall();
+			this.preferenceStoreWrapper = null;
 		}
 		super.dispose();
 	}

@@ -14,6 +14,7 @@
  *******************************************************************************/
 package org.eclipse.ui.internal.genericeditor;
 
+import org.eclipse.core.resources.proposed.PreferenceStoreProviderRegistry;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.ITextHover;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
@@ -49,6 +50,7 @@ public class GenericEditorPlugin extends AbstractUIPlugin {
 	private AutoEditStrategyRegistry autoEditStrategyRegistry;
 	private CharacterPairMatcherRegistry characterPairMatcherRegistry;
 	private IconsRegistry editorImagesRegistry;
+	private PreferenceStoreProviderRegistry preferenceStoreRegistry;
 
 	private IPropertyChangeListener themeListener;
 
@@ -171,5 +173,12 @@ public class GenericEditorPlugin extends AbstractUIPlugin {
 			this.editorImagesRegistry = new IconsRegistry();
 		}
 		return this.editorImagesRegistry;
+	}
+
+	public synchronized PreferenceStoreProviderRegistry getPreferenceStoreRegistry() {
+		if (this.preferenceStoreRegistry == null) {
+			this.preferenceStoreRegistry = new PreferenceStoreProviderRegistry();
+		}
+		return preferenceStoreRegistry;
 	}
 }
