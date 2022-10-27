@@ -27,6 +27,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipse.ui.texteditor.ITextEditorAware;
 
 /**
  * This class wraps and proxies an instance of T provided through extensions and
@@ -54,9 +55,13 @@ public class GenericContentTypeRelatedExtension<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public T createDelegate() {
+	public T createDelegate(ITextEditor editor) {
 		try {
-			return (T) extension.createExecutableExtension(CLASS_ATTRIBUTE);
+			T delegateInstance = (T) extension.createExecutableExtension(CLASS_ATTRIBUTE);
+			if (delegateInstance instanceof ITextEditorAware) {
+				((ITextEditorAware) delegateInstance).setEditor(editor);
+			}
+			return delegateInstance;
 		} catch (CoreException e) {
 			GenericEditorPlugin.getDefault().getLog()
 					.log(new Status(IStatus.ERROR, GenericEditorPlugin.BUNDLE_ID, e.getMessage(), e));

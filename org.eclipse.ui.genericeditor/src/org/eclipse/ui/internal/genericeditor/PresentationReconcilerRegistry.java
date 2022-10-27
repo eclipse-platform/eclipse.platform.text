@@ -65,7 +65,7 @@ public class PresentationReconcilerRegistry {
 			.filter(ext -> contentTypes.contains(ext.targetContentType))
 			.filter(ext -> ext.matches(sourceViewer, editor))
 			.sorted(new ContentTypeSpecializationComparator<IPresentationReconciler>())
-			.map(GenericContentTypeRelatedExtension<IPresentationReconciler>::createDelegate)
+			.map(ext -> ext.createDelegate(editor))
 			.collect(Collectors.toList());
 	}
 

@@ -65,7 +65,7 @@ public class CharacterPairMatcherRegistry {
 		return this.extensions.values().stream().filter(ext -> contentTypes.contains(ext.targetContentType))
 				.filter(ext -> ext.matches(sourceViewer, editor))
 				.sorted(new ContentTypeSpecializationComparator<ICharacterPairMatcher>())
-				.map(GenericContentTypeRelatedExtension<ICharacterPairMatcher>::createDelegate)
+				.map(ext -> ext.createDelegate(editor))
 				.collect(Collectors.toList());
 	}
 

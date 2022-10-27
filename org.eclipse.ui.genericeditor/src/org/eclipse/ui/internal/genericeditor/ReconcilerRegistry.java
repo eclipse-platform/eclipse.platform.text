@@ -80,7 +80,7 @@ public class ReconcilerRegistry {
 				.filter(ext -> contentTypes.contains(ext.targetContentType)) //
 				.filter(ext -> ext.matches(sourceViewer, editor)) //
 				.sorted(new ContentTypeSpecializationComparator<IReconciler>().reversed()) //
-				.map(GenericContentTypeRelatedExtension<IReconciler>::createDelegate) //
+				.map(ext -> ext.createDelegate(editor)) //
 				.collect(Collectors.toList());
 	}
 
@@ -104,7 +104,7 @@ public class ReconcilerRegistry {
 				.filter(ext -> contentTypes.contains(ext.targetContentType)) //
 				.filter(ext -> ext.matches(sourceViewer, editor)) //
 				.sorted(new ContentTypeSpecializationComparator<IReconciler>().reversed()) //
-				.map(GenericContentTypeRelatedExtension<IReconciler>::createDelegate) //
+				.map(ext -> ext.createDelegate(editor)) //
 				.collect(Collectors.toList());
 	}
 
@@ -128,7 +128,7 @@ public class ReconcilerRegistry {
 				.filter(ext -> contentTypes.contains(ext.targetContentType)) //
 				.filter(ext -> ext.matches(sourceViewer, editor)) //
 				.sorted(new ContentTypeSpecializationComparator<IReconciler>().reversed()) //
-				.map(GenericContentTypeRelatedExtension<IReconciler>::createDelegate) //
+				.map(ext -> ext.createDelegate(editor)) //
 				.collect(Collectors.toList());
 	}
 

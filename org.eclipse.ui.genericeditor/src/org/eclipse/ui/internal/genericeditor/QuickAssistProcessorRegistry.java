@@ -57,7 +57,7 @@ public class QuickAssistProcessorRegistry {
 				.filter(ext -> contentTypes.contains(ext.targetContentType))
 				.filter(ext -> ext.matches(sourceViewer, editor))
 				.sorted(new ContentTypeSpecializationComparator<IQuickAssistProcessor>())
-				.map(GenericContentTypeRelatedExtension<IQuickAssistProcessor>::createDelegate)
+				.map(ext -> ext.createDelegate(editor))
 				.collect(Collectors.toList());
 	}
 

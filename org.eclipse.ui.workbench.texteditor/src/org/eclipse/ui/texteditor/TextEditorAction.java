@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
  * actually modifying the editor contents.
  * </p>
  */
-public abstract class TextEditorAction extends ResourceAction implements IUpdate {
+public abstract class TextEditorAction extends ResourceAction implements IUpdate, ITextEditorAware {
 
 	/** The action's editor */
 	private ITextEditor fTextEditor;
@@ -85,6 +85,7 @@ public abstract class TextEditorAction extends ResourceAction implements IUpdate
 	 *
 	 * @param editor the new editor, or <code>null</code> if none
 	 */
+	@Override
 	public void setEditor(ITextEditor editor) {
 		fTextEditor= editor;
 	}

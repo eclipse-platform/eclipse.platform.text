@@ -60,6 +60,8 @@
                   The fully qualified class name implementing the interface &lt;code&gt;org.eclipse.jface.text.reconciler.IReconciler&lt;/code&gt;
                   To manipulate folding, the implementation reconciler needs to use ProjectionAnnotation and viewer.getProjectionModel(). You can find a sample in 
                   org.eclipse.ui.internal.genericeditor.folding.DefaultFoldingReconciler.
+                  
+If you need to access to the ITextEditor in your implementation, you can implement &lt;code&gt;org.eclipse.ui.texteditor.ITextEditorAware&lt;/code&gt; to inject editor instance in your class.
                </documentation>
                <appinfo>
                   <meta.attribute kind="java" basedOn=":org.eclipse.jface.text.reconciler.IReconciler"/>

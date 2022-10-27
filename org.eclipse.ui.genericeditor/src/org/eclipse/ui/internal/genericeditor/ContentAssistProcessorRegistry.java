@@ -154,7 +154,7 @@ public class ContentAssistProcessorRegistry {
 			.filter(ext -> contentTypes.contains(ext.targetContentType))
 			.filter(ext -> ext.matches(sourceViewer, editor))
 			.sorted(new ContentTypeSpecializationComparator<IContentAssistProcessor>())
-			.map(GenericContentTypeRelatedExtension<IContentAssistProcessor>::createDelegate)
+			.map(ext -> ext.createDelegate(editor))
 			.collect(Collectors.toList());
 	}
 

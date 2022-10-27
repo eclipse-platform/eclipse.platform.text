@@ -97,7 +97,7 @@ public final class TextHoverRegistry {
 				.filter(ext -> contentTypes.contains(ext.targetContentType))
 				.filter(ext -> ext.matches(sourceViewer, editor))
 				// don't sort in the stream as the initial structure is already sorted by isAfter/isBefore
-				.map(GenericContentTypeRelatedExtension<ITextHover>::createDelegate)
+				.map(ext -> ext.createDelegate(editor))
 				.collect(Collectors.toList());
 	}
 

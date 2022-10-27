@@ -70,7 +70,7 @@ public class AutoEditStrategyRegistry {
 			.filter(ext -> contentTypes.contains(ext.targetContentType))
 			.filter(ext -> ext.matches(sourceViewer, editor))
 			.sorted(new ContentTypeSpecializationComparator<IAutoEditStrategy>())
-			.map(GenericContentTypeRelatedExtension<IAutoEditStrategy>::createDelegate)
+			.map(ext -> ext.createDelegate(editor))
 			.collect(Collectors.toList());
 	}
 

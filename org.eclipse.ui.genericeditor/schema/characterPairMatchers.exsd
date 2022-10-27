@@ -58,6 +58,8 @@
             <annotation>
                <documentation>
                   The fully qualified class name implementing the interface &lt;code&gt;org.eclipse.jface.text.source.ICharacterPairMatcher&lt;/code&gt;
+
+If you need to access to the ITextEditor in your implementation, you can implement &lt;code&gt;org.eclipse.ui.texteditor.ITextEditorAware&lt;/code&gt; to inject editor instance in your class.
                </documentation>
                <appinfo>
                   <meta.attribute kind="java" basedOn=":org.eclipse.jface.text.source.ICharacterPairMatcher"/>

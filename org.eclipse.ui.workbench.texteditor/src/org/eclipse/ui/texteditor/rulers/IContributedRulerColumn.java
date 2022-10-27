@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.jface.text.source.IVerticalRulerColumn;
 
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipse.ui.texteditor.ITextEditorAware;
 
 
 /**
@@ -30,7 +31,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
  *
  * @since 3.3
  */
-public interface IContributedRulerColumn extends IVerticalRulerColumn {
+public interface IContributedRulerColumn extends IVerticalRulerColumn, ITextEditorAware {
 
 	/**
 	 * Returns the extension point descriptor of this ruler.
@@ -57,6 +58,7 @@ public interface IContributedRulerColumn extends IVerticalRulerColumn {
 	 *
 	 * @param editor the editor targeted by this ruler instance
 	 */
+	@Override
 	void setEditor(ITextEditor editor);
 
 	/**
