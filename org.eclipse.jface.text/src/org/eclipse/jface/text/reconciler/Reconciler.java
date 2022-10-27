@@ -26,6 +26,8 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentExtension3;
 import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.ITextViewerLifecycle;
 import org.eclipse.jface.text.ITypedRegion;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.TextUtilities;
@@ -157,6 +159,35 @@ public class Reconciler extends AbstractReconciler implements IReconcilerExtensi
 			while (e.hasNext()) {
 				IReconcilingStrategy strategy= e.next();
 				strategy.setDocument(document);
+			}
+		}
+	}
+
+
+	@Override
+	public void install(ITextViewer textViewer) {
+		super.install(textViewer);
+		if (fStrategies != null) {
+			Iterator<IReconcilingStrategy> e= fStrategies.values().iterator();
+			while (e.hasNext()) {
+				IReconcilingStrategy strategy= e.next();
+				if (strategy instanceof ITextViewerLifecycle) {
+					((ITextViewerLifecycle) strategy).install(textViewer);
+				}
+			}
+		}
+	}
+
+	@Override
+	public void uninstall() {
+		super.uninstall();
+		if (fStrategies != null) {
+			Iterator<IReconcilingStrategy> e= fStrategies.values().iterator();
+			while (e.hasNext()) {
+				IReconcilingStrategy strategy= e.next();
+				if (strategy instanceof ITextViewerLifecycle) {
+					((ITextViewerLifecycle) strategy).uninstall();
+				}
 			}
 		}
 	}
