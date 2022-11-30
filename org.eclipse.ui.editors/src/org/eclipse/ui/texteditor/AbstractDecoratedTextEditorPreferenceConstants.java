@@ -81,6 +81,15 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	public final static String EDITOR_TAB_WIDTH= "tabWidth"; //$NON-NLS-1$
 
 	/**
+	 * A named preference that holds the number for line spacing (integer) in the text editor.
+	 * <p>
+	 * Value is of type <code>int</code>: positive int value specifying the number of spaces per
+	 * tab.
+	 * </p>
+	 */
+	public final static String EDITOR_LINE_SPACE= "lineSpace"; //$NON-NLS-1$
+
+	/**
 	 * A named preference that specifies if the editor uses spaces for tabs.
 	 * <p>
 	 * Value is of type <code>Boolean</code>. If <code>true</code>spaces instead of tabs are used

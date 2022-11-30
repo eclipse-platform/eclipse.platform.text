@@ -192,6 +192,12 @@ public class TextSourceViewerConfiguration extends SourceViewerConfiguration {
 		return fPreferenceStore.getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH);
 	}
 
+	private int getLineSpace(ISourceViewer sourceViewer) {
+		if (fPreferenceStore == null)
+			return super.getTabWidth(sourceViewer);
+		return fPreferenceStore.getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACE);
+	}
+
 	@Override
 	public String[] getIndentPrefixes(ISourceViewer sourceViewer, String contentType) {
 		String[] indentPrefixes= getIndentPrefixesForTab(getTabWidth(sourceViewer));
