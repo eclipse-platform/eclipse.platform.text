@@ -86,15 +86,10 @@ public class SourceViewerConfiguration {
 	/**
 	 * Returns the line space for the given source viewer. This implementation always returns 0.
 	 * 
-	 * <p>
-	 * <strong>EXPERIMENTAL</strong>. This function has been added as
-	 * part of a work in progress. There is no guarantee that this API will remain the same.
-	 * </p>
-	 *
 	 * @param sourceViewer the source viewer to be configured by this configuration
 	 * @return the line space
 	 * @see org.eclipse.swt.custom.StyledText#setLineSpacing(int)
-	 * @since 3.15
+	 * @since 3.23
 	 */
 	public int getLineSpace(ISourceViewer sourceViewer) {
 		return 0;
