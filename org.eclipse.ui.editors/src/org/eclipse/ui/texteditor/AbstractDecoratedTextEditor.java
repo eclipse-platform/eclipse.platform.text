@@ -853,12 +853,11 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 				return;
 			}
 
-			if (AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACE.equals(property)) {
+			if (AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACING.equals(property)) {
 				IPreferenceStore store= getPreferenceStore();
 				if (store != null) {
 					// translate ratio into height
-					// TODO: update linespaec upon font change.
-					int linespace= getSourceViewerConfiguration().getLineSpace(sourceViewer);
+					int linespace= getSourceViewerConfiguration().getLineSpacing(sourceViewer);
 					sourceViewer.getTextWidget().setLineSpacing(linespace);
 				}
 				return;

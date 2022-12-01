@@ -91,7 +91,7 @@ public class SourceViewerConfiguration {
 	 * @see org.eclipse.swt.custom.StyledText#setLineSpacing(int)
 	 * @since 3.23
 	 */
-	public int getLineSpace(ISourceViewer sourceViewer) {
+	public int getLineSpacing(ISourceViewer sourceViewer) {
 		return 0;
 	}
 

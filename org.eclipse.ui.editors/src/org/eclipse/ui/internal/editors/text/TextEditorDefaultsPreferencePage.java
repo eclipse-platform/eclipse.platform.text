@@ -732,7 +732,7 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_CURRENT_LINE));
 
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH));
-		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACE));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACING));
 
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractTextEditor.PREFERENCE_WORD_WRAP_ENABLED));
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SPACES_FOR_TABS));
@@ -854,10 +854,10 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 		IntegerDomain tabWidthDomain= new IntegerDomain(1, 16);
 		addTextField(appearanceComposite, tabWidth, tabWidthDomain, 15, 0);
 
-		label= TextEditorMessages.TextEditorPreferencePage_lineSpace;
-		Preference lineSpace= new Preference(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACE, label, null);
+		label= TextEditorMessages.TextEditorPreferencePage_lineSpacing;
+		Preference lineSpacing= new Preference(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACING, label, null);
 		IntegerDomain lineSpaceDomain= new IntegerDomain(0, 1000);
-		addTextField(appearanceComposite, lineSpace, lineSpaceDomain, 15, 0);
+		addTextField(appearanceComposite, lineSpacing, lineSpaceDomain, 15, 0);
 
 		label= TextEditorMessages.TextEditorPreferencePage_enableWordWrap;
 		Preference enableWordWrap= new Preference(AbstractTextEditor.PREFERENCE_WORD_WRAP_ENABLED, label, null);

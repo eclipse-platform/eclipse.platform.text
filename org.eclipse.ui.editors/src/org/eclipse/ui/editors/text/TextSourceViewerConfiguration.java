@@ -195,16 +195,16 @@ public class TextSourceViewerConfiguration extends SourceViewerConfiguration {
 	}
 
 	/**
-	 * Returns the line space for the given source viewer.
+	 * Returns the lineSpacing for the given source viewer.
 	 * 
 	 * @param sourceViewer the source viewer to be configured by this configuration
-	 * @return the line space
+	 * @return the lineSpacing
 	 *
 	 * @see org.eclipse.swt.custom.StyledText#setLineSpacing(int)
 	 * @since 3.15
 	 */
 	@Override
-	public int getLineSpace(ISourceViewer sourceViewer) {
+	public int getLineSpacing(ISourceViewer sourceViewer) {
 		// translate extra percentage into actual height
 		if (fPreferenceStore != null && sourceViewer != null) {
 			Font font= sourceViewer.getTextWidget().getFont();
@@ -212,12 +212,12 @@ public class TextSourceViewerConfiguration extends SourceViewerConfiguration {
 				FontData[] data= font.getFontData();
 				if (data != null && data.length > 0) {
 					int fontHeight= data[0].getHeight();
-					int lineSpaceFactor= fPreferenceStore.getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACE);
-					return (int) (fontHeight * lineSpaceFactor / 100.0f);
+					int spacingFactor= fPreferenceStore.getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACING);
+					return (int) (fontHeight * spacingFactor / 100.0f);
 				}
 			}
 		}
-		return super.getLineSpace(sourceViewer);
+		return super.getLineSpacing(sourceViewer);
 
 	}
 

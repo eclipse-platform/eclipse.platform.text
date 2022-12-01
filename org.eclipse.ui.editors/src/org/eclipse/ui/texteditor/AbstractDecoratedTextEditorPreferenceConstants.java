@@ -89,7 +89,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * </p>
 	 * @since 3.15
 	 */
-	public final static String EDITOR_LINE_SPACE= "lineSpace"; //$NON-NLS-1$
+	public final static String EDITOR_LINE_SPACING= "lineSpacing"; //$NON-NLS-1$
 
 	/**
 	 * A named preference that specifies if the editor uses spaces for tabs.
@@ -732,7 +732,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SPACES_FOR_TABS, false);
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_DELETE_SPACES_AS_TABS, false);
 
-		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACE, 0);
+		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACING, 0);
 
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_UNDO_HISTORY_SIZE, 200);
 
