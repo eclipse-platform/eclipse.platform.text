@@ -87,6 +87,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * Value is of type <code>int</code>: positive int value specifying the extra spacing between
 	 * lines. e.g. 10 = increase line spae by 1.1 to current font height used in textwidget.
 	 * </p>
+	 * @since 3.15
 	 */
 	public final static String EDITOR_LINE_SPACE= "lineSpace"; //$NON-NLS-1$
 
