@@ -20,6 +20,8 @@ import java.util.Map.Entry;
 import java.util.StringTokenizer;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.RGB;
 
 import org.eclipse.core.runtime.Assert;
@@ -192,10 +194,34 @@ public class TextSourceViewerConfiguration extends SourceViewerConfiguration {
 		return fPreferenceStore.getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH);
 	}
 
-	private int getLineSpace(ISourceViewer sourceViewer) {
-		if (fPreferenceStore == null)
-			return super.getTabWidth(sourceViewer);
-		return fPreferenceStore.getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACE);
+	/**
+	 * Returns the line space for the given source viewer.
+	 *
+	 * This implementation look up the user settings and translate the spacing factor( a number from
+	 * 1-1000) into linespace with respect to the font being used in the textwidget inside viewer.
+	 *
+	 * @param sourceViewer the source viewer to be configured by this configuration
+	 * @return the line space
+	 *
+	 * @see org.eclipse.swt.custom.StyledText#setLineSpacing(int)
+	 * @since 4.27
+	 */
+	@Override
+	public int getLineSpace(ISourceViewer sourceViewer) {
+		// translate extra percentage into actual height
+		if (fPreferenceStore != null && sourceViewer != null) {
+			Font font= sourceViewer.getTextWidget().getFont();
+			if (font != null) {
+				FontData[] data= font.getFontData();
+				if (data != null && data.length > 0) {
+					int fontHeight= data[0].getHeight();
+					int lineSpaceFactor= fPreferenceStore.getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACE);
+					return (int) (fontHeight * lineSpaceFactor / 100.0f);
+				}
+			}
+		}
+		return super.getLineSpace(sourceViewer);
+
 	}
 
 	@Override

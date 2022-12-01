@@ -81,10 +81,11 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	public final static String EDITOR_TAB_WIDTH= "tabWidth"; //$NON-NLS-1$
 
 	/**
-	 * A named preference that holds the number for line spacing (integer) in the text editor.
+	 * A named preference that holds the integer percentage ratio for extra line spacing in the text
+	 * editor.
 	 * <p>
-	 * Value is of type <code>int</code>: positive int value specifying the number of spaces per
-	 * tab.
+	 * Value is of type <code>int</code>: positive int value specifying the extra spacing between
+	 * lines. e.g. 10 = increase line spae by 1.1 to current font height used in textwidget.
 	 * </p>
 	 */
 	public final static String EDITOR_LINE_SPACE= "lineSpace"; //$NON-NLS-1$
@@ -729,6 +730,8 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH, 4);
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SPACES_FOR_TABS, false);
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_DELETE_SPACES_AS_TABS, false);
+
+		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACE, 0);
 
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_UNDO_HISTORY_SIZE, 200);
 

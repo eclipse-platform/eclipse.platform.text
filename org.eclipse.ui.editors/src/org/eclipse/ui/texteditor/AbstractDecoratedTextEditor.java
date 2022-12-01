@@ -856,9 +856,10 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 			if (AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACE.equals(property)) {
 				IPreferenceStore store= getPreferenceStore();
 				if (store != null) {
-					int fontHeight= sourceViewer.getTextWidget().getFont().getFontData()[0].getHeight();
-					float factor= ((store.getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_SPACE)) / 100.0f);
-					sourceViewer.getTextWidget().setLineSpacing((int) (fontHeight * factor));
+					// translate ratio into height
+					// TODO: update linespaec upon font change.
+					int linespace= getSourceViewerConfiguration().getLineSpace(sourceViewer);
+					sourceViewer.getTextWidget().setLineSpacing(linespace);
 				}
 				return;
 			}
