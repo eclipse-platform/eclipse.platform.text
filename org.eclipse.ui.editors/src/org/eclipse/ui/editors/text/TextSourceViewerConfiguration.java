@@ -196,7 +196,12 @@ public class TextSourceViewerConfiguration extends SourceViewerConfiguration {
 
 	/**
 	 * Returns the line space for the given source viewer.
-	 *
+	 * 
+	 * <p>
+	 * <strong>EXPERIMENTAL</strong>. This function has been added as
+	 * part of a work in progress. There is no guarantee that this API will remain the same.
+	 * </p>
+	 * 
 	 * This implementation look up the user settings and translate the spacing factor( a number from
 	 * 1-1000) into linespace with respect to the font being used in the textwidget inside viewer.
 	 *
@@ -204,7 +209,7 @@ public class TextSourceViewerConfiguration extends SourceViewerConfiguration {
 	 * @return the line space
 	 *
 	 * @see org.eclipse.swt.custom.StyledText#setLineSpacing(int)
-	 * @since 4.27
+	 * @since 3.15
 	 */
 	@Override
 	public int getLineSpace(ISourceViewer sourceViewer) {
