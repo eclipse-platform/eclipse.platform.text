@@ -8,6 +8,7 @@
     <extension-point id="hyperlinkDetectors" name="%ExtPoint.hyperlinkDetectors" schema="schema/hyperlinkDetectors.exsd"/>
     <extension-point id="hyperlinkDetectorTargets" name="%ExtPoint.hyperlinkDetectorTargets" schema="schema/hyperlinkDetectorTargets.exsd"/>
     <extension-point id="codeMiningProviders" name="%ExtPoint.codeMiningProviders" schema="schema/codeMiningProviders.exsd"/>
+    <extension-point id="preferenceStoreProviders" name="%ExtPoint.preferenceStoreProviders" schema="schema/preferenceStoreProviders.exsd"/>
 
 	<extension
 	     point="org.eclipse.ui.commands">

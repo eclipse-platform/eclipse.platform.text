@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.IAction;
 
 import org.eclipse.ui.internal.texteditor.codemining.CodeMiningProviderRegistry;
+import org.eclipse.ui.internal.texteditor.preferences.PreferenceStoreProviderRegistry;
 import org.eclipse.ui.internal.texteditor.quickdiff.QuickDiffExtensionsRegistry;
 import org.eclipse.ui.internal.texteditor.spelling.SpellingEngineRegistry;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -92,6 +93,13 @@ public final class TextEditorPlugin extends AbstractUIPlugin implements IRegistr
 	 * @since 3.10
 	 */
 	private CodeMiningProviderRegistry fCodeMiningProviderRegistry;
+
+	/**
+	 * The codemining provider registry
+	 *
+	 * @since 3.10
+	 */
+	private PreferenceStoreProviderRegistry fPreferenceStoreProviderRegistry;
 
 	/**
 	 * Creates a plug-in instance.
@@ -227,6 +235,7 @@ public final class TextEditorPlugin extends AbstractUIPlugin implements IRegistr
 		fQuickDiffExtensionRegistry= new QuickDiffExtensionsRegistry();
 		fSpellingEngineRegistry= new SpellingEngineRegistry();
 		fCodeMiningProviderRegistry = new CodeMiningProviderRegistry();
+		fPreferenceStoreProviderRegistry = new PreferenceStoreProviderRegistry();
 		Platform.getExtensionRegistry().addRegistryChangeListener(this, PLUGIN_ID);
 	}
 
@@ -236,6 +245,7 @@ public final class TextEditorPlugin extends AbstractUIPlugin implements IRegistr
 		fQuickDiffExtensionRegistry= null;
 		fSpellingEngineRegistry= null;
 		fCodeMiningProviderRegistry = null;
+		fPreferenceStoreProviderRegistry = null;
 		super.stop(context);
 	}
 
@@ -248,6 +258,9 @@ public final class TextEditorPlugin extends AbstractUIPlugin implements IRegistr
 		if (fCodeMiningProviderRegistry != null && event.getExtensionDeltas(PLUGIN_ID,
 				CodeMiningProviderRegistry.CODEMINING_PROVIDERS_EXTENSION_POINT).length > 0)
 			fCodeMiningProviderRegistry.reloadExtensions();
+		if (fPreferenceStoreProviderRegistry != null && event.getExtensionDeltas(PLUGIN_ID,
+				PreferenceStoreProviderRegistry.PREFERENCE_STORE_PROVIDERS_EXTENSION_POINT).length > 0)
+			fPreferenceStoreProviderRegistry.reloadExtensions();
 	}
 
 	/**
@@ -279,6 +292,17 @@ public final class TextEditorPlugin extends AbstractUIPlugin implements IRegistr
 	 */
 	public CodeMiningProviderRegistry getCodeMiningProviderRegistry() {
 		return fCodeMiningProviderRegistry;
+	}
+
+	/**
+	 * Returns this plug-ins codemining provider registry.
+	 *
+	 * @return the codemining provider registry or <code>null</code> if this plug-in
+	 *         has been shutdown
+	 * @since 3.10
+	 */
+	public PreferenceStoreProviderRegistry getPreferenceStoreProviderRegistry() {
+		return fPreferenceStoreProviderRegistry;
 	}
 
 	public static enum TraversalDirection {

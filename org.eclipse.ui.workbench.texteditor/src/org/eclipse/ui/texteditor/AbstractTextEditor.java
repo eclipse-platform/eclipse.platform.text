@@ -223,6 +223,7 @@ import org.eclipse.ui.internal.texteditor.FocusedInformationPresenter;
 import org.eclipse.ui.internal.texteditor.HistoryTracker;
 import org.eclipse.ui.internal.texteditor.NLSUtility;
 import org.eclipse.ui.internal.texteditor.TextEditorPlugin;
+import org.eclipse.ui.internal.texteditor.preferences.PreferenceStoreWrapper;
 import org.eclipse.ui.internal.texteditor.rulers.StringSetSerializer;
 import org.eclipse.ui.operations.LinearUndoViolationUserApprover;
 import org.eclipse.ui.operations.NonLocalUndoUserApprover;
@@ -2828,7 +2829,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			fPreferenceStore.removePropertyChangeListener(fFontPropertyChangeListener);
 		}
 
-		fPreferenceStore= store;
+		fPreferenceStore = new PreferenceStoreWrapper(this, store);
 
 		if (fPreferenceStore != null) {
 			fPreferenceStore.addPropertyChangeListener(fPropertyChangeListener);
@@ -4433,6 +4434,9 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			fSaveAction= null;
 		}
 
+		if (fPreferenceStore instanceof PreferenceStoreWrapper) {
+			((PreferenceStoreWrapper) fPreferenceStore).dispose();
+		}
 		super.dispose();
 	}
 
