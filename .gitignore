@@ -1,3 +1,5 @@
+/*/*/bin/
+/*/*/target
 /*/bin/
 *~
 *.rej
@@ -6,6 +8,8 @@ javacore.*
 heapdump.*
 core.*
 Snap.*
+/.settings/
+/.project
 # maven
 target/
 .DS_Store
