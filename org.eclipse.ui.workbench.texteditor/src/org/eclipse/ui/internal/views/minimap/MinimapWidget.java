@@ -259,24 +259,40 @@ public class MinimapWidget {
 
 		void updateMinimap(boolean textChanged) {
 			StyledText editorTextWidget = fEditorViewer.getTextWidget();
-			int editorTopIndex = JFaceTextUtil.getPartialTopIndex(editorTextWidget);
-			int editorBottomIndex = JFaceTextUtil.getPartialBottomIndex(editorTextWidget);
-			int maximalLines = fEditorViewer.getTextWidget().getClientArea().height
-					/ fEditorViewer.getTextWidget().getLineHeight();
+			int jfacetop = JFaceTextUtil.getPartialTopIndex(editorTextWidget);
+			int edtop = fEditorViewer.getTopIndex();
+			int editorTopIndex = (editorTextWidget == null) ? edtop : jfacetop;
+			int jfacebot = JFaceTextUtil.getPartialBottomIndex(editorTextWidget);
+
+			int lastPixel = (editorTextWidget == null) ? 0 : editorTextWidget.getClientArea().height - 1;
+			int bottomLine = (editorTextWidget == null) ? 0 : editorTextWidget.getLineIndex(lastPixel);
+
+			int edbot = fEditorViewer.getBottomIndex();
+			int editorBottomIndex = (editorTextWidget == null) ? edbot : jfacebot;
+			int height = (editorTextWidget == null) ? 0 : editorTextWidget.getClientArea().height;
+			int lineheight = (editorTextWidget == null) ? 0 : editorTextWidget.getLineHeight();
+			int maximalLines = height / lineheight;
+			System.err.println(
+					"updateMiniMap: editortopindex=" + editorTopIndex + " editorBottomIndex=" + editorBottomIndex
+							+ " jfacetop=" + jfacetop + " edtop=" + edtop + " jfacebot=" + jfacebot + " edbot=" + edbot
+							+ " maxLines=" + maximalLines + " lineheight=" + lineheight + " height=" + height
+							+ " lastPixel=" + lastPixel + " bottomLine=" + bottomLine);
 			fMinimapTracker.updateMinimap(editorTopIndex, editorBottomIndex, maximalLines, textChanged);
 		}
 
 		void install() {
 			StyledText editorTextWidget = fEditorViewer.getTextWidget();
 			fScaledFonts = new HashMap<>();
-			// Compute scaled font
-			Font scaledFont = getScaledFont(editorTextWidget.getFont());
-			fMinimapTextWidget.setFont(scaledFont);
-			// track changed content of styled text of the editor
-			editorTextWidget.getContent().addTextChangeListener(this);
-			// track changed styles of styled text of the editor
-			fMinimapTextWidget.setBackground(editorTextWidget.getBackground());
-			fMinimapTextWidget.setForeground(editorTextWidget.getForeground());
+			if (editorTextWidget != null) {
+				// Compute scaled font
+				Font scaledFont = getScaledFont(editorTextWidget.getFont());
+				fMinimapTextWidget.setFont(scaledFont);
+				// track changed content of styled text of the editor
+				editorTextWidget.getContent().addTextChangeListener(this);
+				// track changed styles of styled text of the editor
+				fMinimapTextWidget.setBackground(editorTextWidget.getBackground());
+				fMinimapTextWidget.setForeground(editorTextWidget.getForeground());
+			}
 			if (fEditorViewer instanceof ITextViewerExtension4) {
 				((ITextViewerExtension4) fEditorViewer).addTextPresentationListener(this);
 			}
@@ -284,7 +300,9 @@ public class MinimapWidget {
 			// track changed of vertical bar scroll to update highlight
 			// Viewport.
 			fEditorViewer.addViewportListener(this);
-			editorTextWidget.addControlListener(this);
+			if (editorTextWidget != null) {
+				editorTextWidget.addControlListener(this);
+			}
 			synchTextAndStyles();
 		}
 
@@ -295,18 +313,25 @@ public class MinimapWidget {
 
 		private void synchStyles() {
 			StyledText editorTextWidget = fEditorViewer.getTextWidget();
+			if (editorTextWidget == null) {
+				return;
+			}
 			StyleRange[] ranges = editorTextWidget.getStyleRanges();
+			// SWT error if ranges is null
 			if (ranges != null) {
 				for (StyleRange range : ranges) {
 					updateStyle(range);
 				}
+				fMinimapTextWidget.setStyleRanges(ranges);
 			}
-			fMinimapTextWidget.setStyleRanges(ranges);
 		}
 
 		private void synchText() {
 			StyledText editorTextWidget = fEditorViewer.getTextWidget();
-			fMinimapTextWidget.setText(editorTextWidget.getText());
+			fMinimapTextWidget.setText(
+					// provide an empty value for when the StyledText is not available
+					(editorTextWidget == null) ? "" : editorTextWidget.getText() //$NON-NLS-1$
+			);
 		}
 
 		void uninstall() {
