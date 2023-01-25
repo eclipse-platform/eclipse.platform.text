@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Angelo ZERR.
+ * Copyright (c) 2018, 2023 Angelo ZERR.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,6 +11,7 @@
  * Contributors:
  * Angelo Zerr <angelo.zerr@gmail.com> - [minimap] Initialize minimap view - Bug 535450
  * Arne Deutsch <arne.deutsch@itemis.de> - Correct view height - Bug 536207
+ * Gerald Mitchell ,gerald.mitchell@ibm.com - correct NPE
  *******************************************************************************/
 package org.eclipse.ui.internal.views.minimap;
 
@@ -259,24 +260,19 @@ public class MinimapWidget {
 
 		void updateMinimap(boolean textChanged) {
 			StyledText editorTextWidget = fEditorViewer.getTextWidget();
-			int jfacetop = JFaceTextUtil.getPartialTopIndex(editorTextWidget);
-			int edtop = fEditorViewer.getTopIndex();
-			int editorTopIndex = (editorTextWidget == null) ? edtop : jfacetop;
-			int jfacebot = JFaceTextUtil.getPartialBottomIndex(editorTextWidget);
-
-			int lastPixel = (editorTextWidget == null) ? 0 : editorTextWidget.getClientArea().height - 1;
-			int bottomLine = (editorTextWidget == null) ? 0 : editorTextWidget.getLineIndex(lastPixel);
-
-			int edbot = fEditorViewer.getBottomIndex();
-			int editorBottomIndex = (editorTextWidget == null) ? edbot : jfacebot;
+			//top index
+			int jFacePartialTopIndex = JFaceTextUtil.getPartialTopIndex(editorTextWidget);
+			int editorViewerTopIndex = fEditorViewer.getTopIndex();
+			int editorTopIndex = (editorTextWidget == null) ? editorViewerTopIndex : jFacePartialTopIndex;
+			//bottom index
+			int jFacePartialBottomIndex = JFaceTextUtil.getPartialBottomIndex(editorTextWidget);
+			int editorViewerBottomIndex = fEditorViewer.getBottomIndex();
+			int editorBottomIndex = (editorTextWidget == null) ? editorViewerBottomIndex : jFacePartialBottomIndex;
+			//height
 			int height = (editorTextWidget == null) ? 0 : editorTextWidget.getClientArea().height;
 			int lineheight = (editorTextWidget == null) ? 0 : editorTextWidget.getLineHeight();
-			int maximalLines = height / lineheight;
-			System.err.println(
-					"updateMiniMap: editortopindex=" + editorTopIndex + " editorBottomIndex=" + editorBottomIndex
-							+ " jfacetop=" + jfacetop + " edtop=" + edtop + " jfacebot=" + jfacebot + " edbot=" + edbot
-							+ " maxLines=" + maximalLines + " lineheight=" + lineheight + " height=" + height
-							+ " lastPixel=" + lastPixel + " bottomLine=" + bottomLine);
+			int maximalLines = (lineheight == 0) ? 0 : (height / lineheight);
+			//update
 			fMinimapTracker.updateMinimap(editorTopIndex, editorBottomIndex, maximalLines, textChanged);
 		}
 
