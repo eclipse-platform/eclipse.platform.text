@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2023 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,6 +15,7 @@
  *     Roman Fuchs, fuchsro@ethz.ch - 47136 Search view should show match objects
  *     Christian Walther (Indel AG) - Bug 399094: Add whole word option to file search
  *     Terry Parker <tparker@google.com> (Google Inc.) - Bug 441016 - Speed up text search by parallelizing it using JobGroups
+ *     Red Hat Inc. - Issue 31 (Nested projects: Search and Quick search matches appear twice)
  *******************************************************************************/
 package org.eclipse.search.internal.ui.text;
 
@@ -96,6 +97,16 @@ public class FileSearchQuery implements ISearchQuery {
 				int matchOffset = matchRequestor.getMatchOffset();
 				LineElement lineElement = getLineElement(matchOffset, matchRequestor, matches);
 				if (lineElement != null) {
+					if (matches != null && !matches.isEmpty()) {
+						FileMatch last= matches.get(matches.size() - 1);
+						LineElement lastLineElement= last.getLineElement();
+						// Ignore duplicate entries due to nested projects
+						if (last.getFile().equals(matchRequestor.getFile()) &&
+								lastLineElement.getOffset() == lineElement.getOffset() &&
+								lastLineElement.getLine() == lineElement.getLine()) {
+							return matches;
+						}
+					}
 					FileMatch fileMatch = new FileMatch(matchRequestor.getFile(), matchOffset,
 							matchRequestor.getMatchLength(), lineElement);
 					if (matches == null) {

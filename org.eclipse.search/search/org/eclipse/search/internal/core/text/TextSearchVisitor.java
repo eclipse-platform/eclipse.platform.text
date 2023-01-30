@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corporation and others.
+ * Copyright (c) 2000, 2023 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,15 +12,19 @@
  *     IBM Corporation - initial API and implementation
  *     Terry Parker <tparker@google.com> (Google Inc.) - Bug 441016 - Speed up text search by parallelizing it using JobGroups
  *     Sergey Prigogin (Google) - Bug 489551 - File Search silently drops results on StackOverflowError
+ *     Red Hat Inc. - Issue 31 (Nested projects: Search and Quick search matches appear twice)
  *******************************************************************************/
 package org.eclipse.search.internal.core.text;
 
 import java.io.CharConversionException;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -99,10 +103,29 @@ public class TextSearchVisitor {
 		private CharSequence fContent;
 
 		public void initialize(IFile file, int offset, int length, CharSequence content) {
-			fFile= file;
+			fFile = getInnermostProjectFile(file);
 			fOffset= offset;
 			fLength= length;
 			fContent= content;
+		}
+
+		private IFile getInnermostProjectFile(IFile file) {
+			// In the case where projects are nested, a text search will find a
+			// result more than once.
+			// We want to refine the outer project(s) matches to avoid
+			// duplicates
+			// but also because an outer match
+			// when opened will use an editor chosen by the outer project which
+			// may
+			// be incorrect (e.g. outer
+			// project is generic and inner project is Java). So, we convert the
+			// file to be the IResource found in
+			// the innermost project. This fixes: Bug 559340
+			// https://bugs.eclipse.org/bugs/show_bug.cgi?id=559340
+			URI locationUri = file.getLocationURI();
+			return locationUri == null ? file : //
+					Arrays.stream(file.getWorkspace().getRoot().findFilesForLocationURI(locationUri)) //
+							.min(Comparator.comparingInt(aFile -> aFile.getFullPath().segments().length)).orElse(file);
 		}
 
 		@Override
