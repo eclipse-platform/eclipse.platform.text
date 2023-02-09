@@ -12,6 +12,7 @@ package org.eclipse.jface.text.tests.contentassist;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
@@ -20,7 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
@@ -270,7 +270,7 @@ public class FilteringAsyncContentAssistTests {
 
 		List<ICompletionProposal> filteredProposals= getFilteredProposals(ca,
 				p -> p instanceof IncompleteCompletionProposal);
-		assertTrue(filteredProposals != null);
+		assertNotNull(filteredProposals);
 		assertEquals(1, filteredProposals.size());
 
 		filteredProposals.get(0).apply(document);
@@ -351,7 +351,7 @@ public class FilteringAsyncContentAssistTests {
 
 		List<ICompletionProposal> filteredProposals= getFilteredProposals(ca,
 				p -> p instanceof CompletionProposal);
-		assertTrue(filteredProposals != null);
+		assertNotNull(filteredProposals);
 		assertEquals(1, filteredProposals.size());
 
 		filteredProposals.get(0).apply(document);
@@ -506,13 +506,13 @@ public class FilteringAsyncContentAssistTests {
 	private static List<ICompletionProposal> getComputedProposals(ContentAssistant ca, Predicate<ICompletionProposal> p)
 			throws Exception {
 		List<ICompletionProposal> computedProposals = getComputedProposals(ca);
-		return computedProposals == null ? null : computedProposals.stream().filter(p).collect(Collectors.toList());
+		return computedProposals == null ? null : computedProposals.stream().filter(p).toList();
 	}
 
 	private static List<ICompletionProposal> getFilteredProposals(ContentAssistant ca, Predicate<ICompletionProposal> p)
 			throws Exception {
 		List<ICompletionProposal> filteredProposals = getFilteredProposals(ca);
-		return filteredProposals == null ? null : filteredProposals.stream().filter(p).collect(Collectors.toList());
+		return filteredProposals == null ? null : filteredProposals.stream().filter(p).toList();
 	}
 
 	private static class IncompleteCompletionProposal implements ICompletionProposal {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2023 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,7 @@
  *     Juerg Billeter, juergbi@ethz.ch - 47136 Search view should show match objects
  *     Ulrich Etter, etteru@ethz.ch - 47136 Search view should show match objects
  *     Roman Fuchs, fuchsro@ethz.ch - 47136 Search view should show match objects
+ *     Red Hat Inc. - add support for filtering files that are not from innermost nested project
  *******************************************************************************/
 package org.eclipse.search.internal.ui.text;
 
@@ -21,29 +22,23 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
-
-import org.eclipse.swt.dnd.DND;
-import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.swt.widgets.Display;
-
-import org.eclipse.core.runtime.IAdaptable;
-
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IFile;
 
 import org.eclipse.core.filebuffers.FileBuffers;
 import org.eclipse.core.filebuffers.ITextFileBuffer;
 import org.eclipse.core.filebuffers.ITextFileBufferManager;
 import org.eclipse.core.filebuffers.LocationKind;
-
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.ITreeViewerListener;
@@ -55,7 +50,21 @@ import org.eclipse.jface.viewers.TreeExpansionEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
-
+import org.eclipse.search.internal.ui.Messages;
+import org.eclipse.search.internal.ui.SearchMessages;
+import org.eclipse.search.ui.IContextMenuConstants;
+import org.eclipse.search.ui.ISearchResultViewPart;
+import org.eclipse.search.ui.NewSearchUI;
+import org.eclipse.search.ui.text.AbstractTextSearchResult;
+import org.eclipse.search.ui.text.AbstractTextSearchViewPage;
+import org.eclipse.search.ui.text.Match;
+import org.eclipse.search2.internal.ui.OpenSearchPreferencesAction;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Item;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.Tree;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IWorkbenchPage;
@@ -67,17 +76,6 @@ import org.eclipse.ui.part.IShowInSource;
 import org.eclipse.ui.part.IShowInTargetList;
 import org.eclipse.ui.part.ResourceTransfer;
 import org.eclipse.ui.part.ShowInContext;
-import org.eclipse.ui.views.navigator.NavigatorDragAdapter;
-
-import org.eclipse.search.internal.ui.Messages;
-import org.eclipse.search.internal.ui.SearchMessages;
-import org.eclipse.search.ui.IContextMenuConstants;
-import org.eclipse.search.ui.ISearchResultViewPart;
-import org.eclipse.search.ui.text.AbstractTextSearchResult;
-import org.eclipse.search.ui.text.AbstractTextSearchViewPage;
-import org.eclipse.search.ui.text.Match;
-
-import org.eclipse.search2.internal.ui.OpenSearchPreferencesAction;
 
 
 public class FileSearchPage extends AbstractTextSearchViewPage implements IAdaptable {
@@ -278,11 +276,12 @@ public class FileSearchPage extends AbstractTextSearchViewPage implements IAdapt
 		ITextFileBuffer textFileBuffer = textFileBufferManager.getTextFileBuffer(resource.getFullPath(),
 				LocationKind.IFILE);
 		return Arrays.stream(resource.getWorkspace().getRoot().findFilesForLocationURI(resource.getLocationURI())) //
-				.sorted(Comparator.comparingInt(aFile -> aFile.getFullPath().segments().length)) //
-				.findFirst() //
-				.filter(aFile -> textFileBufferManager.getTextFileBuffer(aFile.getFullPath(),
-						LocationKind.IFILE) == textFileBuffer)
-				.orElse(resource);
+				.min(Comparator.comparingInt(aFile -> aFile.getFullPath().segments().length)) //
+				.filter(aFile -> {
+					ITextFileBuffer buffer = textFileBufferManager.getTextFileBuffer(aFile.getFullPath(),
+							LocationKind.IFILE);
+					return textFileBuffer == null || Objects.equals(textFileBuffer, buffer);
+				}).orElse(resource);
 	}
 
 	@Override
@@ -421,30 +420,102 @@ public class FileSearchPage extends AbstractTextSearchViewPage implements IAdapt
 		return null;
 	}
 
+	private boolean isQueryRunning() {
+		AbstractTextSearchResult result = getInput();
+		if (result != null) {
+			return NewSearchUI.isQueryRunning(result.getQuery());
+		}
+		return false;
+	}
+
 	@Override
 	public String getLabel() {
 		String label= super.getLabel();
 		StructuredViewer viewer= getViewer();
-		if (viewer instanceof TableViewer) {
-			TableViewer tv= (TableViewer) viewer;
+		AbstractTextSearchResult result = getInput();
+		String msg = label;
+		if (result != null) {
+			if (viewer instanceof TableViewer) {
+				TableViewer tv = (TableViewer) viewer;
 
-			AbstractTextSearchResult result= getInput();
-			if (result != null) {
-				int itemCount= ((IStructuredContentProvider) tv.getContentProvider()).getElements(getInput()).length;
+				int itemCount = ((FileTableContentProvider) tv.getContentProvider())
+						.getUnfilteredElements(getInput()).length;
 				if (showLineMatches()) {
 					int matchCount= getInput().getMatchCount();
 					if (itemCount < matchCount) {
-						return Messages.format(SearchMessages.FileSearchPage_limited_format_matches, new Object[]{label, Integer.valueOf(itemCount), Integer.valueOf(matchCount)});
+						msg = Messages.format(SearchMessages.FileSearchPage_limited_format_matches,
+								new Object[] { label, Integer.valueOf(itemCount), Integer.valueOf(matchCount) });
 					}
 				} else {
 					int fileCount= getInput().getElements().length;
 					if (itemCount < fileCount) {
-						return Messages.format(SearchMessages.FileSearchPage_limited_format_files, new Object[]{label, Integer.valueOf(itemCount), Integer.valueOf(fileCount)});
+						msg = Messages.format(SearchMessages.FileSearchPage_limited_format_files,
+								new Object[] { label, Integer.valueOf(itemCount), Integer.valueOf(fileCount) });
 					}
+				}
+
+			}
+			if (result.getActiveMatchFilters() != null && result.getActiveMatchFilters().length > 0) {
+				if (isQueryRunning()) {
+					String message = SearchMessages.FileSearchPage_filtered_message;
+					return Messages.format(message, new Object[] { msg });
+
+				} else {
+					int filteredOut = result.getMatchCount() - getFilteredMatchCount();
+					String message = SearchMessages.FileSearchPage_filteredWithCount_message;
+					return Messages.format(message, new Object[] { msg, String.valueOf(filteredOut) });
 				}
 			}
 		}
-		return label;
+		return msg;
+	}
+
+	private int getFilteredMatchCount() {
+		StructuredViewer viewer = getViewer();
+		if (viewer instanceof TreeViewer) {
+			ITreeContentProvider tp = (ITreeContentProvider) viewer.getContentProvider();
+			return getMatchCount(tp, getRootElements((TreeViewer) getViewer()));
+		} else {
+			return getMatchCount((TableViewer) viewer);
+		}
+	}
+
+	private Object[] getRootElements(TreeViewer viewer) {
+		Tree t = viewer.getTree();
+		Item[] roots = t.getItems();
+		Object[] elements = new Object[roots.length];
+		for (int i = 0; i < elements.length; i++) {
+			elements[i] = roots[i].getData();
+		}
+		return elements;
+	}
+
+	private Object[] getRootElements(TableViewer viewer) {
+		Table t = viewer.getTable();
+		Item[] roots = t.getItems();
+		Object[] elements = new Object[roots.length];
+		for (int i = 0; i < elements.length; i++) {
+			elements[i] = roots[i].getData();
+		}
+		return elements;
+	}
+
+	private int getMatchCount(ITreeContentProvider cp, Object[] elements) {
+		int count = 0;
+		for (Object element : elements) {
+			count += getDisplayedMatchCount(element);
+			Object[] children = cp.getChildren(element);
+			count += getMatchCount(cp, children);
+		}
+		return count;
+	}
+
+	private int getMatchCount(TableViewer viewer) {
+		int count = 0;
+		for (Object element : getRootElements(viewer)) {
+			count += getDisplayedMatchCount(element);
+		}
+		return count;
 	}
 
 	@Override
@@ -452,7 +523,10 @@ public class FileSearchPage extends AbstractTextSearchViewPage implements IAdapt
 		if (showLineMatches()) {
 			if (element instanceof LineElement) {
 				LineElement lineEntry= (LineElement) element;
-				return lineEntry.getNumberOfMatches(getInput());
+				IResource res = lineEntry.getParent();
+				if (super.getDisplayedMatchCount(res) > 0) {
+					return lineEntry.getNumberOfMatches(getInput());
+				}
 			}
 			return 0;
 		}
@@ -464,7 +538,10 @@ public class FileSearchPage extends AbstractTextSearchViewPage implements IAdapt
 		if (showLineMatches()) {
 			if (element instanceof LineElement) {
 				LineElement lineEntry= (LineElement) element;
-				return lineEntry.getMatches(getInput());
+				IResource res = lineEntry.getParent();
+				if (super.getDisplayedMatchCount(res) > 0) {
+					return lineEntry.getMatches(getInput());
+				}
 			}
 			return new Match[0];
 		}
