@@ -260,19 +260,17 @@ public class MinimapWidget {
 
 		void updateMinimap(boolean textChanged) {
 			StyledText editorTextWidget = fEditorViewer.getTextWidget();
-			//top index
-			int jFacePartialTopIndex = JFaceTextUtil.getPartialTopIndex(editorTextWidget);
-			int editorViewerTopIndex = fEditorViewer.getTopIndex();
-			int editorTopIndex = (editorTextWidget == null) ? editorViewerTopIndex : jFacePartialTopIndex;
-			//bottom index
-			int jFacePartialBottomIndex = JFaceTextUtil.getPartialBottomIndex(editorTextWidget);
-			int editorViewerBottomIndex = fEditorViewer.getBottomIndex();
-			int editorBottomIndex = (editorTextWidget == null) ? editorViewerBottomIndex : jFacePartialBottomIndex;
-			//height
-			int height = (editorTextWidget == null) ? 0 : editorTextWidget.getClientArea().height;
-			int lineHeight = (editorTextWidget == null) ? 0 : editorTextWidget.getLineHeight();
-			int maximalLines = (lineHeight == 0) ? 0 : (height / lineHeight);
-			//update
+			if (editorTextWidget == null) {
+     				fMinimapTracker.updateMinimap(
+          				fEditorViewer.getTopIndex(),
+         				fEditorViewer.getBottomIndex(),
+         				0, textChanged);
+     				return;
+			}
+			int editorTopIndex = JFaceTextUtil.getPartialTopIndex(editorTextWidget);
+			int editorBottomIndex = JFaceTextUtil.getPartialBottomIndex(editorTextWidget);
+			int lineHeight = editorTextWidget.getLineHeight();
+			int maximalLines = (lineHeight == 0) ? 0 : editorTextWidget.getClientArea().height/ lineHeight;
 			fMinimapTracker.updateMinimap(editorTopIndex, editorBottomIndex, maximalLines, textChanged);
 		}
 
