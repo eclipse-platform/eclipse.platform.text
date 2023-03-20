@@ -113,11 +113,13 @@ public class ContextInformationTest extends AbstractContentAssistTest {
 		this.infoShell= findNewShell(beforeShells);
 		assertEquals("idx= 1", getInfoText(this.infoShell));
 
-		// Hide all
-		if (!getButton().setFocus()) {
-			//then try to force focus...
-			assertTrue("neither set nor force focus worked!", getButton().forceFocus());
-		}
+		infoShell.getDisplay().asyncExec(() -> {
+			// Hide all
+			if (!getButton().setFocus()) {
+				//then try to force focus...
+				assertTrue("neither set nor force focus worked!", getButton().forceFocus());
+			}
+		});
 		long deadline= System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10);
 		while (deadline > System.currentTimeMillis()) {
 			processEvents();
