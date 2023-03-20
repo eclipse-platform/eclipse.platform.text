@@ -15,9 +15,11 @@ package org.eclipse.jface.text.tests.contentassist;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -112,9 +114,18 @@ public class ContextInformationTest extends AbstractContentAssistTest {
 		assertEquals("idx= 1", getInfoText(this.infoShell));
 
 		// Hide all
-		getButton().setFocus();
-		processEvents();
-		assertTrue(this.infoShell.isDisposed() || !this.infoShell.isVisible());
+		if (!getButton().setFocus()) {
+			//then try to force focus...
+			assertTrue("neither set nor force focus worked!", getButton().forceFocus());
+		}
+		long deadline= System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10);
+		while (deadline > System.currentTimeMillis()) {
+			processEvents();
+			if (this.infoShell.isDisposed() || !this.infoShell.isVisible()) {
+				return;
+			}
+		}
+		fail("The shell is neither disposed nor hidden within 10 seconds!");
 	}
 
 	@Test
