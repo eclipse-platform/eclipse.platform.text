@@ -20,7 +20,7 @@
   </parent>
 
   <groupId>org.eclipse.platform</groupId>
-  <artifactId>eclipse.platform.text</artifactId>
+  <artifactId>eclipse.platform.text.parent</artifactId>
   <packaging>pom</packaging>
 
   <properties>
@@ -51,27 +51,7 @@
   </profiles>
 
   <modules>
-    <module>org.eclipse.core.filebuffers.tests</module>
-    <module>org.eclipse.jface.text.tests</module>
-    <module>org.eclipse.search.tests</module>
-    <module>org.eclipse.text.tests</module>
-    <module>org.eclipse.ui.editors.tests</module>
-    <module>org.eclipse.ui.workbench.texteditor.tests</module>
-    <module>org.eclipse.core.filebuffers</module>
-    <module>org.eclipse.jface.text</module>
-    <module>org.eclipse.text</module>
-    <module>org.eclipse.ui.workbench.texteditor</module>
-    <module>org.eclipse.ui.editors</module>
-    <module>org.eclipse.search</module>
-    <module>org.eclipse.ui.examples.javaeditor</module>
-    <module>org.eclipse.jface.text.examples</module>
-    <!-- Generic editor -->
-    <module>org.eclipse.ui.genericeditor</module>
-    <module>org.eclipse.ui.genericeditor.tests</module>
-    <module>org.eclipse.ui.genericeditor.examples</module>
-    <!-- Quick Search -->
-    <module>org.eclipse.text.quicksearch</module>
-    <module>org.eclipse.text.quicksearch.tests</module>
+    <module>text</module>
   </modules>
 
 </project>
