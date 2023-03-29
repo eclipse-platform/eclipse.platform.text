@@ -223,8 +223,8 @@ public class TextSearchVisitor {
 						}
 						occurences = locateMatches(file, charsequence, matcher, monitor);
 					} catch (FileCharSequenceProvider.FileCharSequenceException e) {
-						if (e.getCause() instanceof RuntimeException) {
-							throw (RuntimeException) e.getCause();
+						if (e.getCause() instanceof RuntimeException runtimeEx) {
+							throw runtimeEx;
 						}
 						throw e;
 					}
