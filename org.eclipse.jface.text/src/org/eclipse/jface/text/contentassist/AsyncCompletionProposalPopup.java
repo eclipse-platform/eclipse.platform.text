@@ -376,7 +376,8 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 		List<CompletableFuture<List<ICompletionProposal>>> futures = new ArrayList<>(processors.size());
 		for (IContentAssistProcessor processor : processors) {
 			// Use a custom ForkJoinWorkerThreadFactory, to prevent issues with a
-			// potential SecurityManager, since the threads created by it get no permissions.
+			// potential SecurityManager. Threads created by ForkJoinPool.commonPool(),
+			// which is used in CompletableFuture.supplyAsync(), get no permissions.
 			ForkJoinPool commonPool= new ForkJoinPool(ForkJoinPool.getCommonPoolParallelism(),
 					pool -> new ForkJoinWorkerThread(pool) {
 						// anonymous subclass to access protected constructor
