@@ -177,16 +177,19 @@ public class FileTreeContentProvider implements ITreeContentProvider, IFileSearc
 		if (element instanceof LineElement) {
 			LineElement lineElement= (LineElement) element;
 			IResource resource = lineElement.getParent();
-			if (getMatchCount(resource) > 0) {
+			if (resourceHasMatches(resource)) {
 				return lineElement.hasMatches(fResult);
 			}
 		}
 		return fPage.getDisplayedMatchCount(element) > 0;
 	}
 
-	private int getMatchCount(Object element) {
-		return fResult.getActiveMatchFilters().length > 0 ? fPage.getDisplayedMatchCount(element)
-				: fResult.getMatchCount();
+	private boolean resourceHasMatches(IResource element) {
+		if (fResult.getActiveMatchFilters().length > 0) {
+			return fPage.getDisplayedMatchCount(element) > 0;
+		} else {
+			return fResult.hasMatches();
+		}
 	}
 
 	private void removeFromSiblings(Object element, Object parent) {
@@ -235,9 +238,11 @@ public class FileTreeContentProvider implements ITreeContentProvider, IFileSearc
 					// change events to line elements are reported in text
 					// search
 					LineElement lineElement = (LineElement) updatedElement;
-					boolean hasMatches = lineMatches.contains(lineElement);
-					int matchCount = getMatchCount(lineElement.getParent());
-					if (hasMatches && matchCount > 0) {
+					boolean hasMatches = false;
+					if (lineMatches.contains(lineElement)) {
+						hasMatches = resourceHasMatches(lineElement.getParent());
+					}
+					if (hasMatches) {
 						if (singleElement && hasChild(lineElement.getParent(), lineElement)) {
 							fTreeViewer.update(new Object[] { lineElement, lineElement.getParent() }, null);
 						} else {

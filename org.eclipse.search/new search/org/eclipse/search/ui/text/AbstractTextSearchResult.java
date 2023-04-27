@@ -309,6 +309,16 @@ public abstract class AbstractTextSearchResult implements ISearchResult {
 	}
 
 	/**
+	 * @return {@code true} if the result has at least one match. The filter
+	 *         state of the matches is not relevant when counting matches. All
+	 *         matches are counted.
+	 * @since 3.15
+	 */
+	public boolean hasMatches() {
+		return fElementsToMatches.values().stream().anyMatch(x -> !x.isEmpty());
+	}
+
+	/**
 	 * Returns the number of matches reported against a given element. This is
 	 * equivalent to calling <code>getMatches(element).length</code>
 	 * The filter state of the matches is not relevant when counting matches. All matches are counted.
