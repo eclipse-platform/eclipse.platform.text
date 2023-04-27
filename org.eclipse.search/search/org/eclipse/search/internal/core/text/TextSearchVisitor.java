@@ -528,9 +528,14 @@ public class TextSearchVisitor {
 				ReusableMatchAccess access= new ReusableMatchAccess();
 				access.initialize(file, start, end - start, searchInput);
 				occurences.add(access);
-				boolean res= fCollector.acceptPatternMatch(access);
-				if (!res) {
-					return occurences; // no further reporting requested
+				try {
+					boolean res = fCollector.acceptPatternMatch(access);
+					if (!res) {
+						return occurences; // no further reporting requested
+					}
+				} catch (OperationCanceledException e) {
+					monitor.setCanceled(true);
+					return occurences;
 				}
 			}
 			// Periodically check for cancellation and quit working on the current file if the job has been cancelled.

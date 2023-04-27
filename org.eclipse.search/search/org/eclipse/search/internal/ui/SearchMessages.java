@@ -163,6 +163,7 @@ public final class SearchMessages extends NLS {
 	public static String FileSearchQuery_singularLabel;
 	public static String FileSearchQuery_singularLabel_fileNameSearch;
 	public static String FileSearchQuery_pluralPattern_fileNameSearch;
+	public static String FileSearchQuery_maxResultsExceeded;
 	public static String OpenSearchDialogAction_label;
 	public static String OpenSearchDialogAction_tooltip;
 	public static String FileTypeEditor_typeDelimiter;
@@ -205,6 +206,7 @@ public final class SearchMessages extends NLS {
 	public static String SearchPreferencePage_defaultPerspective_none;
 	public static String SearchPreferencePage_ignorePotentialMatches;
 	public static String SearchPreferencePage_rememberLastUsedPage;
+	public static String SearchPreferencePage_maxResults;
 	public static String ReplaceAction_label_all;
 	public static String ReplaceAction_label_selected;
 	public static String SelectAllAction_label;

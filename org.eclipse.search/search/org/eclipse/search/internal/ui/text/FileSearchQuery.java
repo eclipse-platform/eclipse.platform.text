@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 
 import org.eclipse.core.resources.IFile;
@@ -38,6 +39,7 @@ import org.eclipse.search.core.text.TextSearchRequestor;
 import org.eclipse.search.internal.core.text.PatternConstructor;
 import org.eclipse.search.internal.ui.Messages;
 import org.eclipse.search.internal.ui.SearchMessages;
+import org.eclipse.search.internal.ui.SearchPreferencePage;
 import org.eclipse.search.ui.ISearchQuery;
 import org.eclipse.search.ui.ISearchResult;
 import org.eclipse.search.ui.text.AbstractTextSearchResult;
@@ -56,6 +58,7 @@ public class FileSearchQuery implements ISearchQuery {
 		private final boolean fIsLightweightAutoRefresh;
 		private final ConcurrentHashMap<IFile, ArrayList<FileMatch>> fCachedMatches;
 		private volatile boolean stop;
+		private final int maxSearchResults;
 
 		private TextSearchResultCollector(AbstractTextSearchResult result, boolean isFileSearchOnly, boolean searchInBinaries) {
 			fResult= result;
@@ -63,6 +66,7 @@ public class FileSearchQuery implements ISearchQuery {
 			fSearchInBinaries= searchInBinaries;
 			fIsLightweightAutoRefresh= Platform.getPreferencesService().getBoolean(ResourcesPlugin.PI_RESOURCES, ResourcesPlugin.PREF_LIGHTWEIGHT_AUTO_REFRESH, false, null);
 			fCachedMatches = new ConcurrentHashMap<>();
+			maxSearchResults = SearchPreferencePage.getMaxResults();
 		}
 
 		@Override
@@ -105,6 +109,12 @@ public class FileSearchQuery implements ISearchQuery {
 				}
 				return matches;
 			});
+
+			// use 0 to disable result size checking completely
+			if (maxSearchResults > 0 && fResult.getMatchCount() >= maxSearchResults) {
+				throw new OperationCanceledException();
+			}
+
 			return true;
 		}
 
@@ -261,6 +271,20 @@ public class FileSearchQuery implements ISearchQuery {
 	}
 
 	public String getResultLabel(int nMatches) {
+		String resultLabel = getResultLabelWithOutLimitString(nMatches);
+
+		int maxResultAllowed = SearchPreferencePage.getMaxResults();
+		// use maxResultAllowed=0 to disable maxResults functionality
+		if (maxResultAllowed > 0 && nMatches >= maxResultAllowed) {
+			String limitExceededLabel = Messages.format(SearchMessages.FileSearchQuery_maxResultsExceeded,
+					maxResultAllowed);
+			resultLabel = resultLabel + ' ' + limitExceededLabel;
+		}
+
+		return resultLabel;
+	}
+
+	public String getResultLabelWithOutLimitString(int nMatches) {
 		String searchString= getSearchString();
 		if (!searchString.isEmpty()) {
 			// text search

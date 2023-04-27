@@ -25,6 +25,7 @@ import org.eclipse.jface.preference.ColorFieldEditor;
 import org.eclipse.jface.preference.ComboFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
@@ -44,7 +45,6 @@ public class SearchPreferencePage extends FieldEditorPreferencePage implements I
 
 	public static final String PAGE_ID= "org.eclipse.search.preferences.SearchPreferencePage"; //$NON-NLS-1$
 
-
 	public static final String IGNORE_POTENTIAL_MATCHES= "org.eclipse.search.potentialMatch.ignore"; //$NON-NLS-1$
 	public static final String REMEMBER_LAST_USED_PAGE = "org.eclipse.search.potentialMatch.remember"; //$NON-NLS-1$
 	public static final String EMPHASIZE_POTENTIAL_MATCHES= "org.eclipse.search.potentialMatch.emphasize"; //$NON-NLS-1$
@@ -56,12 +56,13 @@ public class SearchPreferencePage extends FieldEditorPreferencePage implements I
 	public static final String TEXT_SEARCH_ENGINE = "org.eclipse.search.textSearchEngine"; //$NON-NLS-1$
 	public static final String TEXT_SEARCH_QUERY_PROVIDER = "org.eclipse.search.textSearchQueryProvider"; //$NON-NLS-1$
 	public static final String LIMIT_HISTORY= "org.eclipse.search.limitHistory"; //$NON-NLS-1$
+	public static final String MAX_RESULTS = "org.eclipse.search.maxResults"; //$NON-NLS-1$
 
 	private ColorFieldEditor fColorEditor;
 	private BooleanFieldEditor fEmphasizedCheckbox;
 	private BooleanFieldEditor fIgnorePotentialMatchesCheckbox;
 	private BooleanFieldEditor fRememberLastUsedPageCheckbox;
-
+	private IntegerFieldEditor fieldMaxResults;
 
 	private static class PerspectiveDescriptorComparator implements Comparator<IPerspectiveDescriptor> {
 		@Override
@@ -91,6 +92,9 @@ public class SearchPreferencePage extends FieldEditorPreferencePage implements I
 		store.setDefault(TEXT_SEARCH_ENGINE, ""); //default search engine is empty string //$NON-NLS-1$
 		store.setDefault(TEXT_SEARCH_QUERY_PROVIDER, ""); // default query provider is empty string  //$NON-NLS-1$
 		store.setDefault(LIMIT_HISTORY, 10);
+
+		// we will use 0 to mean disable maxResults limiting functionality
+		store.setDefault(MAX_RESULTS, 0);
 	}
 
 
@@ -139,6 +143,10 @@ public class SearchPreferencePage extends FieldEditorPreferencePage implements I
 			perspectiveNamesAndIds,
 			getFieldEditorParent());
 		addField(comboEditor);
+
+		fieldMaxResults = new IntegerFieldEditor(MAX_RESULTS, SearchMessages.SearchPreferencePage_maxResults,
+				getFieldEditorParent());
+		addField(fieldMaxResults);
 
 		// in case we have a contributed engine, let the user choose.
 		TextSearchEngineRegistry reg= SearchPlugin.getDefault().getTextSearchEngineRegistry();
@@ -252,6 +260,24 @@ public class SearchPreferencePage extends FieldEditorPreferencePage implements I
 	public static RGB getPotentialMatchForegroundColor() {
 		IPreferenceStore store= SearchPlugin.getDefault().getPreferenceStore();
 		return PreferenceConverter.getColor(store, POTENTIAL_MATCH_FG_COLOR);
+	}
+	
+	/**
+	 * This is only a rough stopping point due to the fact there's a cache which
+	 * prevents accurate counting until the cache flushes (which would be
+	 * inefficient if we called flush all the time); as well as it being a
+	 * multi-threaded search so even when stop is signaled the currently running
+	 * threads may not notice until they attempt to process the next file. This
+	 * should not cause a problem as the limit is not meant to be a specific
+	 * exact result size limit but rather a safety trigger to prevent run away
+	 * searches.
+	 * <p>
+	 * We can reserve 0 for unlimited, it can be different than Integer.maxValue
+	 * in that if it's 0 we can skip checks; making it more efficient.
+	 */
+	public static int getMaxResults() {
+		IPreferenceStore store= SearchPlugin.getDefault().getPreferenceStore();
+		return store.getInt(MAX_RESULTS);
 	}
 
 	public static int getHistoryLimit() {
