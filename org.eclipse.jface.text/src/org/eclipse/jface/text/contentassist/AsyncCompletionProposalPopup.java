@@ -382,7 +382,11 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 					pool -> new ForkJoinWorkerThread(pool) {
 						// anonymous subclass to access protected constructor
 					}, null, false);
-			futures.add(CompletableFuture.supplyAsync(() -> this.getCompletionProposals(processor, invocationOffset), commonPool));
+			try {
+				futures.add(CompletableFuture.supplyAsync(() -> this.getCompletionProposals(processor, invocationOffset), commonPool));
+			} finally {
+				commonPool.shutdown();
+			}
 		}
 		return futures;
 	}
