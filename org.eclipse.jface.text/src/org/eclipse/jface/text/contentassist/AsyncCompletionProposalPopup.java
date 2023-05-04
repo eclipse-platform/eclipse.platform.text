@@ -374,19 +374,19 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 			return Collections.emptyList();
 		}
 		List<CompletableFuture<List<ICompletionProposal>>> futures = new ArrayList<>(processors.size());
-		for (IContentAssistProcessor processor : processors) {
-			// Use a custom ForkJoinWorkerThreadFactory, to prevent issues with a
-			// potential SecurityManager. Threads created by ForkJoinPool.commonPool(),
-			// which is used in CompletableFuture.supplyAsync(), get no permissions.
-			ForkJoinPool commonPool= new ForkJoinPool(ForkJoinPool.getCommonPoolParallelism(),
-					pool -> new ForkJoinWorkerThread(pool) {
-						// anonymous subclass to access protected constructor
-					}, null, false);
-			try {
+		// Use a custom ForkJoinWorkerThreadFactory, to prevent issues with a
+		// potential SecurityManager. Threads created by ForkJoinPool.commonPool(),
+		// which is used in CompletableFuture.supplyAsync(), get no permissions.
+		ForkJoinPool commonPool= new ForkJoinPool(ForkJoinPool.getCommonPoolParallelism(),
+				pool -> new ForkJoinWorkerThread(pool) {
+					// anonymous subclass to access protected constructor
+				}, null, false);
+		try {
+			for (IContentAssistProcessor processor : processors) {
 				futures.add(CompletableFuture.supplyAsync(() -> this.getCompletionProposals(processor, invocationOffset), commonPool));
-			} finally {
-				commonPool.shutdown();
 			}
+		} finally {
+			commonPool.shutdown();
 		}
 		return futures;
 	}
