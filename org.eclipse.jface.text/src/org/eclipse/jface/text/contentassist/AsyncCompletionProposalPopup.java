@@ -244,7 +244,7 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 						if (offset != fInvocationOffset || fComputedProposals != requestSpecificProposals) {
 							return;
 						}
-						boolean stillComputing= fComputedProposals.contains(computingProposal);
+						boolean stillComputing= stillComputing();
 						if (autoInsert
 								&& !autoActivated
 								&& !stillComputing
@@ -260,10 +260,7 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 						if (!stillComputing && callback != null) {
 							callback.accept(fComputedProposals);
 						} else {
-							boolean hasProposals= (stillComputing && fComputedProposals.size() > 1)
-									|| (!stillComputing && !fComputedProposals.isEmpty());
-
-							if ((autoActivated && hasProposals) || !autoActivated) {
+							if ((autoActivated && hasProposals()) || !autoActivated) {
 								setProposals(fComputedProposals, false);
 								displayProposals(true);
 							} else if (isValid(fProposalShell) && fProposalShell.isVisible() && remaining.get() == 0) {
@@ -406,6 +403,15 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 		return IDocument.DEFAULT_CONTENT_TYPE;
 	}
 
+	private boolean stillComputing() {
+		return fComputedProposals.stream().anyMatch(ComputingProposal.class::isInstance);
+	}
+
+	private boolean hasProposals() {
+		boolean stillComputing= stillComputing();
+		return (stillComputing && fComputedProposals.size() > 1) || (!stillComputing && !fComputedProposals.isEmpty());
+	}
+
 	private class PopupVisibleTimer implements Runnable {
 		private Thread fThread;
 
@@ -427,7 +433,11 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 							fMutex.wait(fAutoActivationDelay);
 					}
 					Optional<Display> display= Optional.ofNullable(fContentAssistSubjectControlAdapter.getControl()).map(Control::getDisplay);
-					display.ifPresent(d -> d.asyncExec(() -> displayProposals(true)));
+					display.ifPresent(d -> d.asyncExec(() -> {
+						if (hasProposals()) {
+							displayProposals(true);
+						}
+					}));
 					break;
 				}
 			} catch (InterruptedException e) {
