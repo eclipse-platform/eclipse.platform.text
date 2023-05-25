@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -37,7 +36,6 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 
 import org.eclipse.core.runtime.SafeRunner;
 
@@ -67,8 +65,6 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 	private CompletableFuture<?> fAggregatedPopulateFuture;
 
 	private Collection<CompletableFuture<?>> toCancelFutures= new LinkedList<>();
-
-	private PopupVisibleTimer fPopupVisibleTimer= new PopupVisibleTimer();
 
 	private static final class ComputingProposal implements ICompletionProposal, ICompletionProposalExtension {
 
@@ -266,8 +262,6 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 							if ((autoActivated && hasProposals) || !autoActivated) {
 								setProposals(fComputedProposals, false);
 								displayProposals(true);
-							} else if (isValid(fProposalShell) && (!fProposalShell.isVisible() || !hasProposals) && remaining.get() == 0) {
-								hide(); // we only tear down if the popup is not visible or it is visible but has no proposals.
 							}
 						}
 					});
@@ -276,19 +270,6 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 			toCancelFutures.addAll(populateFutures);
 			fAggregatedPopulateFuture= CompletableFuture.allOf(populateFutures.toArray(new CompletableFuture[populateFutures.size()]));
 			toCancelFutures.add(fAggregatedPopulateFuture);
-		}
-		displayProposals(!autoActivated);
-	}
-
-	@Override
-	void displayProposals(boolean showPopup) {
-		if (showPopup) {
-			fPopupVisibleTimer.stop();
-		}
-
-		super.displayProposals(showPopup);
-		if (!showPopup) {
-			fPopupVisibleTimer.start();
 		}
 	}
 
@@ -355,7 +336,6 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 
 	@Override
 	public void hide() {
-		fPopupVisibleTimer.stop();
 		super.hide();
 		cancelFutures();
 	}
@@ -404,42 +384,5 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 			return TextUtilities.getContentType(fViewer.getDocument(), fContentAssistant.getDocumentPartitioning(), invocationOffset, true);
 		}
 		return IDocument.DEFAULT_CONTENT_TYPE;
-	}
-
-	private class PopupVisibleTimer implements Runnable {
-		private Thread fThread;
-
-		private Object fMutex= new Object();
-
-		private int fAutoActivationDelay= 500;
-
-		protected void start() {
-			fThread= new Thread(this, JFaceTextMessages.getString("ContentAssistant.assist_delay_timer_name")); //$NON-NLS-1$
-			fThread.start();
-		}
-
-		@Override
-		public void run() {
-			try {
-				while (true) {
-					synchronized (fMutex) {
-						if (fAutoActivationDelay != 0)
-							fMutex.wait(fAutoActivationDelay);
-					}
-					Optional<Display> display= Optional.ofNullable(fContentAssistSubjectControlAdapter.getControl()).map(Control::getDisplay);
-					display.ifPresent(d -> d.asyncExec(() -> displayProposals(true)));
-					break;
-				}
-			} catch (InterruptedException e) {
-			}
-			fThread= null;
-		}
-
-		protected void stop() {
-			Thread threadToStop= fThread;
-			if (threadToStop != null && threadToStop.isAlive())
-				threadToStop.interrupt();
-		}
-
 	}
 }
