@@ -18,6 +18,7 @@
 package org.eclipse.search.internal.ui.text;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,13 +32,12 @@ import java.util.stream.StreamSupport;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
-
 import org.eclipse.search.ui.text.AbstractTextSearchResult;
 import org.eclipse.search.ui.text.Match;
+import org.eclipse.search.ui.text.MatchFilter;
 
 
 public class FileTreeContentProvider implements ITreeContentProvider, IFileSearchContentProvider {
@@ -185,7 +185,8 @@ public class FileTreeContentProvider implements ITreeContentProvider, IFileSearc
 	}
 
 	private int getMatchCount(Object element) {
-		return fResult.getActiveMatchFilters().length > 0 ? fPage.getDisplayedMatchCount(element)
+		return fResult.getActiveMatchFilters() != null && fResult.getActiveMatchFilters().length > 0
+				? fPage.getDisplayedMatchCount(element)
 				: fResult.getMatchCount();
 	}
 
@@ -213,20 +214,58 @@ public class FileTreeContentProvider implements ITreeContentProvider, IFileSearc
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(e.asIterator(), Spliterator.ORDERED), false);
 	}
 
+	private boolean isUnfiltered(FileMatch m) {
+		MatchFilter[] filters = fResult.getActiveMatchFilters();
+		if (filters != null) {
+			for (MatchFilter filter : filters) {
+				if (filter.filters(m)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 *
+	 * Update the search contents. Screen out any results that are filtered via
+	 * active match filters (e.g. selected filters in the pull-down menu of the
+	 * FileSearchPage). For example, one match filter exists to screen matches that
+	 * are duplicates reported when one or more projects are nested within another.
+	 * Each outer project will own a separate IResource for files found in inner
+	 * projects and searches will report for both inner and outer resources. The
+	 * filter mentioned only eliminates duplicates that are not from the innermost
+	 * nested project owning the file.
+	 * 
+	 */
 	@Override
 	public synchronized void elementsChanged(Object[] updatedElements) {
 		boolean singleElement = updatedElements.length == 1;
-		Set<LineElement> lineMatches = Arrays.stream(updatedElements).filter(LineElement.class::isInstance)
+		Set<LineElement> lineMatches = Collections.emptySet();
+		// if we have active match filters, we should only use non-filtered FileMatch
+		// objects to collect LineElements to update
+		if (fResult.getActiveMatchFilters() != null && fResult.getActiveMatchFilters().length > 0) {
+			lineMatches = Arrays.stream(updatedElements).filter(LineElement.class::isInstance)
 				// only for distinct files:
 				.map(u -> ((LineElement) u).getParent()).distinct()
 				// query matches:
 				.map(fResult::getMatchSet).flatMap(FileTreeContentProvider::toStream)
-				.map(m -> ((FileMatch) m).getLineElement()).collect(Collectors.toSet());
+				.map(m -> ((FileMatch) m)).filter(this::isUnfiltered).map(m -> m.getLineElement())
+				.collect(Collectors.toSet());
+		} else {
+			lineMatches = Arrays.stream(updatedElements).filter(LineElement.class::isInstance)
+					// only for distinct files:
+					.map(u -> ((LineElement) u).getParent()).distinct()
+					// query matches:
+					.map(fResult::getMatchSet).flatMap(FileTreeContentProvider::toStream)
+					.map(m -> ((FileMatch) m).getLineElement()).collect(Collectors.toSet());
+		}
 		try {
 			for (Object updatedElement : updatedElements) {
 				if (!(updatedElement instanceof LineElement)) {
-					// change events to elements are reported in file search
-					if (fPage.getDisplayedMatchCount(updatedElement) > 0) {
+					// change events to elements are reported in file search.
+					// ask the page to determine if element is filtered.
+					if (getMatchCount(updatedElement) > 0) {
 						insert(updatedElement, singleElement);
 					} else {
 						remove(updatedElement, singleElement);
@@ -236,8 +275,7 @@ public class FileTreeContentProvider implements ITreeContentProvider, IFileSearc
 					// search
 					LineElement lineElement = (LineElement) updatedElement;
 					boolean hasMatches = lineMatches.contains(lineElement);
-					int matchCount = getMatchCount(lineElement.getParent());
-					if (hasMatches && matchCount > 0) {
+					if (hasMatches) {
 						if (singleElement && hasChild(lineElement.getParent(), lineElement)) {
 							fTreeViewer.update(new Object[] { lineElement, lineElement.getParent() }, null);
 						} else {
