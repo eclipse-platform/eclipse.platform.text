@@ -1,2 +1,0 @@
-# To force a version qualifier update add the bug here
-Bug 509931: Comparator errors in M20170104-0545

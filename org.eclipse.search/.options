@@ -1,4 +1,0 @@
-# Debugging options for the org.eclipse.search plug-in
-
-# Reports performance of text searches
-org.eclipse.search/perf=false
